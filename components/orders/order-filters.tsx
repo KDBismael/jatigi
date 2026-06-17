@@ -1,0 +1,50 @@
+'use client'
+
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
+
+interface OrderFiltersProps {
+  filters: { status?: OrderStatus | ''; dateFrom?: string; dateTo?: string; search?: string }
+  onChange: (f: { status?: OrderStatus | ''; dateFrom?: string; dateTo?: string; search?: string }) => void
+}
+
+const statusOptions = [
+  { value: '', label: 'Tous les statuts' },
+  ...STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] })),
+]
+
+export function OrderFilters({ filters, onChange }: OrderFiltersProps) {
+  return (
+    <div className="flex flex-wrap gap-3 mb-6">
+      <div className="w-56">
+        <Input
+          placeholder="Rechercher un client..."
+          value={filters.search ?? ''}
+          onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        />
+      </div>
+      <div className="w-44">
+        <Select
+          options={statusOptions}
+          value={filters.status ?? ''}
+          onChange={(e) => onChange({ ...filters, status: e.target.value as OrderStatus | '' })}
+        />
+      </div>
+      <div className="w-40">
+        <Input
+          type="date"
+          value={filters.dateFrom ?? ''}
+          onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
+        />
+      </div>
+      <div className="w-40">
+        <Input
+          type="date"
+          value={filters.dateTo ?? ''}
+          onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
+        />
+      </div>
+    </div>
+  )
+}
