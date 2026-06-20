@@ -16,16 +16,16 @@ export async function getOrders(): Promise<Order[]> {
 export async function createOrder(input: OrderInput, userId: string, organizationId: string): Promise<Order> {
   const supabase = await createClient()
 
-  // Fetch product costs for snapshot
+  // Fetch sale prices for snapshot (costs come from lots via FIFO RPC)
   const productIds = input.lines.map((l) => l.product_id)
   const { data: products, error: pErr } = await supabase
     .from('products')
-    .select('id, sale_price, purchase_cost, import_cost, packaging_cost')
+    .select('id, sale_price')
     .in('id', productIds)
 
   if (pErr) throw new Error(pErr.message)
 
-  const productMap = new Map(products?.map((p) => [p.id, p]) ?? [])
+  const priceMap = new Map(products?.map((p) => [p.id, p.sale_price]) ?? [])
 
   // Create order
   const { data: order, error: oErr } = await supabase
@@ -44,21 +44,46 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
 
   if (oErr) throw new Error(oErr.message)
 
-  // Insert order lines with cost snapshots (trigger will decrement stock)
-  const lines = input.lines.map((l) => {
-    const product = productMap.get(l.product_id)
-    if (!product) throw new Error(`Produit introuvable: ${l.product_id}`)
-    return {
-      order_id: order.id,
-      product_id: l.product_id,
-      quantity: l.quantity,
-      unit_price: product.sale_price,
-      unit_cost: product.purchase_cost + product.import_cost + product.packaging_cost,
-    }
-  })
+  // Insert order lines, then consume stock FIFO (RPC handles lot allocation atomically)
+  for (const line of input.lines) {
+    const sale_price = priceMap.get(line.product_id)
+    if (sale_price === undefined) throw new Error(`Produit introuvable : ${line.product_id}`)
 
-  const { error: lErr } = await supabase.from('order_lines').insert(lines)
-  if (lErr) throw new Error(lErr.message)
+    // Insert order line with placeholder unit_cost — will be updated by FIFO RPC
+    const { data: orderLine, error: lErr } = await supabase
+      .from('order_lines')
+      .insert({
+        order_id: order.id,
+        product_id: line.product_id,
+        quantity: line.quantity,
+        unit_price: sale_price,
+        unit_cost: 0, // overwritten below
+      })
+      .select()
+      .single()
+
+    if (lErr) throw new Error(lErr.message)
+
+    // Consume stock FIFO — returns weighted unit cost; throws on insufficient stock
+    const { data: weightedCost, error: fifoErr } = await supabase.rpc('consume_stock_fifo', {
+      p_order_line_id: orderLine.id,
+      p_product_id: line.product_id,
+      p_org_id: organizationId,
+      p_quantity: line.quantity,
+    })
+
+    if (fifoErr) {
+      // Roll back by deleting the order (cascade removes order_lines)
+      await supabase.from('orders').delete().eq('id', order.id)
+      throw new Error(fifoErr.message)
+    }
+
+    // Update unit_cost with the actual weighted cost from lot allocation
+    await supabase
+      .from('order_lines')
+      .update({ unit_cost: weightedCost })
+      .eq('id', orderLine.id)
+  }
 
   return order as Order
 }
