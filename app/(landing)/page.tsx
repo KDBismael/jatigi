@@ -33,7 +33,7 @@ const FEATURES = [
   },
 ]
 
-const CHANNELS = ['TikTok', 'Facebook', 'Instagram', 'WhatsApp']
+const CHANNELS = ['TikTok', 'Facebook', 'Instagram', 'WhatsApp', 'magasin physique']
 
 export default function LandingPage() {
   return (
