@@ -64,8 +64,18 @@ export default function OrderDetailPage() {
   }
 
   const lines = order.order_lines ?? []
+
+  // Resolve the effective unit cost per line:
+  // prefer the stored unit_cost (FIFO lot cost); fall back to current
+  // product costs when the stored value is 0 (e.g. lot not yet set up).
+  function resolveUnitCost(l: (typeof lines)[number]): number {
+    if (l.unit_cost > 0) return l.unit_cost
+    const p = l.product
+    return (p?.purchase_cost ?? 0) + (p?.import_cost ?? 0) + (p?.packaging_cost ?? 0)
+  }
+
   const totalRevenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-  const totalCost = lines.reduce((s, l) => s + l.unit_cost * l.quantity, 0)
+  const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l) * l.quantity, 0)
   const totalProfit = totalRevenue - totalCost
 
   return (
@@ -126,8 +136,10 @@ export default function OrderDetailPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {lines.map((l) => {
+                const effectiveCost = resolveUnitCost(l)
                 const lineRevenue = l.unit_price * l.quantity
-                const lineProfit = (l.unit_price - l.unit_cost) * l.quantity
+                const lineCost = effectiveCost * l.quantity
+                const lineProfit = lineRevenue - lineCost
                 return (
                   <tr key={l.id}>
                     <td className="py-2.5 pr-4 font-medium text-gray-900">
@@ -135,7 +147,7 @@ export default function OrderDetailPage() {
                     </td>
                     <td className="py-2.5 pr-4 text-gray-600 text-right">{l.quantity}</td>
                     <td className="py-2.5 pr-4 text-gray-600 text-right">{formatCurrency(l.unit_price)}</td>
-                    <td className="py-2.5 pr-4 text-gray-500 text-right">{formatCurrency(l.unit_cost)}</td>
+                    <td className="py-2.5 pr-4 text-gray-500 text-right">{formatCurrency(effectiveCost)}</td>
                     <td className="py-2.5 pr-4 font-medium text-gray-900 text-right">{formatCurrency(lineRevenue)}</td>
                     <td className={`py-2.5 font-semibold text-right ${lineProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {formatCurrency(lineProfit)}

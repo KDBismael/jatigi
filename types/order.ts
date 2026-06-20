@@ -7,7 +7,12 @@ export interface OrderLine {
   quantity: number
   unit_price: number
   unit_cost: number
-  product?: { name: string }
+  product?: {
+    name: string
+    purchase_cost?: number
+    import_cost?: number
+    packaging_cost?: number
+  }
 }
 
 export interface Order {

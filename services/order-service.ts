@@ -17,7 +17,7 @@ export async function getOrderById(id: string): Promise<Order | null> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('orders')
-    .select('*, order_lines(*, product:products(name, sale_price))')
+    .select('*, order_lines(*, product:products(name, purchase_cost, import_cost, packaging_cost))')
     .eq('id', id)
     .single()
 
