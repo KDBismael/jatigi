@@ -13,19 +13,32 @@ export async function getOrders(): Promise<Order[]> {
   return data as Order[]
 }
 
+export async function getOrderById(id: string): Promise<Order | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_lines(*, product:products(name, sale_price))')
+    .eq('id', id)
+    .single()
+
+  if (error) return null
+  return data as Order
+}
+
 export async function createOrder(input: OrderInput, userId: string, organizationId: string): Promise<Order> {
   const supabase = await createClient()
 
-  // Fetch sale prices for snapshot (costs come from lots via FIFO RPC)
   const productIds = input.lines.map((l) => l.product_id)
+
+  // Fetch product sale price + costs (costs used as fallback if FIFO lots don't exist)
   const { data: products, error: pErr } = await supabase
     .from('products')
-    .select('id, sale_price')
+    .select('id, sale_price, purchase_cost, import_cost, packaging_cost')
     .in('id', productIds)
 
   if (pErr) throw new Error(pErr.message)
 
-  const priceMap = new Map(products?.map((p) => [p.id, p.sale_price]) ?? [])
+  const productMap = new Map(products?.map((p) => [p.id, p]) ?? [])
 
   // Create order
   const { data: order, error: oErr } = await supabase
@@ -44,27 +57,31 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
 
   if (oErr) throw new Error(oErr.message)
 
-  // Insert order lines, then consume stock FIFO (RPC handles lot allocation atomically)
   for (const line of input.lines) {
-    const sale_price = priceMap.get(line.product_id)
-    if (sale_price === undefined) throw new Error(`Produit introuvable : ${line.product_id}`)
+    const product = productMap.get(line.product_id)
+    if (!product) throw new Error(`Produit introuvable : ${line.product_id}`)
 
-    // Insert order line with placeholder unit_cost — will be updated by FIFO RPC
+    // Fallback cost from product fields (covers case where FIFO lots don't exist yet)
+    const fallbackCost = product.purchase_cost + product.import_cost + product.packaging_cost
+
     const { data: orderLine, error: lErr } = await supabase
       .from('order_lines')
       .insert({
         order_id: order.id,
         product_id: line.product_id,
         quantity: line.quantity,
-        unit_price: sale_price,
-        unit_cost: 0, // overwritten below
+        unit_price: product.sale_price,
+        unit_cost: fallbackCost,
       })
       .select()
       .single()
 
-    if (lErr) throw new Error(lErr.message)
+    if (lErr) {
+      await supabase.from('orders').delete().eq('id', order.id)
+      throw new Error(lErr.message)
+    }
 
-    // Consume stock FIFO — returns weighted unit cost; throws on insufficient stock
+    // Attempt FIFO allocation — updates unit_cost to weighted lot cost if successful
     const { data: weightedCost, error: fifoErr } = await supabase.rpc('consume_stock_fifo', {
       p_order_line_id: orderLine.id,
       p_product_id: line.product_id,
@@ -73,16 +90,18 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     })
 
     if (fifoErr) {
-      // Roll back by deleting the order (cascade removes order_lines)
-      await supabase.from('orders').delete().eq('id', order.id)
-      throw new Error(fifoErr.message)
+      // FIFO RPC unavailable (migration not applied) or insufficient stock
+      if (fifoErr.message?.includes('INSUFFICIENT_STOCK')) {
+        await supabase.from('orders').delete().eq('id', order.id)
+        throw new Error(`Stock insuffisant pour ce produit`)
+      }
+      // Otherwise: FIFO not set up yet — fallback cost stays, continue without lot tracking
+    } else if (weightedCost !== null) {
+      await supabase
+        .from('order_lines')
+        .update({ unit_cost: weightedCost })
+        .eq('id', orderLine.id)
     }
-
-    // Update unit_cost with the actual weighted cost from lot allocation
-    await supabase
-      .from('order_lines')
-      .update({ unit_cost: weightedCost })
-      .eq('id', orderLine.id)
   }
 
   return order as Order

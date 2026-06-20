@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
-import { updateProduct, deleteProduct } from '@/services/product-service'
+import { getProductById, updateProduct, deleteProduct } from '@/services/product-service'
 import { z } from 'zod'
 
 const COST_FIELDS = [
@@ -13,6 +13,17 @@ const productUpdateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   sale_price: z.coerce.number().positive().optional(),
 })
+
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id } = await params
+  const product = await getProductById(id)
+  if (!product) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
+  return NextResponse.json(product)
+}
 
 async function requireAdmin() {
   const supabase = await createClient()

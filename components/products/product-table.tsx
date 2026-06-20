@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { computeMargin, formatCurrency } from '@/lib/utils'
 import type { Product } from '@/types/product'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ interface ProductTableProps {
 export function ProductTable({ products, onDelete }: ProductTableProps) {
   const [addStockProduct, setAddStockProduct] = useState<Product | null>(null)
   const { updateProduct } = useProductStore()
+  const router = useRouter()
 
   if (products.length === 0) {
     return (
@@ -54,7 +56,11 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
                 packaging_cost: p.packaging_cost,
               })
               return (
-                <tr key={p.id} className="hover:bg-gray-50">
+                <tr
+                key={p.id}
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => router.push(`/products/${p.id}`)}
+              >
                   <td className="py-3 pr-4 font-medium text-gray-900">{p.name}</td>
                   <td className="py-3 pr-4 text-gray-700">{formatCurrency(p.sale_price)}</td>
                   <td className="py-3 pr-4 text-gray-700">{formatCurrency(totalCost)}</td>
@@ -76,7 +82,7 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
                       {p.stock_quantity} unités
                     </span>
                   </td>
-                  <td className="py-3">
+                  <td className="py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="secondary"
