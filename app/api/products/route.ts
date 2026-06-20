@@ -26,7 +26,10 @@ export async function GET() {
     const products = await getProducts()
 
     if (ctx.profile.role !== 'admin') {
-      const safe = products.map(({ purchase_cost: _pc, import_cost: _ic, packaging_cost: _pkg, ...p }) => p)
+      const safe = products.map(({
+        purchase_cost: _pc, import_cost: _ic, import_cost_raw: _icr,
+        import_cost_type: _ict, import_batch_size: _ibs, packaging_cost: _pkg, ...p
+      }) => p)
       return NextResponse.json(safe)
     }
 
@@ -48,7 +51,15 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const product = await createProduct(parsed.data, ctx.profile.organization_id)
+    const { import_cost_type, import_cost_raw, import_batch_size, ...rest } = parsed.data
+    const import_cost = import_cost_type === 'unit'
+      ? import_cost_raw
+      : import_cost_raw / (import_batch_size ?? 1)
+
+    const product = await createProduct(
+      { ...rest, import_cost_type, import_cost_raw, import_batch_size: import_batch_size ?? null, import_cost },
+      ctx.profile.organization_id
+    )
     return NextResponse.json(product, { status: 201 })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

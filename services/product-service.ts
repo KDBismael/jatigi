@@ -1,6 +1,7 @@
 import { createClient } from '@/services/supabase/server'
 import type { Product } from '@/types/product'
-import type { ProductInput } from '@/lib/schemas/product.schema'
+
+type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at'>
 
 export async function getProducts(): Promise<Product[]> {
   const supabase = await createClient()
@@ -20,7 +21,7 @@ export async function getProductById(id: string): Promise<Product | null> {
   return data as Product
 }
 
-export async function createProduct(input: ProductInput, organizationId: string): Promise<Product> {
+export async function createProduct(input: ProductInsert, organizationId: string): Promise<Product> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('products')
@@ -31,7 +32,7 @@ export async function createProduct(input: ProductInput, organizationId: string)
   return data as Product
 }
 
-export async function updateProduct(id: string, input: Partial<ProductInput>): Promise<Product> {
+export async function updateProduct(id: string, input: Partial<ProductInsert>): Promise<Product> {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('products')
