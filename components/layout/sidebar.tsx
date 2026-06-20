@@ -8,8 +8,8 @@ import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { href: '/orders', label: 'Commandes', adminOnly: false, icon: '📦' },
   { href: '/dashboard', label: 'Tableau de bord', adminOnly: true, icon: '📊' },
+  { href: '/orders', label: 'Commandes', adminOnly: false, icon: '📦' },
   { href: '/products', label: 'Produits', adminOnly: true, icon: '🛍️' },
   { href: '/analytics', label: 'Analyses', adminOnly: true, icon: '📈' },
   { href: '/team', label: 'Équipe', adminOnly: true, icon: '👥' },
