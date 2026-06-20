@@ -1,13 +1,16 @@
 import { createClient } from '@/services/supabase/server'
 import type { DashboardStats, ProductPerformance, ChannelStat, RevenueByPeriod } from '@/types/analytics'
 import type { DateRange } from '@/lib/date-periods'
+import { resolveUnitCost } from '@/lib/utils'
+
+type LineCosts = { unit_price: number; unit_cost: number; quantity: number; product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null }
 
 export async function getDashboardStats(range: DateRange): Promise<DashboardStats> {
   const supabase = await createClient()
 
   const { data: orders } = await supabase
     .from('orders')
-    .select('status, order_lines(unit_price, unit_cost, quantity)')
+    .select('status, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
 
@@ -20,9 +23,9 @@ export async function getDashboardStats(range: DateRange): Promise<DashboardStat
   let in_progress_orders = 0
 
   for (const order of orders) {
-    const lines = (order.order_lines as { unit_price: number; unit_cost: number; quantity: number }[]) ?? []
+    const lines = (order.order_lines as unknown as LineCosts[]) ?? []
     const orderRevenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-    const orderCost = lines.reduce((s, l) => s + l.unit_cost * l.quantity, 0)
+    const orderCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost, l.product) * l.quantity, 0)
 
     if (order.status === 'delivered') {
       total_revenue += orderRevenue
@@ -48,7 +51,6 @@ export async function getDashboardStats(range: DateRange): Promise<DashboardStat
 export async function getProductPerformance(range: DateRange): Promise<ProductPerformance[]> {
   const supabase = await createClient()
 
-  // Two-step: fetch delivered order IDs in range, then query their lines
   const { data: deliveredOrders } = await supabase
     .from('orders')
     .select('id')
@@ -61,18 +63,19 @@ export async function getProductPerformance(range: DateRange): Promise<ProductPe
 
   const { data } = await supabase
     .from('order_lines')
-    .select('product_id, quantity, unit_price, unit_cost, product:products(name)')
+    .select('product_id, quantity, unit_price, unit_cost, product:products(name, purchase_cost, import_cost, packaging_cost)')
     .in('order_id', ids)
 
   if (!data) return []
 
   const map = new Map<string, ProductPerformance>()
 
-  for (const line of data) {
+  for (const line of data as unknown as (LineCosts & { product_id: string })[]) {
     const id = line.product_id
-    const name = ((line.product as unknown) as { name: string } | null)?.name ?? 'Inconnu'
+    const name = (line.product as unknown as { name?: string } | null)?.name ?? 'Inconnu'
+    const effectiveCost = resolveUnitCost(line.unit_cost, line.product)
     const revenue = line.unit_price * line.quantity
-    const profit = (line.unit_price - line.unit_cost) * line.quantity
+    const profit = (line.unit_price - effectiveCost) * line.quantity
 
     const existing = map.get(id)
     if (existing) {
@@ -121,7 +124,7 @@ export async function getRevenueByPeriod(range: DateRange): Promise<RevenueByPer
 
   const { data } = await supabase
     .from('orders')
-    .select('order_date, status, order_lines(unit_price, unit_cost, quantity)')
+    .select('order_date, status, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
     .order('order_date')
@@ -132,9 +135,9 @@ export async function getRevenueByPeriod(range: DateRange): Promise<RevenueByPer
 
   for (const order of data) {
     if (order.status !== 'delivered') continue
-    const lines = (order.order_lines as { unit_price: number; unit_cost: number; quantity: number }[]) ?? []
+    const lines = (order.order_lines as unknown as LineCosts[]) ?? []
     const revenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-    const profit = lines.reduce((s, l) => s + (l.unit_price - l.unit_cost) * l.quantity, 0)
+    const profit = lines.reduce((s, l) => s + (l.unit_price - resolveUnitCost(l.unit_cost, l.product)) * l.quantity, 0)
 
     const existing = map.get(order.order_date)
     if (existing) {

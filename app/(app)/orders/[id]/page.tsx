@@ -6,7 +6,7 @@ import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
 import { CHANNEL_LABELS, STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
 import type { Order } from '@/types/order'
 
@@ -65,17 +65,8 @@ export default function OrderDetailPage() {
 
   const lines = order.order_lines ?? []
 
-  // Resolve the effective unit cost per line:
-  // prefer the stored unit_cost (FIFO lot cost); fall back to current
-  // product costs when the stored value is 0 (e.g. lot not yet set up).
-  function resolveUnitCost(l: (typeof lines)[number]): number {
-    if (l.unit_cost > 0) return l.unit_cost
-    const p = l.product
-    return (p?.purchase_cost ?? 0) + (p?.import_cost ?? 0) + (p?.packaging_cost ?? 0)
-  }
-
   const totalRevenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-  const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l) * l.quantity, 0)
+  const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost, l.product) * l.quantity, 0)
   const totalProfit = totalRevenue - totalCost
 
   return (
@@ -136,7 +127,7 @@ export default function OrderDetailPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {lines.map((l) => {
-                const effectiveCost = resolveUnitCost(l)
+                const effectiveCost = resolveUnitCost(l.unit_cost, l.product)
                 const lineRevenue = l.unit_price * l.quantity
                 const lineCost = effectiveCost * l.quantity
                 const lineProfit = lineRevenue - lineCost

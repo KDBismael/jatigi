@@ -21,6 +21,14 @@ export function formatDate(dateStr: string): string {
   }).format(new Date(dateStr))
 }
 
+export function resolveUnitCost(
+  storedCost: number,
+  product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null,
+): number {
+  if (storedCost > 0) return storedCost
+  return (product?.purchase_cost ?? 0) + (product?.import_cost ?? 0) + (product?.packaging_cost ?? 0)
+}
+
 export function computeMargin(params: {
   sale_price: number
   purchase_cost: number
