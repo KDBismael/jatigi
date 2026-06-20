@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import {
   getDashboardStats,
@@ -6,6 +6,7 @@ import {
   getChannelStats,
   getRevenueByPeriod,
 } from '@/services/analytics-service'
+import { getPeriodDates, type DateRange } from '@/lib/date-periods'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -21,16 +22,24 @@ async function requireAdmin() {
   return profile?.role === 'admin' ? user : null
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const admin = await requireAdmin()
-  if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!admin) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
+
+  const { searchParams } = request.nextUrl
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
+
+  const range: DateRange = from && to
+    ? { dateFrom: from, dateTo: to }
+    : getPeriodDates('today')
 
   try {
     const [stats, products, channels, revenue] = await Promise.all([
-      getDashboardStats(),
-      getProductPerformance(),
-      getChannelStats(),
-      getRevenueByPeriod(30),
+      getDashboardStats(range),
+      getProductPerformance(range),
+      getChannelStats(range),
+      getRevenueByPeriod(range),
     ])
 
     return NextResponse.json({ stats, products, channels, revenue })

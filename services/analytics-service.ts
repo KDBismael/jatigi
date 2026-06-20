@@ -1,12 +1,15 @@
 import { createClient } from '@/services/supabase/server'
 import type { DashboardStats, ProductPerformance, ChannelStat, RevenueByPeriod } from '@/types/analytics'
+import type { DateRange } from '@/lib/date-periods'
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(range: DateRange): Promise<DashboardStats> {
   const supabase = await createClient()
 
   const { data: orders } = await supabase
     .from('orders')
     .select('status, order_lines(unit_price, unit_cost, quantity)')
+    .gte('order_date', range.dateFrom)
+    .lte('order_date', range.dateTo)
 
   if (!orders) return { total_revenue: 0, net_profit: 0, total_orders: 0, delivered_orders: 0, cancelled_orders: 0, in_progress_orders: 0 }
 
@@ -42,21 +45,30 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
 }
 
-export async function getProductPerformance(): Promise<ProductPerformance[]> {
+export async function getProductPerformance(range: DateRange): Promise<ProductPerformance[]> {
   const supabase = await createClient()
+
+  // Two-step: fetch delivered order IDs in range, then query their lines
+  const { data: deliveredOrders } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('status', 'delivered')
+    .gte('order_date', range.dateFrom)
+    .lte('order_date', range.dateTo)
+
+  const ids = deliveredOrders?.map((o) => o.id) ?? []
+  if (ids.length === 0) return []
 
   const { data } = await supabase
     .from('order_lines')
-    .select('product_id, quantity, unit_price, unit_cost, product:products(name), order:orders(status)')
+    .select('product_id, quantity, unit_price, unit_cost, product:products(name)')
+    .in('order_id', ids)
 
   if (!data) return []
 
   const map = new Map<string, ProductPerformance>()
 
   for (const line of data) {
-    const order = (line.order as unknown) as { status: string } | null
-    if (order?.status !== 'delivered') continue
-
     const id = line.product_id
     const name = ((line.product as unknown) as { name: string } | null)?.name ?? 'Inconnu'
     const revenue = line.unit_price * line.quantity
@@ -75,12 +87,14 @@ export async function getProductPerformance(): Promise<ProductPerformance[]> {
   return Array.from(map.values()).sort((a, b) => b.total_quantity - a.total_quantity)
 }
 
-export async function getChannelStats(): Promise<ChannelStat[]> {
+export async function getChannelStats(range: DateRange): Promise<ChannelStat[]> {
   const supabase = await createClient()
 
   const { data } = await supabase
     .from('orders')
     .select('channel, order_lines(unit_price, quantity)')
+    .gte('order_date', range.dateFrom)
+    .lte('order_date', range.dateTo)
 
   if (!data) return []
 
@@ -102,15 +116,14 @@ export async function getChannelStats(): Promise<ChannelStat[]> {
   return Array.from(map.values())
 }
 
-export async function getRevenueByPeriod(days = 30): Promise<RevenueByPeriod[]> {
+export async function getRevenueByPeriod(range: DateRange): Promise<RevenueByPeriod[]> {
   const supabase = await createClient()
-  const since = new Date()
-  since.setDate(since.getDate() - days)
 
   const { data } = await supabase
     .from('orders')
     .select('order_date, status, order_lines(unit_price, unit_cost, quantity)')
-    .gte('order_date', since.toISOString().split('T')[0])
+    .gte('order_date', range.dateFrom)
+    .lte('order_date', range.dateTo)
     .order('order_date')
 
   if (!data) return []
