@@ -1,17 +1,43 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useOrders } from '@/hooks/use-orders'
 import { OrderTable } from '@/components/orders/order-table'
 import { OrderFilters } from '@/components/orders/order-filters'
+import { PeriodSelector } from '@/components/dashboard/period-selector'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/stores/auth-store'
+import { getPeriodDates, type DatePreset } from '@/lib/date-periods'
 
 export default function OrdersPage() {
   const { orders, filters, isLoading, updateStatus, setFilters } = useOrders()
   const { organization } = useAuthStore()
+
+  const [preset, setPreset] = useState<DatePreset>('last30d')
+  const [customFrom, setCustomFrom] = useState<string | undefined>()
+  const [customTo, setCustomTo] = useState<string | undefined>()
+
+  // Initialize date filter to default preset on first render
+  useEffect(() => {
+    const range = getPeriodDates('last30d')
+    setFilters({ dateFrom: range.dateFrom, dateTo: range.dateTo })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handlePeriodChange(p: DatePreset, from?: string, to?: string) {
+    setPreset(p)
+    setCustomFrom(from)
+    setCustomTo(to)
+
+    if (p === 'custom') {
+      if (from && to) setFilters({ ...filters, dateFrom: from, dateTo: to })
+      return
+    }
+    const range = getPeriodDates(p)
+    setFilters({ ...filters, dateFrom: range.dateFrom, dateTo: range.dateTo })
+  }
 
   return (
     <div>
@@ -26,6 +52,15 @@ export default function OrdersPage() {
         <Link href="/orders/new">
           <Button>+ Nouvelle commande</Button>
         </Link>
+      </div>
+
+      <div className="mb-4">
+        <PeriodSelector
+          preset={preset}
+          customFrom={customFrom}
+          customTo={customTo}
+          onChange={handlePeriodChange}
+        />
       </div>
 
       <OrderFilters filters={filters} onChange={setFilters} />

@@ -31,20 +31,6 @@ export function OrderFilters({ filters, onChange }: OrderFiltersProps) {
           onChange={(e) => onChange({ ...filters, status: e.target.value as OrderStatus | '' })}
         />
       </div>
-      <div className="w-40">
-        <Input
-          type="date"
-          value={filters.dateFrom ?? ''}
-          onChange={(e) => onChange({ ...filters, dateFrom: e.target.value })}
-        />
-      </div>
-      <div className="w-40">
-        <Input
-          type="date"
-          value={filters.dateTo ?? ''}
-          onChange={(e) => onChange({ ...filters, dateTo: e.target.value })}
-        />
-      </div>
     </div>
   )
 }
