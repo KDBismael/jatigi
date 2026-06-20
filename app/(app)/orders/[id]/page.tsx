@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
 import { CHANNEL_LABELS, STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
+import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const isAdmin = useAuthStore((s) => s.isAdmin())
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -65,16 +67,15 @@ export default function OrderDetailPage() {
 
   const lines = order.order_lines ?? []
 
-  const totalRevenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-  const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost, l.product) * l.quantity, 0)
+  // Financial totals — only computed and shown for admins
+  const totalRevenue = lines.reduce((s, l) => s + (l.unit_price ?? 0) * l.quantity, 0)
+  const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity, 0)
   const totalProfit = totalRevenue - totalCost
 
   return (
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          ←
-        </Button>
+        <Button variant="ghost" size="sm" onClick={() => router.back()}>←</Button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{order.client_name}</h1>
           <p className="text-sm text-gray-500 mt-0.5">
@@ -119,30 +120,37 @@ export default function OrderDetailPage() {
               <tr className="border-b border-gray-100 text-left">
                 <th className="pb-2 pr-4 font-medium text-gray-500">Produit</th>
                 <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Qté</th>
-                <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Prix unit.</th>
-                <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Coût unit.</th>
-                <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Total</th>
-                <th className="pb-2 font-medium text-gray-500 text-right">Bénéfice</th>
+                {isAdmin && (
+                  <>
+                    <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Prix unit.</th>
+                    <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Coût unit.</th>
+                    <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Total</th>
+                    <th className="pb-2 font-medium text-gray-500 text-right">Bénéfice</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {lines.map((l) => {
-                const effectiveCost = resolveUnitCost(l.unit_cost, l.product)
-                const lineRevenue = l.unit_price * l.quantity
-                const lineCost = effectiveCost * l.quantity
-                const lineProfit = lineRevenue - lineCost
+                const effectiveCost = resolveUnitCost(l.unit_cost ?? 0, l.product)
+                const lineRevenue = (l.unit_price ?? 0) * l.quantity
+                const lineProfit = lineRevenue - effectiveCost * l.quantity
                 return (
                   <tr key={l.id}>
                     <td className="py-2.5 pr-4 font-medium text-gray-900">
                       {l.product?.name ?? 'Produit'}
                     </td>
                     <td className="py-2.5 pr-4 text-gray-600 text-right">{l.quantity}</td>
-                    <td className="py-2.5 pr-4 text-gray-600 text-right">{formatCurrency(l.unit_price)}</td>
-                    <td className="py-2.5 pr-4 text-gray-500 text-right">{formatCurrency(effectiveCost)}</td>
-                    <td className="py-2.5 pr-4 font-medium text-gray-900 text-right">{formatCurrency(lineRevenue)}</td>
-                    <td className={`py-2.5 font-semibold text-right ${lineProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(lineProfit)}
-                    </td>
+                    {isAdmin && (
+                      <>
+                        <td className="py-2.5 pr-4 text-gray-600 text-right">{formatCurrency(l.unit_price ?? 0)}</td>
+                        <td className="py-2.5 pr-4 text-gray-500 text-right">{formatCurrency(effectiveCost)}</td>
+                        <td className="py-2.5 pr-4 font-medium text-gray-900 text-right">{formatCurrency(lineRevenue)}</td>
+                        <td className={`py-2.5 font-semibold text-right ${lineProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(lineProfit)}
+                        </td>
+                      </>
+                    )}
                   </tr>
                 )
               })}
@@ -151,29 +159,31 @@ export default function OrderDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs text-gray-500 font-medium">Chiffre d&apos;affaires</p>
-            <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(totalRevenue)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs text-gray-500 font-medium">Coût total</p>
-            <p className="text-xl font-bold text-gray-700 mt-1">{formatCurrency(totalCost)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-5">
-            <p className="text-xs text-gray-500 font-medium">Bénéfice net</p>
-            <p className={`text-xl font-bold mt-1 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(totalProfit)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Financial summary — admin only */}
+      {isAdmin && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-gray-500 font-medium">Chiffre d&apos;affaires</p>
+              <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(totalRevenue)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-gray-500 font-medium">Coût total</p>
+              <p className="text-xl font-bold text-gray-700 mt-1">{formatCurrency(totalCost)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <p className="text-xs text-gray-500 font-medium">Bénéfice net</p>
+              <p className={`text-xl font-bold mt-1 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {formatCurrency(totalProfit)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Client info */}
       {order.client_phone && (

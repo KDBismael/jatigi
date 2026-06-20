@@ -7,6 +7,7 @@ import type { OrderStatus } from '@/lib/constants'
 import { STATUSES, STATUS_LABELS, CHANNEL_LABELS } from '@/lib/constants'
 import { OrderStatusBadge } from './order-status-badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth-store'
 
 interface OrderTableProps {
   orders: Order[]
@@ -16,6 +17,7 @@ interface OrderTableProps {
 export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
   const [updating, setUpdating] = useState<string | null>(null)
   const router = useRouter()
+  const isAdmin = useAuthStore((s) => s.isAdmin())
 
   if (orders.length === 0) {
     return (
@@ -43,7 +45,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
             <th className="pb-3 pr-4 font-medium text-gray-600">Client</th>
             <th className="pb-3 pr-4 font-medium text-gray-600">Canal</th>
             <th className="pb-3 pr-4 font-medium text-gray-600">Produits</th>
-            <th className="pb-3 pr-4 font-medium text-gray-600">Total</th>
+            {isAdmin && <th className="pb-3 pr-4 font-medium text-gray-600">Total</th>}
             <th className="pb-3 pr-4 font-medium text-gray-600">Date</th>
             <th className="pb-3 font-medium text-gray-600">Statut</th>
           </tr>
@@ -75,9 +77,11 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
                     </div>
                   ))}
                 </td>
-                <td className="py-3 pr-4 font-medium text-gray-900">
-                  {formatCurrency(total)}
-                </td>
+                {isAdmin && (
+                  <td className="py-3 pr-4 font-medium text-gray-900">
+                    {formatCurrency(total)}
+                  </td>
+                )}
                 <td className="py-3 pr-4 text-gray-600">{formatDate(order.order_date)}</td>
                 <td className="py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex flex-col gap-1.5">

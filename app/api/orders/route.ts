@@ -24,6 +24,15 @@ export async function GET() {
 
   try {
     const orders = await getOrders()
+
+    if (ctx.profile.role !== 'admin') {
+      const safe = orders.map(({ order_lines, ...order }) => ({
+        ...order,
+        order_lines: order_lines?.map(({ unit_price: _up, unit_cost: _uc, ...line }) => line),
+      }))
+      return NextResponse.json(safe)
+    }
+
     return NextResponse.json(orders)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

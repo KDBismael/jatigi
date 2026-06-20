@@ -19,9 +19,19 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
   const { id } = await params
   const product = await getProductById(id)
   if (!product) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
+
+  if (profile?.role !== 'admin') {
+    return NextResponse.json({ id: product.id, name: product.name, stock_quantity: product.stock_quantity })
+  }
   return NextResponse.json(product)
 }
 
