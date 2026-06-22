@@ -1,6 +1,14 @@
 import { createClient } from '@/services/supabase/server'
 import type { Order } from '@/types/order'
 import type { OrderInput, OrderStatusUpdate } from '@/lib/schemas/order.schema'
+import type { Channel } from '@/lib/constants'
+
+export interface OrderUpdate {
+  client_name?: string
+  client_phone?: string | null
+  channel?: Channel
+  order_date?: string
+}
 
 export async function getOrders(): Promise<Order[]> {
   const supabase = await createClient()
@@ -105,6 +113,18 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
   }
 
   return order as Order
+}
+
+export async function updateOrder(id: string, input: OrderUpdate): Promise<Order> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('orders')
+    .update(input)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data as Order
 }
 
 export async function updateOrderStatus(id: string, update: OrderStatusUpdate): Promise<Order> {

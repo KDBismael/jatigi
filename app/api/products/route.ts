@@ -51,13 +51,23 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { import_cost_type, import_cost_raw, import_batch_size, ...rest } = parsed.data
-    const import_cost = import_cost_type === 'unit'
-      ? import_cost_raw
-      : import_cost_raw / (import_batch_size ?? 1)
+    const { total_purchase, total_transport, total_packaging, stock_quantity, ...rest } = parsed.data
+    const qty = stock_quantity || 1
+    const purchase_cost = total_purchase / qty
+    const import_cost = total_transport / qty
+    const packaging_cost = total_packaging / qty
 
     const product = await createProduct(
-      { ...rest, import_cost_type, import_cost_raw, import_batch_size: import_batch_size ?? null, import_cost },
+      {
+        ...rest,
+        stock_quantity,
+        purchase_cost,
+        import_cost,
+        import_cost_type: 'lot',
+        import_cost_raw: total_transport,
+        import_batch_size: stock_quantity || null,
+        packaging_cost,
+      },
       ctx.profile.organization_id
     )
     return NextResponse.json(product, { status: 201 })

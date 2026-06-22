@@ -5,11 +5,15 @@ import { useParams, useRouter } from 'next/navigation'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
-import { CHANNEL_LABELS, STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
+import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
+
+const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,12 +23,58 @@ export default function OrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editChannel, setEditChannel] = useState('')
+  const [editDate, setEditDate] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
   useEffect(() => {
     fetch(`/api/orders/${id}`)
       .then((r) => r.json())
       .then(setOrder)
       .finally(() => setIsLoading(false))
   }, [id])
+
+  function startEdit() {
+    if (!order) return
+    setEditName(order.client_name)
+    setEditPhone(order.client_phone ?? '')
+    setEditChannel(order.channel)
+    setEditDate(order.order_date)
+    setSaveError(null)
+    setIsEditing(true)
+  }
+
+  async function saveEdit() {
+    setIsSaving(true)
+    setSaveError(null)
+    try {
+      const res = await fetch(`/api/orders/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          client_name: editName,
+          client_phone: editPhone || null,
+          channel: editChannel,
+          order_date: editDate,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        setSaveError(err.error ?? 'Erreur serveur')
+        return
+      }
+      const updated = await res.json()
+      setOrder((prev) => prev ? { ...prev, ...updated } : prev)
+      setIsEditing(false)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   async function handleStatusChange(status: OrderStatus) {
     if (!order) return
@@ -66,8 +116,6 @@ export default function OrderDetailPage() {
   }
 
   const lines = order.order_lines ?? []
-
-  // Financial totals — only computed and shown for admins
   const totalRevenue = lines.reduce((s, l) => s + (l.unit_price ?? 0) * l.quantity, 0)
   const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity, 0)
   const totalProfit = totalRevenue - totalCost
@@ -76,21 +124,71 @@ export default function OrderDetailPage() {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.back()}>←</Button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">{order.client_name}</h1>
           <p className="text-sm text-gray-500 mt-0.5">
             {CHANNEL_LABELS[order.channel]} · {formatDate(order.order_date)}
           </p>
         </div>
-        <div className="ml-auto">
+        <div className="flex items-center gap-2">
           <OrderStatusBadge status={order.status} />
+          {!isEditing && (
+            <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
+          )}
         </div>
       </div>
+
+      {/* Inline edit form */}
+      {isEditing && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">Modifier la commande</h2>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Nom du client"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+              />
+              <Input
+                label="Téléphone (optionnel)"
+                type="tel"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Select
+                label="Canal"
+                options={channelOptions}
+                value={editChannel}
+                onChange={(e) => setEditChannel(e.target.value)}
+              />
+              <Input
+                label="Date de commande"
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+              />
+            </div>
+            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+            <div className="flex gap-2">
+              <Button onClick={saveEdit} disabled={isSaving}>
+                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+              <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Status change */}
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-gray-900">Changer le statut</h2>
+          <h2 className="font-semibold text-gray-900">Statut</h2>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
@@ -186,7 +284,7 @@ export default function OrderDetailPage() {
       )}
 
       {/* Client info */}
-      {order.client_phone && (
+      {order.client_phone && !isEditing && (
         <Card>
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Contact client</h2>

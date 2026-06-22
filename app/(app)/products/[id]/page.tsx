@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AddStockModal } from '@/components/products/add-stock-modal'
 import { formatCurrency, formatDate, computeMargin } from '@/lib/utils'
@@ -20,6 +21,13 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showAddStock, setShowAddStock] = useState(false)
 
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editPrice, setEditPrice] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+
   async function fetchData() {
     const [productRes, lotsRes] = await Promise.all([
       fetch(`/api/products/${id}`),
@@ -31,6 +39,37 @@ export default function ProductDetailPage() {
   }
 
   useEffect(() => { fetchData() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function startEdit() {
+    if (!product) return
+    setEditName(product.name)
+    setEditPrice(String(product.sale_price))
+    setSaveError(null)
+    setIsEditing(true)
+  }
+
+  async function saveEdit() {
+    if (!product) return
+    setIsSaving(true)
+    setSaveError(null)
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editName, sale_price: Number(editPrice) }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        setSaveError(err.error ?? 'Erreur serveur')
+        return
+      }
+      const updated = await res.json()
+      setProduct(updated)
+      setIsEditing(false)
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -66,14 +105,48 @@ export default function ProductDetailPage() {
         <Button variant="ghost" size="sm" onClick={() => router.back()}>←</Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Référence produit</p>
         </div>
-        {isAdmin && (
-          <Button onClick={() => setShowAddStock(true)} size="sm">
-            + Ajouter un stock
-          </Button>
+        {isAdmin && !isEditing && (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
+            <Button size="sm" onClick={() => setShowAddStock(true)}>+ Ajouter un stock</Button>
+          </div>
         )}
       </div>
+
+      {/* Inline edit form */}
+      {isEditing && isAdmin && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">Modifier le produit</h2>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              label="Nom du produit"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+            />
+            <Input
+              label="Prix de vente (FCFA)"
+              type="number"
+              min={0}
+              value={editPrice}
+              onChange={(e) => setEditPrice(e.target.value)}
+            />
+            {saveError && (
+              <p className="text-sm text-red-600">{saveError}</p>
+            )}
+            <div className="flex gap-2">
+              <Button onClick={saveEdit} disabled={isSaving}>
+                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+              <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key numbers */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -113,7 +186,7 @@ export default function ProductDetailPage() {
         </Card>
       </div>
 
-      {/* Cost breakdown */}
+      {/* Cost breakdown — admin only */}
       {isAdmin && (
         <Card>
           <CardHeader>
@@ -122,15 +195,15 @@ export default function ProductDetailPage() {
           <CardContent>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="text-gray-500">Achat</p>
+                <p className="text-gray-500">Achat / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.purchase_cost)}</p>
               </div>
               <div>
-                <p className="text-gray-500">Importation</p>
+                <p className="text-gray-500">Transport / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.import_cost)}</p>
               </div>
               <div>
-                <p className="text-gray-500">Emballage</p>
+                <p className="text-gray-500">Emballage / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.packaging_cost)}</p>
               </div>
             </div>
@@ -138,17 +211,17 @@ export default function ProductDetailPage() {
         </Card>
       )}
 
-      {/* Stock lots history */}
+      {/* Stock lots history — admin only */}
       {isAdmin && lots.length > 0 && (
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Historique des lots</h2>
+            <h2 className="font-semibold text-gray-900">Historique des approvisionnements</h2>
           </CardHeader>
           <CardContent>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left">
-                  <th className="pb-2 pr-4 font-medium text-gray-500">Date réception</th>
+                  <th className="pb-2 pr-4 font-medium text-gray-500">Date</th>
                   <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Reçu</th>
                   <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Disponible</th>
                   <th className="pb-2 font-medium text-gray-500 text-right">Coût/unité</th>
@@ -160,9 +233,7 @@ export default function ProductDetailPage() {
                     <td className="py-2.5 pr-4 text-gray-700">{formatDate(lot.received_at)}</td>
                     <td className="py-2.5 pr-4 text-gray-600 text-right">{lot.quantity_received}</td>
                     <td className="py-2.5 pr-4 text-right">
-                      <span className={`font-medium ${
-                        lot.quantity_available > 0 ? 'text-green-600' : 'text-gray-400'
-                      }`}>
+                      <span className={`font-medium ${lot.quantity_available > 0 ? 'text-green-600' : 'text-gray-400'}`}>
                         {lot.quantity_available}
                       </span>
                     </td>
@@ -181,9 +252,10 @@ export default function ProductDetailPage() {
         <AddStockModal
           productName={product.name}
           productId={product.id}
+          salePrice={product.sale_price}
           onSuccess={(qty) => {
             setProduct((p) => p ? { ...p, stock_quantity: p.stock_quantity + qty } : p)
-            fetchData() // refresh lots
+            fetchData()
             setShowAddStock(false)
           }}
           onClose={() => setShowAddStock(false)}

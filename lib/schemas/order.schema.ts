@@ -21,5 +21,13 @@ export const orderStatusUpdateSchema = z.object({
   status: statusEnum,
 })
 
+export const orderUpdateSchema = z.object({
+  client_name: z.string().min(1).max(120).optional(),
+  client_phone: z.string().optional().nullable(),
+  channel: channelEnum.optional(),
+  order_date: z.string().optional(),
+})
+
 export type OrderInput = z.infer<typeof orderSchema>
 export type OrderStatusUpdate = z.infer<typeof orderStatusUpdateSchema>
+export type OrderUpdate = z.infer<typeof orderUpdateSchema>
