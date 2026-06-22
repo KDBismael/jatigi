@@ -11,11 +11,13 @@ import { formatCurrency, formatDate, computeMargin } from '@/lib/utils'
 import type { Product } from '@/types/product'
 import type { StockLot } from '@/types/stock-lot'
 import { useAuthStore } from '@/stores/auth-store'
+import { useProductStore } from '@/stores/product-store'
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const isAdmin = useAuthStore((s) => s.isAdmin())
+  const updateStoreProduct = useProductStore((s) => s.updateProduct)
   const [product, setProduct] = useState<Product | null>(null)
   const [lots, setLots] = useState<StockLot[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -33,7 +35,12 @@ export default function ProductDetailPage() {
       fetch(`/api/products/${id}`),
       isAdmin ? fetch(`/api/products/${id}/lots`) : Promise.resolve(null),
     ])
-    if (productRes.ok) setProduct(await productRes.json())
+    if (productRes.ok) {
+      const fresh: Product = await productRes.json()
+      setProduct(fresh)
+      // Sync the shared Zustand store so the catalog stays in sync
+      updateStoreProduct(fresh.id, fresh)
+    }
     if (lotsRes?.ok) setLots(await lotsRes.json())
     setIsLoading(false)
   }
@@ -65,6 +72,7 @@ export default function ProductDetailPage() {
       }
       const updated = await res.json()
       setProduct(updated)
+      updateStoreProduct(updated.id, updated)
       setIsEditing(false)
     } finally {
       setIsSaving(false)
