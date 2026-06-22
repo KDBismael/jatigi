@@ -42,17 +42,18 @@ export default function ProductDetailPage() {
   const [lotSaveError, setLotSaveError] = useState<string | null>(null)
 
   async function fetchData() {
+    // Always fetch both — server handles auth (403 for non-admins on lots)
+    // Avoids the race where isAdmin is still false when the effect fires on reload
     const [productRes, lotsRes] = await Promise.all([
       fetch(`/api/products/${id}`),
-      isAdmin ? fetch(`/api/products/${id}/lots`) : Promise.resolve(null),
+      fetch(`/api/products/${id}/lots`),
     ])
     if (productRes.ok) {
       const fresh: Product = await productRes.json()
       setProduct(fresh)
-      // Sync the shared Zustand store so the catalog stays in sync
       updateStoreProduct(fresh.id, fresh)
     }
-    if (lotsRes?.ok) setLots(await lotsRes.json())
+    if (lotsRes.ok) setLots(await lotsRes.json()) // 403 → not ok → lots stay empty
     setIsLoading(false)
   }
 
@@ -262,10 +263,13 @@ export default function ProductDetailPage() {
       {isAdmin && (
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Détail des coûts (dernier lot)</h2>
+            <div>
+              <h2 className="font-semibold text-gray-900">Coûts unitaires actuels</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Basés sur le dernier lot ajouté</p>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-gray-500">Achat / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.purchase_cost)}</p>
@@ -277,6 +281,12 @@ export default function ProductDetailPage() {
               <div>
                 <p className="text-gray-500">Emballage / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.packaging_cost)}</p>
+              </div>
+              <div className="border-l border-gray-100 pl-4">
+                <p className="text-gray-500">Total / unité</p>
+                <p className="font-bold text-gray-900 mt-0.5">
+                  {formatCurrency(product.purchase_cost + product.import_cost + product.packaging_cost)}
+                </p>
               </div>
             </div>
           </CardContent>
