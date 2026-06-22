@@ -1,4 +1,4 @@
-export const CHANNELS = ['tiktok', 'facebook', 'instagram', 'whatsapp', 'other'] as const
+export const CHANNELS = ['tiktok', 'facebook', 'instagram', 'whatsapp', 'magasin', 'other'] as const
 export type Channel = (typeof CHANNELS)[number]
 
 export const CHANNEL_LABELS: Record<Channel, string> = {
@@ -6,6 +6,7 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   facebook: 'Facebook',
   instagram: 'Instagram',
   whatsapp: 'WhatsApp',
+  magasin: 'Magasin physique',
   other: 'Autre',
 }
 
