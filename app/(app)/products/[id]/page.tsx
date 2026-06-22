@@ -23,13 +23,23 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showAddStock, setShowAddStock] = useState(false)
 
-  // Edit state
+  // Product edit state
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editPrice, setEditPrice] = useState('')
   const [editQty, setEditQty] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Lot edit state
+  const [editingLotId, setEditingLotId] = useState<string | null>(null)
+  const [lotEditSalePrice, setLotEditSalePrice] = useState('')
+  const [lotEditQtyAvail, setLotEditQtyAvail] = useState('')
+  const [lotEditPurchase, setLotEditPurchase] = useState('')
+  const [lotEditTransport, setLotEditTransport] = useState('')
+  const [lotEditPackaging, setLotEditPackaging] = useState('')
+  const [isSavingLot, setIsSavingLot] = useState(false)
+  const [lotSaveError, setLotSaveError] = useState<string | null>(null)
 
   async function fetchData() {
     const [productRes, lotsRes] = await Promise.all([
@@ -82,6 +92,45 @@ export default function ProductDetailPage() {
       setIsEditing(false)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  function startEditLot(lot: (typeof lots)[number]) {
+    setEditingLotId(lot.id)
+    setLotEditSalePrice(String(lot.sale_price ?? ''))
+    setLotEditQtyAvail(String(lot.quantity_available))
+    // Reconstruct totals from per-unit × qty_received
+    setLotEditPurchase(String(Math.round(lot.purchase_cost * lot.quantity_received)))
+    setLotEditTransport(String(Math.round(lot.import_cost * lot.quantity_received)))
+    setLotEditPackaging(String(Math.round(lot.packaging_cost * lot.quantity_received)))
+    setLotSaveError(null)
+  }
+
+  async function saveLot() {
+    if (!editingLotId) return
+    setIsSavingLot(true)
+    setLotSaveError(null)
+    try {
+      const res = await fetch(`/api/products/${id}/lots/${editingLotId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sale_price: Number(lotEditSalePrice),
+          quantity_available: Number(lotEditQtyAvail),
+          total_purchase: Number(lotEditPurchase),
+          total_transport: Number(lotEditTransport),
+          total_packaging: Number(lotEditPackaging),
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        setLotSaveError(err.error ?? 'Erreur serveur')
+        return
+      }
+      setEditingLotId(null)
+      fetchData()
+    } finally {
+      setIsSavingLot(false)
     }
   }
 
@@ -240,37 +289,85 @@ export default function ProductDetailPage() {
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Historique des approvisionnements</h2>
           </CardHeader>
-          <CardContent>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-left">
-                  <th className="pb-2 pr-4 font-medium text-gray-500">Date</th>
-                  <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Reçu</th>
-                  <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Disponible</th>
-                  <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Coût/unité</th>
-                  <th className="pb-2 font-medium text-gray-500 text-right">Prix vente</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {lots.map((lot) => (
-                  <tr key={lot.id}>
-                    <td className="py-2.5 pr-4 text-gray-700">{formatDate(lot.received_at)}</td>
-                    <td className="py-2.5 pr-4 text-gray-600 text-right">{lot.quantity_received}</td>
-                    <td className="py-2.5 pr-4 text-right">
-                      <span className={`font-medium ${lot.quantity_available > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                        {lot.quantity_available}
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-4 text-right font-medium text-gray-900">
-                      {formatCurrency(lot.unit_cost)}
-                    </td>
-                    <td className="py-2.5 text-right font-medium text-indigo-600">
-                      {lot.sale_price > 0 ? formatCurrency(lot.sale_price) : '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <CardContent className="space-y-3">
+            {lots.map((lot) => {
+              const isEditingThis = editingLotId === lot.id
+              return (
+                <div key={lot.id} className="border border-gray-100 rounded-lg overflow-hidden">
+                  {/* Summary row — always visible */}
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50">
+                    <span className="text-sm text-gray-600 w-24 shrink-0">{formatDate(lot.received_at)}</span>
+                    <span className="text-sm text-gray-600">{lot.quantity_received} reçus</span>
+                    <span className={`text-sm font-medium ${lot.quantity_available > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                      · {lot.quantity_available} dispo
+                    </span>
+                    <span className="text-sm text-gray-700 ml-auto">
+                      Coût : <strong>{formatCurrency(lot.unit_cost)}</strong>
+                    </span>
+                    <span className="text-sm text-indigo-600">
+                      Vente : <strong>{lot.sale_price > 0 ? formatCurrency(lot.sale_price) : '—'}</strong>
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => isEditingThis ? setEditingLotId(null) : startEditLot(lot)}
+                      className="text-xs shrink-0"
+                    >
+                      {isEditingThis ? 'Annuler' : 'Modifier'}
+                    </Button>
+                  </div>
+
+                  {/* Inline edit form */}
+                  {isEditingThis && (
+                    <div className="px-4 py-4 space-y-3 border-t border-gray-100">
+                      <div className="grid grid-cols-2 gap-3">
+                        <Input
+                          label="Prix de vente (FCFA)"
+                          type="number"
+                          min={0}
+                          value={lotEditSalePrice}
+                          onChange={(e) => setLotEditSalePrice(e.target.value)}
+                        />
+                        <Input
+                          label="Stock disponible (unités)"
+                          type="number"
+                          min={0}
+                          value={lotEditQtyAvail}
+                          onChange={(e) => setLotEditQtyAvail(e.target.value)}
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <Input
+                          label="Total achat (FCFA)"
+                          type="number"
+                          min={0}
+                          value={lotEditPurchase}
+                          onChange={(e) => setLotEditPurchase(e.target.value)}
+                        />
+                        <Input
+                          label="Total transport (FCFA)"
+                          type="number"
+                          min={0}
+                          value={lotEditTransport}
+                          onChange={(e) => setLotEditTransport(e.target.value)}
+                        />
+                        <Input
+                          label="Total emballage (FCFA)"
+                          type="number"
+                          min={0}
+                          value={lotEditPackaging}
+                          onChange={(e) => setLotEditPackaging(e.target.value)}
+                        />
+                      </div>
+                      {lotSaveError && <p className="text-xs text-red-600">{lotSaveError}</p>}
+                      <Button size="sm" onClick={saveLot} disabled={isSavingLot}>
+                        {isSavingLot ? 'Enregistrement...' : 'Enregistrer ce lot'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </CardContent>
         </Card>
       )}
