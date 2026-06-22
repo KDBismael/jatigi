@@ -45,7 +45,7 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
   const unitCost = totalCost / qty
   const lotSalePrice = Number(watched.sale_price) || 0
   const margin = lotSalePrice - unitCost
-  const potentialProfit = margin * qty
+  const totalProfit = margin * qty
 
   async function onSubmit(data: StockLotInput) {
     setIsSubmitting(true)
@@ -79,19 +79,24 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-5 space-y-4">
+
+          {/* Étape 1 : quantité */}
           <Input
             label="Quantité reçue"
             type="number"
             min={1}
+            placeholder="Ex : 12"
             error={errors.quantity_received?.message}
             {...register('quantity_received')}
           />
 
+          {/* Étape 2 : coûts */}
           <div className="grid grid-cols-3 gap-3">
             <Input
-              label="Montant total d'achat (FCFA)"
+              label="Montant payé au fournisseur (FCFA)"
               type="number"
               min={0}
+              placeholder="Ex : 15 000"
               error={errors.total_purchase?.message}
               {...register('total_purchase')}
             />
@@ -99,6 +104,7 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
               label="Transport (FCFA)"
               type="number"
               min={0}
+              placeholder="Ex : 2 000"
               error={errors.total_transport?.message}
               {...register('total_transport')}
             />
@@ -106,20 +112,23 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
               label="Emballage (FCFA)"
               type="number"
               min={0}
+              placeholder="Ex : 1 000"
               error={errors.total_packaging?.message}
               {...register('total_packaging')}
             />
           </div>
 
+          {/* Étape 3 : prix de vente */}
           <Input
-            label="Prix de vente pour ce lot (FCFA)"
+            label="Prix de vente unitaire (FCFA)"
             type="number"
             min={0}
+            placeholder="Ex : 3 000"
             error={errors.sale_price?.message}
             {...register('sale_price')}
           />
 
-          {/* Auto-calculated preview */}
+          {/* Résultats calculés automatiquement */}
           <div className="grid grid-cols-3 gap-3 pt-1">
             <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
               <p className="text-xs text-gray-500">Coût unitaire</p>
@@ -131,10 +140,10 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
                 {formatCurrency(margin)}
               </p>
             </div>
-            <div className={`p-3 rounded-lg border-2 ${potentialProfit >= 0 ? 'border-indigo-200 bg-indigo-50' : 'border-red-200 bg-red-50'}`}>
-              <p className="text-xs text-gray-500">Bénéfice potentiel</p>
-              <p className={`text-base font-bold mt-0.5 ${potentialProfit >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
-                {formatCurrency(potentialProfit)}
+            <div className={`p-3 rounded-lg border-2 ${totalProfit >= 0 ? 'border-indigo-200 bg-indigo-50' : 'border-red-200 bg-red-50'}`}>
+              <p className="text-xs text-gray-500">Bénéfice total estimé</p>
+              <p className={`text-base font-bold mt-0.5 ${totalProfit >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
+                {formatCurrency(totalProfit)}
               </p>
             </div>
           </div>
