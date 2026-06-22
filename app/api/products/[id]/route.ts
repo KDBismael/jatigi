@@ -8,10 +8,11 @@ const COST_FIELDS = [
   'import_cost_type', 'import_batch_size', 'packaging_cost',
 ] as const
 
-// Only name and sale_price are editable directly; costs must go through /lots
+// Costs must go through /lots — only descriptive/price/qty fields are editable
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   sale_price: z.coerce.number().positive().optional(),
+  stock_quantity: z.coerce.number().int().min(0).optional(),
 })
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {

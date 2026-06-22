@@ -27,6 +27,7 @@ export default function ProductDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editPrice, setEditPrice] = useState('')
+  const [editQty, setEditQty] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -51,6 +52,7 @@ export default function ProductDetailPage() {
     if (!product) return
     setEditName(product.name)
     setEditPrice(String(product.sale_price))
+    setEditQty(String(product.stock_quantity))
     setSaveError(null)
     setIsEditing(true)
   }
@@ -63,7 +65,11 @@ export default function ProductDetailPage() {
       const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, sale_price: Number(editPrice) }),
+        body: JSON.stringify({
+          name: editName,
+          sale_price: Number(editPrice),
+          stock_quantity: Number(editQty),
+        }),
       })
       if (!res.ok) {
         const err = await res.json()
@@ -134,13 +140,22 @@ export default function ProductDetailPage() {
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
-            <Input
-              label="Prix de vente (FCFA)"
-              type="number"
-              min={0}
-              value={editPrice}
-              onChange={(e) => setEditPrice(e.target.value)}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Prix de vente (FCFA)"
+                type="number"
+                min={0}
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+              />
+              <Input
+                label="Stock actuel (unités)"
+                type="number"
+                min={0}
+                value={editQty}
+                onChange={(e) => setEditQty(e.target.value)}
+              />
+            </div>
             {saveError && (
               <p className="text-sm text-red-600">{saveError}</p>
             )}
@@ -250,7 +265,7 @@ export default function ProductDetailPage() {
                       {formatCurrency(lot.unit_cost)}
                     </td>
                     <td className="py-2.5 text-right font-medium text-indigo-600">
-                      {formatCurrency(lot.sale_price)}
+                      {lot.sale_price > 0 ? formatCurrency(lot.sale_price) : '—'}
                     </td>
                   </tr>
                 ))}
