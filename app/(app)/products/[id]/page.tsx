@@ -232,7 +232,8 @@ export default function ProductDetailPage() {
                   <th className="pb-2 pr-4 font-medium text-gray-500">Date</th>
                   <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Reçu</th>
                   <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Disponible</th>
-                  <th className="pb-2 font-medium text-gray-500 text-right">Coût/unité</th>
+                  <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Coût/unité</th>
+                  <th className="pb-2 font-medium text-gray-500 text-right">Prix vente</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -245,8 +246,11 @@ export default function ProductDetailPage() {
                         {lot.quantity_available}
                       </span>
                     </td>
-                    <td className="py-2.5 text-right font-medium text-gray-900">
+                    <td className="py-2.5 pr-4 text-right font-medium text-gray-900">
                       {formatCurrency(lot.unit_cost)}
+                    </td>
+                    <td className="py-2.5 text-right font-medium text-indigo-600">
+                      {formatCurrency(lot.sale_price)}
                     </td>
                   </tr>
                 ))}

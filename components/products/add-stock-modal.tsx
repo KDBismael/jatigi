@@ -16,7 +16,7 @@ interface AddStockModalProps {
   onClose: () => void
 }
 
-export function AddStockModal({ productName, productId, salePrice, onSuccess, onClose }: AddStockModalProps) {
+export function AddStockModal({ productName, productId, salePrice = 0, onSuccess, onClose }: AddStockModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -33,6 +33,7 @@ export function AddStockModal({ productName, productId, salePrice, onSuccess, on
       total_purchase: 0,
       total_transport: 0,
       total_packaging: 0,
+      sale_price: salePrice || undefined,
     },
   })
 
@@ -42,8 +43,9 @@ export function AddStockModal({ productName, productId, salePrice, onSuccess, on
     + (Number(watched.total_transport) || 0)
     + (Number(watched.total_packaging) || 0)
   const unitCost = totalCost / qty
-  const margin = salePrice ? salePrice - unitCost : null
-  const potentialProfit = margin !== null ? margin * qty : null
+  const lotSalePrice = Number(watched.sale_price) || 0
+  const margin = lotSalePrice - unitCost
+  const potentialProfit = margin * qty
 
   async function onSubmit(data: StockLotInput) {
     setIsSubmitting(true)
@@ -70,7 +72,7 @@ export function AddStockModal({ productName, productId, salePrice, onSuccess, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-5 border-b border-gray-100">
           <h2 className="font-semibold text-gray-900">Ajouter un stock</h2>
           <p className="text-sm text-gray-500 mt-0.5">{productName}</p>
@@ -109,20 +111,32 @@ export function AddStockModal({ productName, productId, salePrice, onSuccess, on
             />
           </div>
 
+          <Input
+            label="Prix de vente pour ce lot (FCFA)"
+            type="number"
+            min={0}
+            error={errors.sale_price?.message}
+            {...register('sale_price')}
+          />
+
           {/* Auto-calculated preview */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="p-3 rounded-lg bg-indigo-50 border border-indigo-200">
+          <div className="grid grid-cols-3 gap-3 pt-1">
+            <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
               <p className="text-xs text-gray-500">Coût unitaire</p>
-              <p className="text-lg font-bold text-indigo-700 mt-0.5">{formatCurrency(unitCost)}</p>
+              <p className="text-base font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
             </div>
-            {potentialProfit !== null && (
-              <div className={`p-3 rounded-lg border-2 ${potentialProfit >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                <p className="text-xs text-gray-500">Bénéfice potentiel</p>
-                <p className={`text-lg font-bold mt-0.5 ${potentialProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                  {formatCurrency(potentialProfit)}
-                </p>
-              </div>
-            )}
+            <div className={`p-3 rounded-lg border-2 ${margin >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+              <p className="text-xs text-gray-500">Marge / unité</p>
+              <p className={`text-base font-bold mt-0.5 ${margin >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                {formatCurrency(margin)}
+              </p>
+            </div>
+            <div className={`p-3 rounded-lg border-2 ${potentialProfit >= 0 ? 'border-indigo-200 bg-indigo-50' : 'border-red-200 bg-red-50'}`}>
+              <p className="text-xs text-gray-500">Bénéfice potentiel</p>
+              <p className={`text-base font-bold mt-0.5 ${potentialProfit >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
+                {formatCurrency(potentialProfit)}
+              </p>
+            </div>
           </div>
 
           {serverError && (

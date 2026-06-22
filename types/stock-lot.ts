@@ -13,6 +13,7 @@ export interface StockLot {
   import_batch_size: number | null
   packaging_cost: number
   unit_cost: number
+  sale_price: number
   received_at: string
   created_at: string
 }

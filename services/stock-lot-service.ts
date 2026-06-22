@@ -28,6 +28,7 @@ export async function addStockLot(
   const packaging_cost = input.total_packaging / qty
   const unit_cost = purchase_cost + import_cost + packaging_cost
 
+  // Insert new lot
   const { data: lot, error: lotErr } = await supabase
     .from('stock_lots')
     .insert({
@@ -42,6 +43,7 @@ export async function addStockLot(
       import_batch_size: qty,
       packaging_cost,
       unit_cost,
+      sale_price: input.sale_price,
       received_at: input.received_at ?? new Date().toISOString(),
     })
     .select()
@@ -56,7 +58,21 @@ export async function addStockLot(
   })
   if (incrErr) throw new Error(incrErr.message)
 
-  // Update product cost fields to reflect this latest lot
+  // Recompute weighted average sale_price across all available lots
+  const { data: allLots, error: lotsErr } = await supabase
+    .from('stock_lots')
+    .select('quantity_available, sale_price')
+    .eq('product_id', productId)
+    .gt('quantity_available', 0)
+
+  if (lotsErr) throw new Error(lotsErr.message)
+
+  const totalQty = allLots?.reduce((s, l) => s + l.quantity_available, 0) ?? qty
+  const weightedSalePrice = totalQty > 0
+    ? (allLots?.reduce((s, l) => s + l.quantity_available * l.sale_price, 0) ?? 0) / totalQty
+    : input.sale_price
+
+  // Update product: cost fields from latest lot + weighted average sale_price
   const { error: updateErr } = await supabase
     .from('products')
     .update({
@@ -66,6 +82,7 @@ export async function addStockLot(
       import_cost_raw: input.total_transport,
       import_batch_size: qty,
       packaging_cost,
+      sale_price: Math.round(weightedSalePrice),
     })
     .eq('id', productId)
 
