@@ -18,6 +18,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await addDeliverySettlement(id, parsed.data, profile.organization_id, user.id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    return NextResponse.json({ error: String(error) }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Erreur lors du versement'
+    if (message.startsWith('Aucun montant') || message.startsWith('Le versement ne peut pas')) {
+      return NextResponse.json({ error: message }, { status: 400 })
+    }
+    console.error('[/api/delivery-drivers/:id/settlements] creation failed:', error)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

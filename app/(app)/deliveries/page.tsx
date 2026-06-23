@@ -19,11 +19,13 @@ export default function DeliveriesPage() {
   const [settlementAmount, setSettlementAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault()
     setSubmitting(true)
     setFormError(null)
+    setSuccessMessage(null)
     try {
       await create({ name, phone })
       setName('')
@@ -39,14 +41,20 @@ export default function DeliveriesPage() {
   async function handleSettlement(driverId: string) {
     setSubmitting(true)
     setFormError(null)
+    setSuccessMessage(null)
     try {
+      const amount = Number(settlementAmount)
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error('Saisissez un montant de versement valide.')
+      }
       await settle(driverId, {
-        amount: Number(settlementAmount),
+        amount,
         settled_at: new Date().toISOString().slice(0, 10),
         note: '',
       })
       setSettlementAmount('')
       setSettlingId(null)
+      setSuccessMessage(`Versement de ${formatCurrency(amount)} enregistré.`)
     } catch (caught) {
       setFormError(caught instanceof Error ? caught.message : 'Erreur')
     } finally {
@@ -90,6 +98,7 @@ export default function DeliveriesPage() {
       )}
 
       {(error || formError) && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{formError ?? error}</p>}
+      {successMessage && <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3">{successMessage}</p>}
 
       <Card>
         <CardHeader><h2 className="font-semibold text-gray-900">Situation par livreur</h2></CardHeader>
@@ -108,6 +117,7 @@ export default function DeliveriesPage() {
                   <th className="pb-3 pr-4 font-medium text-gray-600">Annulés</th>
                   <th className="pb-3 pr-4 font-medium text-gray-600">Réussite</th>
                   <th className="pb-3 pr-4 font-medium text-gray-600">Encaissé</th>
+                  <th className="pb-3 pr-4 font-medium text-gray-600">Déjà reversé</th>
                   <th className="pb-3 font-medium text-gray-600">À reverser</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-100">
@@ -119,14 +129,15 @@ export default function DeliveriesPage() {
                       <td className="py-4 pr-4 text-gray-500">{driver.packages_cancelled}</td>
                       <td className="py-4 pr-4 text-gray-700">{driver.success_rate}%</td>
                       <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_collected)}</td>
+                      <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_remitted)}</td>
                       <td className="py-4">
                         <p className="font-semibold text-indigo-700">{formatCurrency(driver.amount_due)}</p>
-                        {isAdmin && (settlingId === driver.id ? (
+                        {isAdmin && driver.amount_due > 0 && (settlingId === driver.id ? (
                           <div className="flex gap-2 mt-2 min-w-56">
-                            <Input type="number" min={1} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
-                            <Button size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
+                            <Input type="number" min={1} max={driver.amount_due} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
+                            <Button type="button" size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
                           </div>
-                        ) : <button className="text-xs text-indigo-600 hover:underline mt-1" onClick={() => setSettlingId(driver.id)}>Enregistrer un reversement</button>)}
+                        ) : <button type="button" className="text-xs text-indigo-600 hover:underline mt-1" onClick={() => setSettlingId(driver.id)}>Enregistrer un versement</button>)}
                       </td>
                     </tr>
                   ))}

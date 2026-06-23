@@ -52,6 +52,35 @@ export async function addDeliverySettlement(
   const { data: driver } = await supabase.from('delivery_drivers').select('id')
     .eq('id', driverId).eq('organization_id', organizationId).single()
   if (!driver) throw new Error('Livreur introuvable')
+
+  const [{ data: deliveredOrders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
+    supabase.from('orders')
+      .select('order_lines(unit_price, quantity)')
+      .eq('organization_id', organizationId)
+      .eq('delivery_driver_id', driverId)
+      .eq('status', 'delivered'),
+    supabase.from('delivery_settlements')
+      .select('amount')
+      .eq('organization_id', organizationId)
+      .eq('delivery_driver_id', driverId),
+  ])
+  if (ordersError) throw new Error(ordersError.message)
+  if (settlementsError) throw new Error(settlementsError.message)
+
+  const collected = deliveredOrders?.reduce((orderTotal, order) => {
+    const lines = (order.order_lines as unknown as { unit_price: number; quantity: number }[]) ?? []
+    return orderTotal + lines.reduce((lineTotal, line) => lineTotal + Number(line.unit_price) * line.quantity, 0)
+  }, 0) ?? 0
+  const alreadyRemitted = settlements?.reduce((total, settlement) => total + Number(settlement.amount), 0) ?? 0
+  const amountDue = Math.max(0, collected - alreadyRemitted)
+
+  if (amountDue === 0) {
+    throw new Error('Aucun montant à reverser. Une commande doit d’abord être marquée comme livrée.')
+  }
+  if (input.amount > amountDue) {
+    throw new Error(`Le versement ne peut pas dépasser le solde dû de ${amountDue} FCFA.`)
+  }
+
   const { error } = await supabase.from('delivery_settlements').insert({
     delivery_driver_id: driverId,
     organization_id: organizationId,
