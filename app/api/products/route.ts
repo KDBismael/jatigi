@@ -23,13 +23,17 @@ export async function GET() {
     const ctx = await getAuthContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const products = await getProducts()
+    const products = await getProducts(ctx.profile.organization_id)
 
     if (ctx.profile.role !== 'admin') {
-      const safe = products.map(({
-        purchase_cost: _pc, import_cost: _ic, import_cost_raw: _icr,
-        import_cost_type: _ict, import_batch_size: _ibs, packaging_cost: _pkg, ...p
-      }) => p)
+      const safe = products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        sale_price: product.sale_price,
+        stock_quantity: product.stock_quantity,
+        created_at: product.created_at,
+        updated_at: product.updated_at,
+      }))
       return NextResponse.json(safe)
     }
 

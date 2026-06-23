@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { inviteEmployeeSchema } from '@/lib/schemas/team.schema'
-import { getTeamMembers, createTeamMember, deleteTeamMember, updateMemberRole, getAdminOrgId } from '@/services/team-service'
+import { getTeamMembers, createTeamMember, deleteTeamMember, updateMemberRole } from '@/services/team-service'
+import { z } from 'zod'
+
+const memberMutationSchema = z.object({ id: z.string().uuid() })
+const roleMutationSchema = memberMutationSchema.extend({ role: z.enum(['admin', 'employee']) })
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -54,11 +58,13 @@ export async function DELETE(request: NextRequest) {
   const auth = await requireAdmin()
   if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id } = await request.json()
-  if (!id) return NextResponse.json({ error: 'ID requis' }, { status: 400 })
+  const parsed = memberMutationSchema.safeParse(await request.json())
+  if (!parsed.success) return NextResponse.json({ error: 'ID invalide' }, { status: 400 })
+  const { id } = parsed.data
+  if (id === auth.user.id) return NextResponse.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, { status: 400 })
 
   try {
-    await deleteTeamMember(id)
+    await deleteTeamMember(id, auth.profile.organization_id)
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
@@ -69,11 +75,13 @@ export async function PATCH(request: NextRequest) {
   const auth = await requireAdmin()
   if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { id, role } = await request.json()
-  if (!id || !role) return NextResponse.json({ error: 'Données manquantes' }, { status: 400 })
+  const parsed = roleMutationSchema.safeParse(await request.json())
+  if (!parsed.success) return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+  const { id, role } = parsed.data
+  if (id === auth.user.id && role !== 'admin') return NextResponse.json({ error: 'Vous ne pouvez pas retirer votre propre rôle administrateur' }, { status: 400 })
 
   try {
-    await updateMemberRole(id, role)
+    await updateMemberRole(id, role, auth.profile.organization_id)
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

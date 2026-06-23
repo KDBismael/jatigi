@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductInput } from '@/lib/schemas/product.schema'
 import { Input } from '@/components/ui/input'
@@ -19,11 +19,10 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useForm<ProductInput, any, ProductInput>({
-    resolver: zodResolver(productSchema) as any,
+  } = useForm<ProductInput>({
+    resolver: zodResolver(productSchema) as unknown as Resolver<ProductInput>,
     defaultValues: {
       total_purchase: 0,
       total_transport: 0,
@@ -33,7 +32,7 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
     },
   })
 
-  const watched = watch()
+  const watched = useWatch({ control })
   const qty = Number(watched.stock_quantity) || 1
   const totalCost = (Number(watched.total_purchase) || 0)
     + (Number(watched.total_transport) || 0)

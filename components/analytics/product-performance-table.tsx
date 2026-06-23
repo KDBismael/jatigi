@@ -12,7 +12,7 @@ export function ProductPerformanceTable({ data }: { data: ProductPerformance[] }
         <tr className="border-b border-gray-200 text-left">
           <th className="pb-3 pr-4 font-medium text-gray-600">Produit</th>
           <th className="pb-3 pr-4 font-medium text-gray-600">Ventes</th>
-          <th className="pb-3 pr-4 font-medium text-gray-600">Chiffre d'affaires</th>
+          <th className="pb-3 pr-4 font-medium text-gray-600">Chiffre d&apos;affaires</th>
           <th className="pb-3 font-medium text-gray-600">Bénéfice</th>
         </tr>
       </thead>

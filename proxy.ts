@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/callback', '/auth/signup']
 
 // Admin-only paths — authenticated non-admins get redirected to /orders
-const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/analytics', '/team']
+const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/deliveries', '/analytics', '/team']
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
@@ -15,7 +15,7 @@ function isAdminOnly(pathname: string): boolean {
   return ADMIN_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Always allow static assets and API routes

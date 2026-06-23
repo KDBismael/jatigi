@@ -12,6 +12,7 @@ import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
 import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
+import { useDeliveryDrivers } from '@/hooks/use-delivery-drivers'
 
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 
@@ -19,6 +20,7 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const isAdmin = useAuthStore((s) => s.isAdmin())
+  const { drivers } = useDeliveryDrivers()
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -29,6 +31,7 @@ export default function OrderDetailPage() {
   const [editPhone, setEditPhone] = useState('')
   const [editChannel, setEditChannel] = useState('')
   const [editDate, setEditDate] = useState('')
+  const [editDriverId, setEditDriverId] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
@@ -45,6 +48,7 @@ export default function OrderDetailPage() {
     setEditPhone(order.client_phone ?? '')
     setEditChannel(order.channel)
     setEditDate(order.order_date)
+    setEditDriverId(order.delivery_driver_id ?? '')
     setSaveError(null)
     setIsEditing(true)
   }
@@ -61,6 +65,7 @@ export default function OrderDetailPage() {
           client_phone: editPhone || null,
           channel: editChannel,
           order_date: editDate,
+          delivery_driver_id: editDriverId || null,
         }),
       })
       if (!res.ok) {
@@ -69,7 +74,7 @@ export default function OrderDetailPage() {
         return
       }
       const updated = await res.json()
-      setOrder((prev) => prev ? { ...prev, ...updated } : prev)
+      setOrder(updated)
       setIsEditing(false)
     } finally {
       setIsSaving(false)
@@ -158,6 +163,13 @@ export default function OrderDetailPage() {
                 onChange={(e) => setEditPhone(e.target.value)}
               />
             </div>
+            <Select
+              label="Livreur assigné"
+              options={drivers.map((driver) => ({ value: driver.id, label: driver.name }))}
+              placeholder="Aucun livreur"
+              value={editDriverId}
+              onChange={(event) => setEditDriverId(event.target.value)}
+            />
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label="Canal"
@@ -184,6 +196,15 @@ export default function OrderDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader><h2 className="font-semibold text-gray-900">Livraison</h2></CardHeader>
+        <CardContent>
+          {order.delivery_driver ? (
+            <div><p className="font-medium text-gray-900">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-sm text-gray-500 mt-1">{order.delivery_driver.phone}</p>}</div>
+          ) : <p className="text-sm text-gray-500">Aucun livreur assigné.</p>}
+        </CardContent>
+      </Card>
 
       {/* Status change */}
       <Card>

@@ -26,7 +26,7 @@ export async function GET(
 
   const { id } = await params
   try {
-    const lots = await getStockLots(id)
+    const lots = await getStockLots(id, ctx.profile.organization_id)
     return NextResponse.json(lots)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

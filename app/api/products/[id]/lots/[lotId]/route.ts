@@ -18,10 +18,10 @@ async function requireAdmin() {
   if (!user) return null
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, organization_id')
     .eq('id', user.id)
     .single()
-  return profile?.role === 'admin' ? user : null
+  return profile?.role === 'admin' && profile.organization_id ? { user, profile } : null
 }
 
 export async function PATCH(
@@ -39,7 +39,7 @@ export async function PATCH(
   }
 
   try {
-    const lot = await updateStockLot(lotId, productId, parsed.data)
+    const lot = await updateStockLot(lotId, productId, parsed.data, admin.profile.organization_id)
     return NextResponse.json(lot)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

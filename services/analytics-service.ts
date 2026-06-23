@@ -1,16 +1,17 @@
-import { createClient } from '@/services/supabase/server'
+import { createAdminClient } from '@/services/supabase/server'
 import type { DashboardStats, ProductPerformance, ChannelStat, RevenueByPeriod } from '@/types/analytics'
 import type { DateRange } from '@/lib/date-periods'
 import { resolveUnitCost } from '@/lib/utils'
 
 type LineCosts = { unit_price: number; unit_cost: number; quantity: number; product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null }
 
-export async function getDashboardStats(range: DateRange): Promise<DashboardStats> {
-  const supabase = await createClient()
+export async function getDashboardStats(range: DateRange, organizationId: string): Promise<DashboardStats> {
+  const supabase = await createAdminClient()
 
   const { data: orders } = await supabase
     .from('orders')
     .select('status, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
+    .eq('organization_id', organizationId)
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
 
@@ -48,12 +49,13 @@ export async function getDashboardStats(range: DateRange): Promise<DashboardStat
   }
 }
 
-export async function getProductPerformance(range: DateRange): Promise<ProductPerformance[]> {
-  const supabase = await createClient()
+export async function getProductPerformance(range: DateRange, organizationId: string): Promise<ProductPerformance[]> {
+  const supabase = await createAdminClient()
 
   const { data: deliveredOrders } = await supabase
     .from('orders')
     .select('id')
+    .eq('organization_id', organizationId)
     .eq('status', 'delivered')
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
@@ -90,12 +92,14 @@ export async function getProductPerformance(range: DateRange): Promise<ProductPe
   return Array.from(map.values()).sort((a, b) => b.total_quantity - a.total_quantity)
 }
 
-export async function getChannelStats(range: DateRange): Promise<ChannelStat[]> {
-  const supabase = await createClient()
+export async function getChannelStats(range: DateRange, organizationId: string): Promise<ChannelStat[]> {
+  const supabase = await createAdminClient()
 
   const { data } = await supabase
     .from('orders')
     .select('channel, order_lines(unit_price, quantity)')
+    .eq('organization_id', organizationId)
+    .eq('status', 'delivered')
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
 
@@ -119,12 +123,13 @@ export async function getChannelStats(range: DateRange): Promise<ChannelStat[]> 
   return Array.from(map.values())
 }
 
-export async function getRevenueByPeriod(range: DateRange): Promise<RevenueByPeriod[]> {
-  const supabase = await createClient()
+export async function getRevenueByPeriod(range: DateRange, organizationId: string): Promise<RevenueByPeriod[]> {
+  const supabase = await createAdminClient()
 
   const { data } = await supabase
     .from('orders')
     .select('order_date, status, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
+    .eq('organization_id', organizationId)
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
     .order('order_date')

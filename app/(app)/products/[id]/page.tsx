@@ -23,15 +23,12 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showAddStock, setShowAddStock] = useState(false)
 
-  // Product edit state
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editPrice, setEditPrice] = useState('')
-  const [editQty, setEditQty] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  // Lot edit state
   const [editingLotId, setEditingLotId] = useState<string | null>(null)
   const [lotEditSalePrice, setLotEditSalePrice] = useState('')
   const [lotEditQtyAvail, setLotEditQtyAvail] = useState('')
@@ -42,8 +39,6 @@ export default function ProductDetailPage() {
   const [lotSaveError, setLotSaveError] = useState<string | null>(null)
 
   async function fetchData() {
-    // Always fetch both — server handles auth (403 for non-admins on lots)
-    // Avoids the race where isAdmin is still false when the effect fires on reload
     const [productRes, lotsRes] = await Promise.all([
       fetch(`/api/products/${id}`),
       fetch(`/api/products/${id}/lots`),
@@ -53,17 +48,19 @@ export default function ProductDetailPage() {
       setProduct(fresh)
       updateStoreProduct(fresh.id, fresh)
     }
-    if (lotsRes.ok) setLots(await lotsRes.json()) // 403 → not ok → lots stay empty
+    if (lotsRes.ok) setLots(await lotsRes.json())
     setIsLoading(false)
   }
 
-  useEffect(() => { fetchData() }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const task = Promise.resolve().then(fetchData)
+    return () => { void task }
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function startEdit() {
     if (!product) return
     setEditName(product.name)
     setEditPrice(String(product.sale_price))
-    setEditQty(String(product.stock_quantity))
     setSaveError(null)
     setIsEditing(true)
   }
@@ -76,31 +73,20 @@ export default function ProductDetailPage() {
       const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: editName,
-          sale_price: Number(editPrice),
-          stock_quantity: Number(editQty),
-        }),
+        body: JSON.stringify({ name: editName, sale_price: Number(editPrice) }),
       })
-      if (!res.ok) {
-        const err = await res.json()
-        setSaveError(err.error ?? 'Erreur serveur')
-        return
-      }
+      if (!res.ok) { setSaveError((await res.json()).error ?? 'Erreur'); return }
       const updated = await res.json()
       setProduct(updated)
       updateStoreProduct(updated.id, updated)
       setIsEditing(false)
-    } finally {
-      setIsSaving(false)
-    }
+    } finally { setIsSaving(false) }
   }
 
   function startEditLot(lot: (typeof lots)[number]) {
     setEditingLotId(lot.id)
     setLotEditSalePrice(String(lot.sale_price ?? ''))
     setLotEditQtyAvail(String(lot.quantity_available))
-    // Reconstruct totals from per-unit × qty_received
     setLotEditPurchase(String(Math.round(lot.purchase_cost * lot.quantity_received)))
     setLotEditTransport(String(Math.round(lot.import_cost * lot.quantity_received)))
     setLotEditPackaging(String(Math.round(lot.packaging_cost * lot.quantity_received)))
@@ -123,24 +109,18 @@ export default function ProductDetailPage() {
           total_packaging: Number(lotEditPackaging),
         }),
       })
-      if (!res.ok) {
-        const err = await res.json()
-        setLotSaveError(err.error ?? 'Erreur serveur')
-        return
-      }
+      if (!res.ok) { setLotSaveError((await res.json()).error ?? 'Erreur'); return }
       setEditingLotId(null)
       fetchData()
-    } finally {
-      setIsSavingLot(false)
-    }
+    } finally { setIsSavingLot(false) }
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-4 max-w-3xl">
+      <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-36" />
-        <Skeleton className="h-48" />
+        <Skeleton className="h-36 w-full" />
+        <Skeleton className="h-48 w-full" />
       </div>
     )
   }
@@ -164,16 +144,17 @@ export default function ProductDetailPage() {
   })
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>←</Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">{product.name}</h1>
+    <div className="space-y-4">
+      {/* Header — stacks on mobile */}
+      <div className="flex items-start gap-2">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-0.5 shrink-0">←</Button>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl font-bold text-gray-900 truncate">{product.name}</h1>
         </div>
         {isAdmin && !isEditing && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
-            <Button size="sm" onClick={() => setShowAddStock(true)}>+ Ajouter un stock</Button>
+            <Button size="sm" onClick={() => setShowAddStock(true)}>+ Stock</Button>
           </div>
         )}
       </div>
@@ -181,39 +162,19 @@ export default function ProductDetailPage() {
       {/* Inline edit form */}
       {isEditing && isAdmin && (
         <Card>
-          <CardHeader>
-            <h2 className="font-semibold text-gray-900">Modifier le produit</h2>
-          </CardHeader>
+          <CardHeader><h2 className="font-semibold text-gray-900">Modifier le produit</h2></CardHeader>
           <CardContent className="space-y-4">
-            <Input
-              label="Nom du produit"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Prix de vente (FCFA)"
-                type="number"
-                min={0}
-                value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
-              />
-              <Input
-                label="Stock actuel (unités)"
-                type="number"
-                min={0}
-                value={editQty}
-                onChange={(e) => setEditQty(e.target.value)}
-              />
+            <Input label="Nom du produit" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            <div>
+              <Input label="Prix de vente (FCFA)" type="number" min={0} value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)} />
             </div>
-            {saveError && (
-              <p className="text-sm text-red-600">{saveError}</p>
-            )}
+            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
             <div className="flex gap-2">
-              <Button onClick={saveEdit} disabled={isSaving}>
+              <Button onClick={saveEdit} disabled={isSaving} size="sm">
                 {isSaving ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
-              <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>
+              <Button variant="secondary" size="sm" onClick={() => setIsEditing(false)} disabled={isSaving}>
                 Annuler
               </Button>
             </div>
@@ -221,34 +182,34 @@ export default function ProductDetailPage() {
         </Card>
       )}
 
-      {/* Key numbers */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Key numbers — 2 cols on mobile, 4 on desktop */}
+      <div className="grid grid-cols-2 gap-3">
         <Card>
-          <CardContent className="pt-5">
+          <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Prix de vente</p>
-            <p className="text-lg font-bold text-indigo-600 mt-1">{formatCurrency(product.sale_price)}</p>
+            <p className="text-base font-bold text-indigo-600 mt-1">{formatCurrency(product.sale_price)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Coût de revient</p>
-            <p className="text-lg font-bold text-gray-700 mt-1">
+            <p className="text-base font-bold text-gray-700 mt-1">
               {formatCurrency(product.purchase_cost + product.import_cost + product.packaging_cost)}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Marge unitaire</p>
-            <p className={`text-lg font-bold mt-1 ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-base font-bold mt-1 ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(margin)}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-5">
+          <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Stock disponible</p>
-            <p className={`text-lg font-bold mt-1 ${
+            <p className={`text-base font-bold mt-1 ${
               product.stock_quantity > 5 ? 'text-green-600'
               : product.stock_quantity > 0 ? 'text-yellow-600'
               : 'text-red-600'
@@ -259,7 +220,7 @@ export default function ProductDetailPage() {
         </Card>
       </div>
 
-      {/* Cost breakdown — admin only */}
+      {/* Cost breakdown — admin only — 2×2 on mobile */}
       {isAdmin && (
         <Card>
           <CardHeader>
@@ -269,7 +230,7 @@ export default function ProductDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-gray-500">Achat / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.purchase_cost)}</p>
@@ -282,7 +243,7 @@ export default function ProductDetailPage() {
                 <p className="text-gray-500">Emballage / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.packaging_cost)}</p>
               </div>
-              <div className="border-l border-gray-100 pl-4">
+              <div className="border-l border-gray-100 pl-3">
                 <p className="text-gray-500">Total / unité</p>
                 <p className="font-bold text-gray-900 mt-0.5">
                   {formatCurrency(product.purchase_cost + product.import_cost + product.packaging_cost)}
@@ -293,7 +254,7 @@ export default function ProductDetailPage() {
         </Card>
       )}
 
-      {/* Stock lots history — admin only */}
+      {/* Lot history — admin only */}
       {isAdmin && lots.length > 0 && (
         <Card>
           <CardHeader>
@@ -304,70 +265,47 @@ export default function ProductDetailPage() {
               const isEditingThis = editingLotId === lot.id
               return (
                 <div key={lot.id} className="border border-gray-100 rounded-lg overflow-hidden">
-                  {/* Summary row — always visible */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50">
-                    <span className="text-sm text-gray-600 w-24 shrink-0">{formatDate(lot.received_at)}</span>
-                    <span className="text-sm text-gray-600">{lot.quantity_received} reçus</span>
-                    <span className={`text-sm font-medium ${lot.quantity_available > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                      · {lot.quantity_available} dispo
-                    </span>
-                    <span className="text-sm text-gray-700 ml-auto">
-                      Coût : <strong>{formatCurrency(lot.unit_cost)}</strong>
-                    </span>
-                    <span className="text-sm text-indigo-600">
-                      Vente : <strong>{lot.sale_price > 0 ? formatCurrency(lot.sale_price) : '—'}</strong>
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => isEditingThis ? setEditingLotId(null) : startEditLot(lot)}
-                      className="text-xs shrink-0"
-                    >
-                      {isEditingThis ? 'Annuler' : 'Modifier'}
-                    </Button>
+                  {/* Summary — vertical on mobile */}
+                  <div className="p-3 bg-gray-50 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-800">{formatDate(lot.received_at)}</span>
+                      <Button
+                        variant="ghost" size="sm"
+                        onClick={() => isEditingThis ? setEditingLotId(null) : startEditLot(lot)}
+                        className="text-xs h-7 px-2"
+                      >
+                        {isEditingThis ? 'Annuler' : 'Modifier'}
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
+                      <span>{lot.quantity_received} reçus ·{' '}
+                        <span className={lot.quantity_available > 0 ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                          {lot.quantity_available} dispo
+                        </span>
+                      </span>
+                      <span>Coût : <strong className="text-gray-800">{formatCurrency(lot.unit_cost)}</strong></span>
+                      <span className="text-indigo-600">
+                        Vente : <strong>{lot.sale_price > 0 ? formatCurrency(lot.sale_price) : '—'}</strong>
+                      </span>
+                    </div>
                   </div>
 
                   {/* Inline edit form */}
                   {isEditingThis && (
-                    <div className="px-4 py-4 space-y-3 border-t border-gray-100">
+                    <div className="p-3 space-y-3 border-t border-gray-100">
                       <div className="grid grid-cols-2 gap-3">
-                        <Input
-                          label="Prix de vente (FCFA)"
-                          type="number"
-                          min={0}
-                          value={lotEditSalePrice}
-                          onChange={(e) => setLotEditSalePrice(e.target.value)}
-                        />
-                        <Input
-                          label="Stock disponible (unités)"
-                          type="number"
-                          min={0}
-                          value={lotEditQtyAvail}
-                          onChange={(e) => setLotEditQtyAvail(e.target.value)}
-                        />
+                        <Input label="Prix de vente (FCFA)" type="number" min={0}
+                          value={lotEditSalePrice} onChange={(e) => setLotEditSalePrice(e.target.value)} />
+                        <Input label="Stock dispo (unités)" type="number" min={0}
+                          value={lotEditQtyAvail} onChange={(e) => setLotEditQtyAvail(e.target.value)} />
                       </div>
-                      <div className="grid grid-cols-3 gap-3">
-                        <Input
-                          label="Total achat (FCFA)"
-                          type="number"
-                          min={0}
-                          value={lotEditPurchase}
-                          onChange={(e) => setLotEditPurchase(e.target.value)}
-                        />
-                        <Input
-                          label="Total transport (FCFA)"
-                          type="number"
-                          min={0}
-                          value={lotEditTransport}
-                          onChange={(e) => setLotEditTransport(e.target.value)}
-                        />
-                        <Input
-                          label="Total emballage (FCFA)"
-                          type="number"
-                          min={0}
-                          value={lotEditPackaging}
-                          onChange={(e) => setLotEditPackaging(e.target.value)}
-                        />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <Input label="Total achat (FCFA)" type="number" min={0}
+                          value={lotEditPurchase} onChange={(e) => setLotEditPurchase(e.target.value)} />
+                        <Input label="Total transport (FCFA)" type="number" min={0}
+                          value={lotEditTransport} onChange={(e) => setLotEditTransport(e.target.value)} />
+                        <Input label="Total emballage (FCFA)" type="number" min={0}
+                          value={lotEditPackaging} onChange={(e) => setLotEditPackaging(e.target.value)} />
                       </div>
                       {lotSaveError && <p className="text-xs text-red-600">{lotSaveError}</p>}
                       <Button size="sm" onClick={saveLot} disabled={isSavingLot}>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm, useFieldArray } from 'react-hook-form'
+import { useForm, useFieldArray, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { orderSchema, type OrderInput } from '@/lib/schemas/order.schema'
 import { Input } from '@/components/ui/input'
@@ -9,16 +9,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CHANNELS, CHANNEL_LABELS } from '@/lib/constants'
 import type { Product } from '@/types/product'
+import type { DeliveryDriverSummary } from '@/types/delivery-driver'
 
 interface OrderFormProps {
   onSubmit: (data: OrderInput) => Promise<void>
   products: Product[]
+  drivers: DeliveryDriverSummary[]
   isLoading?: boolean
 }
 
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 
-export function OrderForm({ onSubmit, products, isLoading }: OrderFormProps) {
+export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormProps) {
   const productOptions = products.map((p) => ({
     value: p.id,
     label: `${p.name} (stock: ${p.stock_quantity})`,
@@ -29,9 +31,8 @@ export function OrderForm({ onSubmit, products, isLoading }: OrderFormProps) {
     handleSubmit,
     control,
     formState: { errors },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useForm<OrderInput, any, OrderInput>({
-    resolver: zodResolver(orderSchema) as any,
+  } = useForm<OrderInput>({
+    resolver: zodResolver(orderSchema) as unknown as Resolver<OrderInput>,
     defaultValues: {
       order_date: new Date().toISOString().split('T')[0],
       lines: [{ product_id: '', quantity: 1 }],
@@ -71,6 +72,13 @@ export function OrderForm({ onSubmit, products, isLoading }: OrderFormProps) {
               {...register('order_date')}
             />
           </div>
+          <Select
+            label="Livreur assigné"
+            options={drivers.filter((driver) => driver.is_active).map((driver) => ({ value: driver.id, label: driver.name }))}
+            placeholder="Aucun livreur pour le moment"
+            error={errors.delivery_driver_id?.message}
+            {...register('delivery_driver_id')}
+          />
         </CardContent>
       </Card>
 

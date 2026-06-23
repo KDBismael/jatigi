@@ -15,11 +15,11 @@ async function requireAdmin() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, organization_id')
     .eq('id', user.id)
     .single()
 
-  return profile?.role === 'admin' ? user : null
+  return profile?.role === 'admin' && profile.organization_id ? { user, profile } : null
 }
 
 export async function GET(request: NextRequest) {
@@ -36,10 +36,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const [stats, products, channels, revenue] = await Promise.all([
-      getDashboardStats(range),
-      getProductPerformance(range),
-      getChannelStats(range),
-      getRevenueByPeriod(range),
+      getDashboardStats(range, admin.profile.organization_id),
+      getProductPerformance(range, admin.profile.organization_id),
+      getChannelStats(range, admin.profile.organization_id),
+      getRevenueByPeriod(range, admin.profile.organization_id),
     ])
 
     return NextResponse.json({ stats, products, channels, revenue })

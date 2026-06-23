@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { stockLotSchema, type StockLotInput } from '@/lib/schemas/stock-lot.schema'
 import { Input } from '@/components/ui/input'
@@ -23,11 +23,10 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } = useForm<StockLotInput, any, StockLotInput>({
-    resolver: zodResolver(stockLotSchema) as any,
+  } = useForm<StockLotInput>({
+    resolver: zodResolver(stockLotSchema) as unknown as Resolver<StockLotInput>,
     defaultValues: {
       quantity_received: undefined,
       total_purchase: 0,
@@ -37,7 +36,7 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
     },
   })
 
-  const watched = watch()
+  const watched = useWatch({ control })
   const qty = Number(watched.quantity_received) || 1
   const totalCost = (Number(watched.total_purchase) || 0)
     + (Number(watched.total_transport) || 0)

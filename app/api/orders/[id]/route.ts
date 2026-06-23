@@ -10,11 +10,11 @@ async function getAuthContext() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, organization_id')
     .eq('id', user.id)
     .single()
 
-  if (!profile) return null
+  if (!profile?.organization_id) return null
   return { user, profile }
 }
 
@@ -23,18 +23,20 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const order = await getOrderById(id)
+  const order = await getOrderById(id, ctx.profile.organization_id)
   if (!order) return NextResponse.json({ error: 'Commande introuvable' }, { status: 404 })
 
   if (ctx.profile.role !== 'admin') {
     const { order_lines, ...rest } = order
     return NextResponse.json({
       ...rest,
-      order_lines: order_lines?.map(({
-        unit_price: _up, unit_cost: _uc,
-        product: { purchase_cost: _pc, import_cost: _ic, packaging_cost: _pkg, ...safeProduct } = {},
-        ...line
-      }) => ({ ...line, product: safeProduct })),
+      order_lines: order_lines?.map((line) => ({
+        id: line.id,
+        order_id: line.order_id,
+        product_id: line.product_id,
+        quantity: line.quantity,
+        product: line.product ? { name: line.product.name } : undefined,
+      })),
     })
   }
 
@@ -53,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   try {
-    const order = await updateOrder(id, parsed.data)
+    const order = await updateOrder(id, parsed.data, ctx.profile.organization_id)
     return NextResponse.json(order)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
@@ -72,7 +74,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   try {
-    const order = await updateOrderStatus(id, parsed.data)
+    const order = await updateOrderStatus(id, parsed.data, ctx.profile.organization_id)
     return NextResponse.json(order)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

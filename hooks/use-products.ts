@@ -9,11 +9,14 @@ export function useProducts() {
     useProductStore()
 
   useEffect(() => {
-    if (products.length > 0) return
     setLoading(true)
     fetch('/api/products')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Impossible de charger les produits')
+        return r.json()
+      })
       .then(setProducts)
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -15,7 +15,7 @@ export type OrderStatus = (typeof STATUSES)[number]
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
   received: 'Reçue',
-  in_progress: 'En cours',
+  in_progress: 'En livraison',
   delivered: 'Livrée',
   cancelled: 'Annulée',
 }

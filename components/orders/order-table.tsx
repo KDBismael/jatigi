@@ -45,6 +45,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
             <th className="pb-3 pr-4 font-medium text-gray-600">Client</th>
             <th className="pb-3 pr-4 font-medium text-gray-600">Canal</th>
             <th className="pb-3 pr-4 font-medium text-gray-600">Produits</th>
+            <th className="pb-3 pr-4 font-medium text-gray-600">Livreur</th>
             {isAdmin && <th className="pb-3 pr-4 font-medium text-gray-600">Total</th>}
             <th className="pb-3 pr-4 font-medium text-gray-600">Date</th>
             <th className="pb-3 font-medium text-gray-600">Statut</th>
@@ -68,6 +69,11 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
                   {order.client_phone && (
                     <p className="text-gray-400 text-xs">{order.client_phone}</p>
                   )}
+                </td>
+                <td className="py-3 pr-4">
+                  {order.delivery_driver ? (
+                    <><p className="font-medium text-gray-700">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-xs text-gray-400">{order.delivery_driver.phone}</p>}</>
+                  ) : <span className="text-gray-400">Non assigné</span>}
                 </td>
                 <td className="py-3 pr-4 text-gray-600">{CHANNEL_LABELS[order.channel]}</td>
                 <td className="py-3 pr-4">

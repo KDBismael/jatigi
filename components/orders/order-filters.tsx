@@ -5,8 +5,8 @@ import { Select } from '@/components/ui/select'
 import { STATUSES, STATUS_LABELS, type OrderStatus } from '@/lib/constants'
 
 interface OrderFiltersProps {
-  filters: { status?: OrderStatus | ''; dateFrom?: string; dateTo?: string; search?: string }
-  onChange: (f: { status?: OrderStatus | ''; dateFrom?: string; dateTo?: string; search?: string }) => void
+  filters: { status?: OrderStatus | ''; dateFrom?: string; dateTo?: string; search?: string; deliverySearch?: string }
+  onChange: (f: { status?: OrderStatus | ''; dateFrom?: string; dateTo?: string; search?: string; deliverySearch?: string }) => void
 }
 
 const statusOptions = [
@@ -22,6 +22,13 @@ export function OrderFilters({ filters, onChange }: OrderFiltersProps) {
           placeholder="Rechercher un client..."
           value={filters.search ?? ''}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
+        />
+      </div>
+      <div className="w-56">
+        <Input
+          placeholder="Rechercher un livreur..."
+          value={filters.deliverySearch ?? ''}
+          onChange={(e) => onChange({ ...filters, deliverySearch: e.target.value })}
         />
       </div>
       <div className="w-44">

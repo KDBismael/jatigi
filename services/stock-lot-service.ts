@@ -1,4 +1,4 @@
-import { createClient } from '@/services/supabase/server'
+import { createAdminClient, createClient } from '@/services/supabase/server'
 import type { StockLot } from '@/types/stock-lot'
 import type { StockLotInput } from '@/lib/schemas/stock-lot.schema'
 
@@ -11,12 +11,13 @@ export interface StockLotUpdate {
   received_at?: string
 }
 
-export async function getStockLots(productId: string): Promise<StockLot[]> {
-  const supabase = await createClient()
+export async function getStockLots(productId: string, organizationId: string): Promise<StockLot[]> {
+  const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('stock_lots')
     .select('*')
     .eq('product_id', productId)
+    .eq('organization_id', organizationId)
     .order('received_at', { ascending: true })
     .order('id', { ascending: true })
 
@@ -48,53 +49,21 @@ export async function addStockLot(
   organizationId: string,
 ): Promise<StockLot> {
   const supabase = await createClient()
-
-  const qty = input.quantity_received
-  const purchase_cost = input.total_purchase / qty
-  const import_cost = input.total_transport / qty
-  const packaging_cost = input.total_packaging / qty
-  const unit_cost = purchase_cost + import_cost + packaging_cost
-
-  const { data: lot, error: lotErr } = await supabase
-    .from('stock_lots')
-    .insert({
-      product_id: productId,
-      organization_id: organizationId,
-      quantity_received: qty,
-      quantity_available: qty,
-      purchase_cost,
-      import_cost,
-      import_cost_type: 'lot',
-      import_cost_raw: input.total_transport,
-      import_batch_size: qty,
-      packaging_cost,
-      unit_cost,
-      sale_price: input.sale_price,
-      received_at: input.received_at ?? new Date().toISOString(),
-    })
-    .select()
-    .single()
-
-  if (lotErr) throw new Error(lotErr.message)
-
-  const { error: incrErr } = await supabase.rpc('increment_product_stock', {
+  const { data: lotId, error } = await supabase.rpc('add_stock_lot_safe', {
     p_product_id: productId,
-    p_quantity: qty,
+    p_quantity: input.quantity_received,
+    p_total_purchase: input.total_purchase,
+    p_total_transport: input.total_transport,
+    p_total_packaging: input.total_packaging,
+    p_sale_price: input.sale_price,
+    p_received_at: input.received_at || null,
   })
-  if (incrErr) throw new Error(incrErr.message)
-
-  // Update product cost fields from latest lot
-  await supabase.from('products').update({
-    purchase_cost,
-    import_cost,
-    import_cost_type: 'lot',
-    import_cost_raw: input.total_transport,
-    import_batch_size: qty,
-    packaging_cost,
-  }).eq('id', productId)
-
-  await syncProductSalePrice(supabase, productId)
-
+  if (error) throw new Error(error.message)
+  const admin = await createAdminClient()
+  const { data: lot, error: fetchError } = await admin.from('stock_lots').select('*')
+    .eq('id', lotId).eq('organization_id', organizationId).single()
+  if (fetchError) throw new Error(fetchError.message)
+  await syncProductSalePrice(admin, productId)
   return lot as StockLot
 }
 
@@ -102,64 +71,22 @@ export async function updateStockLot(
   lotId: string,
   productId: string,
   input: StockLotUpdate,
+  organizationId: string,
 ): Promise<StockLot> {
   const supabase = await createClient()
-
-  // Fetch current lot to fill in missing totals for cost recomputation
-  const { data: current, error: fetchErr } = await supabase
-    .from('stock_lots')
-    .select('*')
-    .eq('id', lotId)
-    .single()
-  if (fetchErr) throw new Error(fetchErr.message)
-
-  const patch: Record<string, unknown> = {}
-
-  // Recompute unit costs if any total amount changed
-  const hasCostChange = input.total_purchase !== undefined
-    || input.total_transport !== undefined
-    || input.total_packaging !== undefined
-
-  if (hasCostChange) {
-    const qty = current.quantity_received
-    const total_purchase = input.total_purchase ?? (current.purchase_cost * qty)
-    const total_transport = input.total_transport ?? (current.import_cost * qty)
-    const total_packaging = input.total_packaging ?? (current.packaging_cost * qty)
-
-    patch.purchase_cost = total_purchase / qty
-    patch.import_cost = total_transport / qty
-    patch.packaging_cost = total_packaging / qty
-    patch.unit_cost = (total_purchase + total_transport + total_packaging) / qty
-    patch.import_cost_raw = total_transport
-  }
-
-  if (input.sale_price !== undefined) patch.sale_price = input.sale_price
-  if (input.quantity_available !== undefined) {
-    patch.quantity_available = input.quantity_available
-    // Sync product stock_quantity: adjust by the difference
-    const diff = input.quantity_available - current.quantity_available
-    if (diff !== 0) {
-      await supabase.from('products').update({
-        stock_quantity: Math.max(0, (current.quantity_received ?? 0) + diff),
-      }).eq('id', productId)
-      // Use rpc for precise delta
-      await supabase.rpc('increment_product_stock', {
-        p_product_id: productId,
-        p_quantity: diff,
-      })
-    }
-  }
-  if (input.received_at !== undefined) patch.received_at = input.received_at
-
-  const { data: updated, error } = await supabase
-    .from('stock_lots')
-    .update(patch)
-    .eq('id', lotId)
-    .select()
-    .single()
+  const { data: updated, error } = await supabase.rpc('update_stock_lot_safe', {
+    p_lot_id: lotId,
+    p_product_id: productId,
+    p_sale_price: input.sale_price ?? null,
+    p_quantity_available: input.quantity_available ?? null,
+    p_total_purchase: input.total_purchase ?? null,
+    p_total_transport: input.total_transport ?? null,
+    p_total_packaging: input.total_packaging ?? null,
+    p_received_at: input.received_at ?? null,
+  })
   if (error) throw new Error(error.message)
-
-  await syncProductSalePrice(supabase, productId)
-
+  if ((updated as StockLot).organization_id !== organizationId) throw new Error('Lot hors organisation')
+  const admin = await createAdminClient()
+  await syncProductSalePrice(admin, productId)
   return updated as StockLot
 }

@@ -9,6 +9,7 @@ interface OrderFilter {
   dateFrom?: string
   dateTo?: string
   search?: string
+  deliverySearch?: string
 }
 
 interface OrderState {

@@ -1,4 +1,5 @@
 import { Channel, OrderStatus } from '@/lib/constants'
+import type { DeliveryDriver } from '@/types/delivery-driver'
 
 export interface OrderLine {
   id: string
@@ -25,5 +26,7 @@ export interface Order {
   created_by: string | null
   created_at: string
   updated_at: string
+  delivery_driver_id: string | null
+  delivery_driver?: Pick<DeliveryDriver, 'id' | 'name' | 'phone'> | null
   order_lines?: OrderLine[]
 }

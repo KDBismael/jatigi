@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Tableau de bord', adminOnly: true, icon: '📊' },
   { href: '/orders', label: 'Commandes', adminOnly: false, icon: '📦' },
+  { href: '/deliveries', label: 'Livraisons', adminOnly: true, icon: '🛵' },
   { href: '/products', label: 'Produits', adminOnly: true, icon: '🛍️' },
   { href: '/analytics', label: 'Analyses', adminOnly: true, icon: '📈' },
   { href: '/team', label: 'Équipe', adminOnly: true, icon: '👥' },

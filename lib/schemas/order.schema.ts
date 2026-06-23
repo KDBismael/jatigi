@@ -14,6 +14,7 @@ export const orderSchema = z.object({
   client_phone: z.string().optional(),
   channel: channelEnum,
   order_date: z.string().min(1, 'Date requise'),
+  delivery_driver_id: z.string().uuid().optional().nullable().or(z.literal('')),
   lines: z.array(orderLineSchema).min(1, 'Au moins un produit requis'),
 })
 
@@ -26,6 +27,7 @@ export const orderUpdateSchema = z.object({
   client_phone: z.string().optional().nullable(),
   channel: channelEnum.optional(),
   order_date: z.string().optional(),
+  delivery_driver_id: z.string().uuid().optional().nullable().or(z.literal('')),
 })
 
 export type OrderInput = z.infer<typeof orderSchema>

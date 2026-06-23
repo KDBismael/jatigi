@@ -1,4 +1,4 @@
-import { createAdminClient, createClient } from '@/services/supabase/server'
+import { createAdminClient } from '@/services/supabase/server'
 import type { Profile } from '@/types/user'
 
 export async function getTeamMembers(organizationId: string): Promise<Profile[]> {
@@ -52,25 +52,16 @@ export async function createTeamMember(params: {
   return profile as Profile
 }
 
-export async function updateMemberRole(id: string, role: 'admin' | 'employee'): Promise<void> {
+export async function updateMemberRole(id: string, role: 'admin' | 'employee', organizationId: string): Promise<void> {
   const supabase = await createAdminClient()
-  const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
+  const { error } = await supabase.from('profiles').update({ role }).eq('id', id).eq('organization_id', organizationId)
   if (error) throw new Error(error.message)
 }
 
-export async function deleteTeamMember(id: string): Promise<void> {
+export async function deleteTeamMember(id: string, organizationId: string): Promise<void> {
   const supabase = await createAdminClient()
+  const { data: member } = await supabase.from('profiles').select('id').eq('id', id).eq('organization_id', organizationId).single()
+  if (!member) throw new Error('Membre introuvable dans votre organisation')
   const { error } = await supabase.auth.admin.deleteUser(id)
   if (error) throw new Error(error.message)
-}
-
-export async function getAdminOrgId(adminUserId: string): Promise<string> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', adminUserId)
-    .single()
-  if (error || !data?.organization_id) throw new Error('Organisation introuvable')
-  return data.organization_id
 }

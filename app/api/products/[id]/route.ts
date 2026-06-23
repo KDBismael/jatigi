@@ -12,7 +12,6 @@ const COST_FIELDS = [
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   sale_price: z.coerce.number().positive().optional(),
-  stock_quantity: z.coerce.number().int().min(0).optional(),
 })
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -22,12 +21,13 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, organization_id')
     .eq('id', user.id)
     .single()
 
   const { id } = await params
-  const product = await getProductById(id)
+  if (!profile?.organization_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const product = await getProductById(id, profile.organization_id)
   if (!product) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
 
   if (profile?.role !== 'admin') {
@@ -43,11 +43,11 @@ async function requireAdmin() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, organization_id')
     .eq('id', user.id)
     .single()
 
-  return profile?.role === 'admin' ? user : null
+  return profile?.role === 'admin' && profile.organization_id ? { user, profile } : null
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   try {
-    const product = await updateProduct(id, parsed.data)
+    const product = await updateProduct(id, parsed.data, admin.profile.organization_id)
     return NextResponse.json(product)
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
@@ -85,7 +85,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params
   try {
-    await deleteProduct(id)
+    await deleteProduct(id, admin.profile.organization_id)
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

@@ -17,16 +17,21 @@ export function useAnalytics(range: DateRange) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    setIsLoading(true)
-    setError(null)
-    fetch(`/api/analytics?from=${range.dateFrom}&to=${range.dateTo}`)
-      .then((r) => {
-        if (!r.ok) throw new Error('Accès refusé')
-        return r.json()
-      })
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setIsLoading(false))
+    const controller = new AbortController()
+    void Promise.resolve().then(async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const response = await fetch(`/api/analytics?from=${range.dateFrom}&to=${range.dateTo}`, { signal: controller.signal })
+        if (!response.ok) throw new Error('Accès refusé')
+        setData(await response.json())
+      } catch (caught) {
+        if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : 'Erreur inconnue')
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false)
+      }
+    })
+    return () => controller.abort()
   }, [range.dateFrom, range.dateTo])
 
   return { data, isLoading, error }

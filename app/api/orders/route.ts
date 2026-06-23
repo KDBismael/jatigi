@@ -23,12 +23,18 @@ export async function GET() {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const orders = await getOrders()
+    const orders = await getOrders(ctx.profile.organization_id)
 
     if (ctx.profile.role !== 'admin') {
       const safe = orders.map(({ order_lines, ...order }) => ({
         ...order,
-        order_lines: order_lines?.map(({ unit_price: _up, unit_cost: _uc, ...line }) => line),
+        order_lines: order_lines?.map((line) => ({
+          id: line.id,
+          order_id: line.order_id,
+          product_id: line.product_id,
+          quantity: line.quantity,
+          product: line.product,
+        })),
       }))
       return NextResponse.json(safe)
     }

@@ -10,11 +10,14 @@ export function useOrders() {
     useOrderStore()
 
   useEffect(() => {
-    if (orders.length > 0) return
     setLoading(true)
     fetch('/api/orders')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error('Impossible de charger les commandes')
+        return r.json()
+      })
       .then(setOrders)
+      .catch(() => setOrders([]))
       .finally(() => setLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -23,6 +26,8 @@ export function useOrders() {
     if (filters.dateFrom && o.order_date < filters.dateFrom) return false
     if (filters.dateTo && o.order_date > filters.dateTo) return false
     if (filters.search && !o.client_name.toLowerCase().includes(filters.search.toLowerCase()))
+      return false
+    if (filters.deliverySearch && !o.delivery_driver?.name.toLowerCase().includes(filters.deliverySearch.toLowerCase()))
       return false
     return true
   })
