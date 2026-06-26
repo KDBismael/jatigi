@@ -95,7 +95,11 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => onDelete(p.id)}
+                          onClick={() => {
+                            if (confirm(`Supprimer "${p.name}" ? Cette action supprimera aussi tous les lots et lignes de commande associés.`)) {
+                              onDelete(p.id)
+                            }
+                          }}
                           className="text-red-500 hover:text-red-700"
                         >
                           Supprimer
