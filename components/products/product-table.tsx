@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { computeMargin, formatCurrency } from '@/lib/utils'
 import type { Product } from '@/types/product'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { AddStockModal } from './add-stock-modal'
 import { useProductStore } from '@/stores/product-store'
 
@@ -15,6 +16,7 @@ interface ProductTableProps {
 
 export function ProductTable({ products, onDelete }: ProductTableProps) {
   const [addStockProduct, setAddStockProduct] = useState<Product | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
   const { updateProduct } = useProductStore()
   const router = useRouter()
 
@@ -95,11 +97,7 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            if (confirm(`Supprimer "${p.name}" ? Cette action supprimera aussi tous les lots et lignes de commande associés.`)) {
-                              onDelete(p.id)
-                            }
-                          }}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(p) }}
                           className="text-red-500 hover:text-red-700"
                         >
                           Supprimer
@@ -120,6 +118,18 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
           productId={addStockProduct.id}
           onSuccess={(qty) => handleStockAdded(addStockProduct, qty)}
           onClose={() => setAddStockProduct(null)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title={`Supprimer "${deleteTarget.name}" ?`}
+          message="Cette action supprimera définitivement le produit, tous ses lots de stock et les lignes de commande associées. Impossible d'annuler."
+          confirmLabel="Supprimer"
+          cancelLabel="Annuler"
+          variant="danger"
+          onConfirm={() => { onDelete?.(deleteTarget.id); setDeleteTarget(null) }}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </>
