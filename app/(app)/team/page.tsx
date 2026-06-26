@@ -8,6 +8,7 @@ import { useTeam } from '@/hooks/use-team'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -239,7 +240,7 @@ export default function TeamPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <Input label="Nom complet" error={errors.full_name?.message} {...register('full_name')} />
                   <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
-                  <Input label="Mot de passe" type="password" error={errors.password?.message} {...register('password')} />
+                  <PasswordInput label="Mot de passe" error={errors.password?.message} {...register('password')} />
                   <Select label="Rôle" options={roleOptions} error={errors.role?.message} {...register('role')} />
                 </div>
                 {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/services/supabase/client'
+import { PasswordInput } from '@/components/ui/password-input'
 
 type Mode = 'login' | 'signup'
 
@@ -24,16 +25,9 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
-    }
-
+    if (error) { setError(error.message); setLoading(false); return }
     window.location.href = '/orders'
   }
 
@@ -41,35 +35,20 @@ export default function LoginPage() {
     e.preventDefault()
     setError(null)
     setLoading(true)
-
-    // Create owner + org atomically server-side
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password,
-        full_name: fullName,
-        organization_name: orgName,
-      }),
+      body: JSON.stringify({ email, password, full_name: fullName, organization_name: orgName }),
     })
-
     if (!res.ok) {
       const data = await res.json()
       setError(typeof data.error === 'string' ? data.error : 'Une erreur est survenue')
       setLoading(false)
       return
     }
-
-    // Log them in right away (email is auto-confirmed)
     const supabase = createClient()
     const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password })
-    if (loginErr) {
-      setError('Compte créé, mais connexion échouée. Veuillez vous connecter manuellement.')
-      setLoading(false)
-      return
-    }
-
+    if (loginErr) { setError('Compte créé, mais connexion échouée. Veuillez vous connecter manuellement.'); setLoading(false); return }
     window.location.href = '/dashboard'
   }
 
@@ -86,30 +65,15 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Card */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
           {/* Tabs */}
           <div className="flex bg-gray-800 rounded-lg p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => switchMode('login')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                mode === 'login'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
+            <button type="button" onClick={() => switchMode('login')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'login' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}>
               Connexion
             </button>
-            <button
-              type="button"
-              onClick={() => switchMode('signup')}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                mode === 'signup'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-            >
+            <button type="button" onClick={() => switchMode('signup')}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'signup' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400 hover:text-gray-200'}`}>
               Créer ma boutique
             </button>
           </div>
@@ -117,7 +81,22 @@ export default function LoginPage() {
           {mode === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-4">
               <Field label="Email" id="email" type="email" value={email} onChange={setEmail} placeholder="vous@exemple.com" />
-              <Field label="Mot de passe" id="password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
+              <div className="space-y-1">
+                <PasswordInput
+                  id="password"
+                  label="Mot de passe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  darkTheme
+                />
+                <div className="flex justify-end">
+                  <Link href="/auth/forgot-password" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                    Mot de passe oublié ?
+                  </Link>
+                </div>
+              </div>
               <ErrorBox error={error} />
               <SubmitButton loading={loading} label="Se connecter" loadingLabel="Connexion..." />
             </form>
@@ -126,7 +105,15 @@ export default function LoginPage() {
               <Field label="Nom de votre boutique" id="orgName" type="text" value={orgName} onChange={setOrgName} placeholder="Ex : Boutique Aminata" />
               <Field label="Votre nom complet" id="fullName" type="text" value={fullName} onChange={setFullName} placeholder="Aminata Diallo" />
               <Field label="Email" id="email2" type="email" value={email} onChange={setEmail} placeholder="vous@exemple.com" />
-              <Field label="Mot de passe" id="password2" type="password" value={password} onChange={setPassword} placeholder="Minimum 6 caractères" />
+              <PasswordInput
+                id="password2"
+                label="Mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Minimum 6 caractères"
+                required
+                darkTheme
+              />
               <ErrorBox error={error} />
               <SubmitButton loading={loading} label="Créer ma boutique" loadingLabel="Création..." />
               <p className="text-xs text-gray-500 text-center leading-relaxed">
@@ -137,55 +124,35 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center mt-6 text-xs text-gray-600">
-          <Link href="/" className="hover:text-gray-400 transition-colors">
-            ← Retour à l&apos;accueil
-          </Link>
+          <Link href="/" className="hover:text-gray-400 transition-colors">← Retour à l&apos;accueil</Link>
         </p>
       </div>
     </div>
   )
 }
 
-function Field({
-  label, id, type, value, onChange, placeholder,
-}: {
+function Field({ label, id, type, value, onChange, placeholder }: {
   label: string; id: string; type: string; value: string
   onChange: (v: string) => void; placeholder?: string
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1.5">
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        required
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-      />
+      <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1.5">{label}</label>
+      <input id={id} type={type} required value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" />
     </div>
   )
 }
 
 function ErrorBox({ error }: { error: string | null }) {
   if (!error) return null
-  return (
-    <p className="text-sm text-red-400 bg-red-950 border border-red-900 px-3 py-2 rounded-lg">
-      {error}
-    </p>
-  )
+  return <p className="text-sm text-red-400 bg-red-950 border border-red-900 px-3 py-2 rounded-lg">{error}</p>
 }
 
 function SubmitButton({ loading, label, loadingLabel }: { loading: boolean; label: string; loadingLabel: string }) {
   return (
-    <button
-      type="submit"
-      disabled={loading}
-      className="w-full bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50 transition-colors mt-2"
-    >
+    <button type="submit" disabled={loading}
+      className="w-full bg-indigo-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-500 disabled:opacity-50 transition-colors mt-2">
       {loading ? loadingLabel : label}
     </button>
   )

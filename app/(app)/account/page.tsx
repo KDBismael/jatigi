@@ -5,6 +5,7 @@ import { createClient } from '@/services/supabase/client'
 import { useAuthStore } from '@/stores/auth-store'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { PasswordInput } from '@/components/ui/password-input'
 
 export default function AccountPage() {
   const { profile } = useAuthStore()
@@ -20,31 +21,17 @@ export default function AccountPage() {
     setError(null)
     setSuccess(false)
 
-    if (newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères.')
-      return
-    }
-    if (newPassword !== confirm) {
-      setError('Les mots de passe ne correspondent pas.')
-      return
-    }
+    if (newPassword.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return }
+    if (newPassword !== confirm) { setError('Les mots de passe ne correspondent pas.'); return }
 
     setSubmitting(true)
     try {
       const supabase = createClient()
-
-      // Re-authenticate first to verify current password
       const { data: { user } } = await supabase.auth.getUser()
       if (!user?.email) throw new Error('Session expirée.')
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      })
-      if (signInError) {
-        setError('Mot de passe actuel incorrect.')
-        return
-      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword })
+      if (signInError) { setError('Mot de passe actuel incorrect.'); return }
 
       const { error: updateError } = await supabase.auth.updateUser({ password: newPassword })
       if (updateError) throw updateError
@@ -73,48 +60,30 @@ export default function AccountPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Mot de passe actuel</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="••••••••"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Nouveau mot de passe</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Min. 8 caractères"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Confirmer le nouveau mot de passe</label>
-              <input
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="••••••••"
-              />
-            </div>
+            <PasswordInput
+              label="Mot de passe actuel"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
+            <PasswordInput
+              label="Nouveau mot de passe"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              placeholder="Min. 8 caractères"
+            />
+            <PasswordInput
+              label="Confirmer le nouveau mot de passe"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
 
-            {error && (
-              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-            )}
-            {success && (
-              <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">
-                Mot de passe mis à jour avec succès.
-              </p>
-            )}
+            {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+            {success && <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-lg">Mot de passe mis à jour avec succès.</p>}
 
             <Button type="submit" disabled={submitting}>
               {submitting ? 'Mise à jour...' : 'Mettre à jour'}
