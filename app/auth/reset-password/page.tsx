@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/services/supabase/client'
 import { PasswordInput } from '@/components/ui/password-input'
+import { translateAuthError } from '@/lib/auth-errors'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -31,7 +32,7 @@ export default function ResetPasswordPage() {
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.updateUser({ password })
-      if (error) { setError(error.message); return }
+      if (error) { setError(translateAuthError(error.message)); return }
       setSuccess(true)
       setTimeout(() => router.push('/auth/login'), 2500)
     } finally {

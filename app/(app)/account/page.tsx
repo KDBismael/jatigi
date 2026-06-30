@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth-store'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PasswordInput } from '@/components/ui/password-input'
+import { translateAuthError } from '@/lib/auth-errors'
 
 export default function AccountPage() {
   const { profile } = useAuthStore()
@@ -41,7 +42,7 @@ export default function AccountPage() {
       setNewPassword('')
       setConfirm('')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue.')
+      setError(err instanceof Error ? translateAuthError(err.message) : 'Une erreur est survenue.')
     } finally {
       setSubmitting(false)
     }

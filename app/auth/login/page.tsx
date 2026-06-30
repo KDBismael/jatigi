@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/services/supabase/client'
 import { PasswordInput } from '@/components/ui/password-input'
+import { translateAuthError } from '@/lib/auth-errors'
 
 type Mode = 'login' | 'signup'
 
@@ -27,7 +28,7 @@ export default function LoginPage() {
     setLoading(true)
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false); return }
+    if (error) { setError(translateAuthError(error.message)); setLoading(false); return }
     window.location.href = '/orders'
   }
 
@@ -42,7 +43,7 @@ export default function LoginPage() {
     })
     if (!res.ok) {
       const data = await res.json()
-      setError(typeof data.error === 'string' ? data.error : 'Une erreur est survenue')
+      setError(typeof data.error === 'string' ? translateAuthError(data.error) : 'Une erreur est survenue')
       setLoading(false)
       return
     }
