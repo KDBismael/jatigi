@@ -1,6 +1,6 @@
-# Jatigi
+# Warko
 
-Jatigi est une application de gestion commerciale en français destinée aux vendeurs sociaux. Elle centralise produits, lots de stock, commandes, livreurs, reversements et analyses, avec isolation stricte entre boutiques.
+Warko est une application de gestion commerciale en français destinée aux vendeurs sociaux. Elle centralise produits, lots de stock, commandes, livreurs, reversements et analyses, avec isolation stricte entre boutiques.
 
 ## Fonctionnalités
 

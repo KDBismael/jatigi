@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Jatigi — Gestion commerciale',
+  title: 'Warko — Gestion commerciale',
   description: 'Plateforme de gestion pour commerces vendant via les réseaux sociaux',
 }
 

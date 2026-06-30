@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="text-2xl font-bold text-white tracking-tight">Jatigi</span>
+            <span className="text-2xl font-bold text-white tracking-tight">Warko</span>
           </Link>
           <p className="mt-2 text-gray-400 text-sm">Réinitialisation du mot de passe</p>
         </div>

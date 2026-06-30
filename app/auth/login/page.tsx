@@ -58,7 +58,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="text-2xl font-bold text-white tracking-tight">Jatigi</span>
+            <span className="text-2xl font-bold text-white tracking-tight">Warko</span>
           </Link>
           <p className="mt-2 text-gray-400 text-sm">
             {mode === 'login' ? 'Connectez-vous à votre espace' : 'Créez votre boutique'}

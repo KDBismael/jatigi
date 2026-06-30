@@ -30,7 +30,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     <div className="flex flex-col h-full">
       {/* Brand + org name */}
       <div className="px-6 py-5 border-b border-gray-700">
-        <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-1">Jatigi</p>
+        <p className="text-xs font-semibold text-indigo-400 uppercase tracking-widest mb-1">Warko</p>
         {organization?.name ? (
           <h1 className="text-sm font-bold text-white truncate">{organization.name}</h1>
         ) : (
@@ -107,7 +107,7 @@ export function Sidebar() {
     <>
       {/* Mobile top bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-700">
-        <span className="text-sm font-bold text-white tracking-widest uppercase">Jatigi</span>
+        <span className="text-sm font-bold text-white tracking-widest uppercase">Warko</span>
         <button
           onClick={() => setOpen(true)}
           className="text-gray-300 hover:text-white p-1"
