@@ -95,5 +95,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    // Match all paths except Next internals, favicon, and static asset files
+    // (images/fonts/etc. in /public) so the auth proxy doesn't redirect them.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|avif|woff2?|ttf|css|js|map)$).*)',
+  ],
 }
