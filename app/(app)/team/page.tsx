@@ -237,7 +237,7 @@ export default function TeamPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input label="Nom complet" error={errors.full_name?.message} {...register('full_name')} />
                   <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
                   <PasswordInput label="Mot de passe" error={errors.password?.message} {...register('password')} />
@@ -264,47 +264,85 @@ export default function TeamPage() {
             ) : members.length === 0 ? (
               <p className="text-center text-gray-500 py-8">Aucun membre</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 text-left">
-                    <th className="pb-3 pr-4 font-medium text-gray-600">Nom</th>
-                    <th className="pb-3 pr-4 font-medium text-gray-600">Rôle</th>
-                    <th className="pb-3 pr-4 font-medium text-gray-600">Depuis</th>
-                    <th className="pb-3 font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
+              <>
+                {/* Mobile: stacked cards */}
+                <div className="space-y-3 sm:hidden">
                   {members.map((m) => (
-                    <tr key={m.id} className="hover:bg-gray-50">
-                      <td className="py-3 pr-4 font-medium text-gray-900">{m.full_name}</td>
-                      <td className="py-3 pr-4">
+                    <div key={m.id} className="border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{m.full_name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Depuis le {formatDate(m.created_at)}</p>
+                        </div>
                         <Badge className={m.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}>
                           {m.role === 'admin' ? 'Administrateur' : 'Employé'}
                         </Badge>
-                      </td>
-                      <td className="py-3 pr-4 text-gray-500">{formatDate(m.created_at)}</td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleRoleToggle(m)}
-                            className={`text-xs hover:underline ${
-                              m.role === 'admin' ? 'text-orange-500' : 'text-indigo-600'
-                            }`}
-                          >
-                            {m.role === 'admin' ? '→ Employé' : '→ Admin'}
-                          </button>
-                          <button
-                            onClick={() => setRemoveTarget(m)}
-                            className="text-xs text-red-500 hover:underline"
-                          >
-                            Supprimer
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                      </div>
+                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                        <button
+                          onClick={() => handleRoleToggle(m)}
+                          className={`text-sm font-medium hover:underline ${
+                            m.role === 'admin' ? 'text-orange-500' : 'text-indigo-600'
+                          }`}
+                        >
+                          {m.role === 'admin' ? '→ Employé' : '→ Admin'}
+                        </button>
+                        <button
+                          onClick={() => setRemoveTarget(m)}
+                          className="text-sm font-medium text-red-500 hover:underline"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+
+                {/* Desktop: table */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left">
+                        <th className="pb-3 pr-4 font-medium text-gray-600">Nom</th>
+                        <th className="pb-3 pr-4 font-medium text-gray-600">Rôle</th>
+                        <th className="pb-3 pr-4 font-medium text-gray-600">Depuis</th>
+                        <th className="pb-3 font-medium text-gray-600">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {members.map((m) => (
+                        <tr key={m.id} className="hover:bg-gray-50">
+                          <td className="py-3 pr-4 font-medium text-gray-900">{m.full_name}</td>
+                          <td className="py-3 pr-4">
+                            <Badge className={m.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}>
+                              {m.role === 'admin' ? 'Administrateur' : 'Employé'}
+                            </Badge>
+                          </td>
+                          <td className="py-3 pr-4 text-gray-500">{formatDate(m.created_at)}</td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => handleRoleToggle(m)}
+                                className={`text-xs hover:underline ${
+                                  m.role === 'admin' ? 'text-orange-500' : 'text-indigo-600'
+                                }`}
+                              >
+                                {m.role === 'admin' ? '→ Employé' : '→ Admin'}
+                              </button>
+                              <button
+                                onClick={() => setRemoveTarget(m)}
+                                className="text-xs text-red-500 hover:underline"
+                              >
+                                Supprimer
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
