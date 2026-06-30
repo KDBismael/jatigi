@@ -13,6 +13,12 @@ export function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
+// Grouped number without currency symbol, e.g. 2450000 -> "2 450 000".
+// Used where "FCFA" is rendered separately as a prefix.
+export function formatAmount(amount: number): string {
+  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(amount)
+}
+
 export function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat('fr-FR', {
     day: '2-digit',
