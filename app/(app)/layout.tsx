@@ -9,7 +9,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 overflow-auto bg-gray-50">
           {/* Spacer for mobile top bar */}
           <div className="md:hidden h-14" />
-          <div className="max-w-7xl mx-auto p-4 md:p-8">{children}</div>
+          {/* pb on mobile leaves room for the fixed bottom tab bar */}
+          <div className="max-w-7xl mx-auto p-4 pb-24 md:p-8 md:pb-8">{children}</div>
         </main>
       </div>
     </AuthProvider>
