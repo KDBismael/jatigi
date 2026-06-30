@@ -27,6 +27,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Safety net: if Supabase falls back to the Site URL and drops an auth
+  // `code` on a non-callback path (e.g. `/?code=...`), forward it to the
+  // callback route so the session is exchanged and the user reaches reset.
+  const code = request.nextUrl.searchParams.get('code')
+  if (code && pathname !== '/auth/callback') {
+    const callbackUrl = new URL('/auth/callback', request.url)
+    callbackUrl.searchParams.set('code', code)
+    const next = request.nextUrl.searchParams.get('next') ?? '/auth/reset-password'
+    callbackUrl.searchParams.set('next', next)
+    return NextResponse.redirect(callbackUrl)
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   let user = null
