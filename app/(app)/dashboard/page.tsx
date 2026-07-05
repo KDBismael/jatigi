@@ -5,10 +5,12 @@ import { useAnalytics } from '@/hooks/use-analytics'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { PeriodSelector } from '@/components/dashboard/period-selector'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/stores/auth-store'
 import { formatAmount } from '@/lib/utils'
 import { getPeriodDates, PRESET_LABELS, type DatePreset } from '@/lib/date-periods'
+import { exportDashboardToExcel } from '@/lib/dashboard-export'
 
 function getLastName(fullName?: string): string {
   if (!fullName) return ''
@@ -22,6 +24,7 @@ export default function DashboardPage() {
   const [preset, setPreset] = useState<DatePreset>('today')
   const [customFrom, setCustomFrom] = useState<string | undefined>()
   const [customTo, setCustomTo] = useState<string | undefined>()
+  const [isExporting, setIsExporting] = useState(false)
 
   const range = (preset === 'custom' && customFrom && customTo)
     ? { dateFrom: customFrom, dateTo: customTo }
@@ -40,6 +43,16 @@ export default function DashboardPage() {
   const periodLabel = preset === 'custom' && customFrom && customTo
     ? 'période personnalisée'
     : PRESET_LABELS[preset]
+
+  async function handleExport() {
+    if (!data) return
+    setIsExporting(true)
+    try {
+      await exportDashboardToExcel(data, periodLabel, range)
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   const lastName = getLastName(profile?.full_name)
   const greeting = lastName ? `Bonjour, ${lastName}` : 'Tableau de bord'
@@ -66,11 +79,25 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{greeting}</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Bienvenue, voici l&apos;ensemble de votre activité.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{greeting}</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Bienvenue, voici l&apos;ensemble de votre activité.
+          </p>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleExport}
+          disabled={isExporting || !data}
+          className="shrink-0"
+        >
+          <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          {isExporting ? 'Export...' : 'Exporter en Excel'}
+        </Button>
       </div>
 
       <PeriodSelector
