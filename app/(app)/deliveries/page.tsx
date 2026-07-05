@@ -108,42 +108,106 @@ export default function DeliveriesPage() {
           ) : drivers.length === 0 ? (
             <p className="text-center text-gray-500 py-10">Ajoutez votre premier livreur pour commencer le suivi.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-gray-200 text-left">
-                  <th className="pb-3 pr-4 font-medium text-gray-600">Livreur</th>
-                  <th className="pb-3 pr-4 font-medium text-gray-600">En cours</th>
-                  <th className="pb-3 pr-4 font-medium text-gray-600">Livrés</th>
-                  <th className="pb-3 pr-4 font-medium text-gray-600">Annulés</th>
-                  <th className="pb-3 pr-4 font-medium text-gray-600">Réussite</th>
-                  <th className="pb-3 pr-4 font-medium text-gray-600">Encaissé</th>
-                  <th className="pb-3 pr-4 font-medium text-gray-600">Déjà reversé</th>
-                  <th className="pb-3 font-medium text-gray-600">À reverser</th>
-                </tr></thead>
-                <tbody className="divide-y divide-gray-100">
-                  {drivers.map((driver) => (
-                    <tr key={driver.id}>
-                      <td className="py-4 pr-4"><p className="font-medium text-gray-900">{driver.name}</p>{driver.phone && <p className="text-xs text-gray-400">{driver.phone}</p>}</td>
-                      <td className="py-4 pr-4 text-orange-600 font-medium">{driver.packages_in_progress}</td>
-                      <td className="py-4 pr-4 text-green-600 font-medium">{driver.packages_delivered}</td>
-                      <td className="py-4 pr-4 text-gray-500">{driver.packages_cancelled}</td>
-                      <td className="py-4 pr-4 text-gray-700">{driver.success_rate}%</td>
-                      <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_collected)}</td>
-                      <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_remitted)}</td>
-                      <td className="py-4">
-                        <p className="font-semibold text-indigo-700">{formatCurrency(driver.amount_due)}</p>
-                        {isAdmin && driver.amount_due > 0 && (settlingId === driver.id ? (
-                          <div className="flex gap-2 mt-2 min-w-56">
-                            <Input type="number" min={1} max={driver.amount_due} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
-                            <Button type="button" size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
-                          </div>
-                        ) : <button type="button" className="text-xs text-indigo-600 hover:underline mt-1" onClick={() => setSettlingId(driver.id)}>Enregistrer un versement</button>)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              {/* Mobile: card per driver */}
+              <ul className="space-y-4 sm:hidden">
+                {drivers.map((driver) => (
+                  <li key={driver.id} className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                    {/* Driver identity */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 truncate">{driver.name}</p>
+                        {driver.phone && <p className="text-xs text-gray-400">{driver.phone}</p>}
+                      </div>
+                      <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-600 border border-gray-200">
+                        {driver.success_rate}% réussite
+                      </span>
+                    </div>
+
+                    {/* Package stats */}
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-lg bg-white py-2 border border-gray-100">
+                        <p className="text-lg font-bold text-orange-600 leading-none">{driver.packages_in_progress}</p>
+                        <p className="text-[11px] text-gray-500 mt-1">En cours</p>
+                      </div>
+                      <div className="rounded-lg bg-white py-2 border border-gray-100">
+                        <p className="text-lg font-bold text-green-600 leading-none">{driver.packages_delivered}</p>
+                        <p className="text-[11px] text-gray-500 mt-1">Livrés</p>
+                      </div>
+                      <div className="rounded-lg bg-white py-2 border border-gray-100">
+                        <p className="text-lg font-bold text-gray-500 leading-none">{driver.packages_cancelled}</p>
+                        <p className="text-[11px] text-gray-500 mt-1">Annulés</p>
+                      </div>
+                    </div>
+
+                    {/* Money breakdown */}
+                    <dl className="mt-3 space-y-1.5 text-sm">
+                      <div className="flex justify-between">
+                        <dt className="text-gray-500">Encaissé</dt>
+                        <dd className="text-gray-700 font-medium">{formatCurrency(driver.amount_collected)}</dd>
+                      </div>
+                      <div className="flex justify-between">
+                        <dt className="text-gray-500">Déjà reversé</dt>
+                        <dd className="text-gray-700 font-medium">{formatCurrency(driver.amount_remitted)}</dd>
+                      </div>
+                      <div className="flex justify-between border-t border-gray-200 pt-1.5">
+                        <dt className="text-gray-900 font-medium">À reverser</dt>
+                        <dd className="text-indigo-700 font-bold">{formatCurrency(driver.amount_due)}</dd>
+                      </div>
+                    </dl>
+
+                    {isAdmin && driver.amount_due > 0 && (settlingId === driver.id ? (
+                      <div className="flex gap-2 mt-3">
+                        <Input type="number" min={1} max={driver.amount_due} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
+                        <Button type="button" size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
+                      </div>
+                    ) : (
+                      <button type="button" className="mt-3 w-full rounded-lg border border-indigo-200 bg-white py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 transition-colors" onClick={() => setSettlingId(driver.id)}>
+                        Enregistrer un versement
+                      </button>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b border-gray-200 text-left">
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Livreur</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">En cours</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Livrés</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Annulés</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Réussite</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Encaissé</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Déjà reversé</th>
+                    <th className="pb-3 font-medium text-gray-600">À reverser</th>
+                  </tr></thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {drivers.map((driver) => (
+                      <tr key={driver.id}>
+                        <td className="py-4 pr-4"><p className="font-medium text-gray-900">{driver.name}</p>{driver.phone && <p className="text-xs text-gray-400">{driver.phone}</p>}</td>
+                        <td className="py-4 pr-4 text-orange-600 font-medium">{driver.packages_in_progress}</td>
+                        <td className="py-4 pr-4 text-green-600 font-medium">{driver.packages_delivered}</td>
+                        <td className="py-4 pr-4 text-gray-500">{driver.packages_cancelled}</td>
+                        <td className="py-4 pr-4 text-gray-700">{driver.success_rate}%</td>
+                        <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_collected)}</td>
+                        <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_remitted)}</td>
+                        <td className="py-4">
+                          <p className="font-semibold text-indigo-700">{formatCurrency(driver.amount_due)}</p>
+                          {isAdmin && driver.amount_due > 0 && (settlingId === driver.id ? (
+                            <div className="flex gap-2 mt-2 min-w-56">
+                              <Input type="number" min={1} max={driver.amount_due} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
+                              <Button type="button" size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
+                            </div>
+                          ) : <button type="button" className="text-xs text-indigo-600 hover:underline mt-1" onClick={() => setSettlingId(driver.id)}>Enregistrer un versement</button>)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
