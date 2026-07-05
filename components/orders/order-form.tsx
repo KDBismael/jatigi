@@ -1,13 +1,14 @@
 'use client'
 
-import { useForm, useFieldArray, type Resolver } from 'react-hook-form'
+import { useForm, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { orderSchema, type OrderInput } from '@/lib/schemas/order.schema'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { CHANNELS, CHANNEL_LABELS } from '@/lib/constants'
+import { CHANNELS, CHANNEL_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants'
+import { formatCurrency } from '@/lib/utils'
 import type { Product } from '@/types/product'
 import type { DeliveryDriverSummary } from '@/types/delivery-driver'
 
@@ -19,6 +20,7 @@ interface OrderFormProps {
 }
 
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
+const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
 
 export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormProps) {
   const productOptions = products.map((p) => ({
@@ -35,11 +37,24 @@ export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormP
     resolver: zodResolver(orderSchema) as unknown as Resolver<OrderInput>,
     defaultValues: {
       order_date: new Date().toISOString().split('T')[0],
+      confirmation_amount: 0,
+      payment_method: '',
       lines: [{ product_id: '', quantity: 1 }],
     },
   })
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' })
+
+  // Live "à collecter par le livreur" = order total − confirmation deposit.
+  const priceById = new Map(products.map((p) => [p.id, p.sale_price]))
+  const watchedLines = useWatch({ control, name: 'lines' }) ?? []
+  const watchedConfirmation = useWatch({ control, name: 'confirmation_amount' })
+  const orderTotal = watchedLines.reduce(
+    (sum, line) => sum + (priceById.get(line?.product_id ?? '') ?? 0) * (Number(line?.quantity) || 0),
+    0
+  )
+  const confirmationAmount = Number(watchedConfirmation) || 0
+  const toCollect = Math.max(0, orderTotal - confirmationAmount)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
@@ -133,6 +148,54 @@ export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormP
               )}
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div>
+            <h2 className="font-semibold text-gray-900">Confirmation de commande</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Acompte déjà payé par le client (Mobile Money). Optionnel.
+            </p>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Montant de confirmation (FCFA)"
+              type="number"
+              min={0}
+              placeholder="0"
+              error={errors.confirmation_amount?.message}
+              {...register('confirmation_amount')}
+            />
+            <Select
+              label="Moyen de paiement"
+              options={paymentMethodOptions}
+              placeholder="Non confirmée"
+              error={errors.payment_method?.message}
+              {...register('payment_method')}
+            />
+          </div>
+          {orderTotal > 0 && (
+            <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm">
+              <div className="flex justify-between text-gray-500">
+                <span>Total de la commande</span>
+                <span>{formatCurrency(orderTotal)}</span>
+              </div>
+              {confirmationAmount > 0 && (
+                <div className="flex justify-between text-gray-500 mt-1">
+                  <span>Confirmation payée</span>
+                  <span>− {formatCurrency(confirmationAmount)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-semibold text-gray-900 mt-2 pt-2 border-t border-gray-200">
+                <span>À collecter par le livreur</span>
+                <span className="text-indigo-600">{formatCurrency(toCollect)}</span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -2,12 +2,13 @@ import { createAdminClient } from '@/services/supabase/server'
 import type { DeliveryDriverInput, DeliverySettlementInput } from '@/lib/schemas/delivery-driver.schema'
 import type { DeliveryDriver, DeliveryDriverSummary } from '@/types/delivery-driver'
 import { calculateDeliveryMetrics } from '@/lib/delivery-metrics'
+import { orderCollectibleAmount } from '@/lib/order-amounts'
 
 export async function getDeliveryDrivers(organizationId: string): Promise<DeliveryDriverSummary[]> {
   const supabase = await createAdminClient()
   const [{ data: drivers, error: driversError }, { data: orders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
     supabase.from('delivery_drivers').select('*').eq('organization_id', organizationId).order('name'),
-    supabase.from('orders').select('delivery_driver_id, status, order_lines(unit_price, quantity)').eq('organization_id', organizationId).not('delivery_driver_id', 'is', null),
+    supabase.from('orders').select('delivery_driver_id, status, confirmation_amount, order_lines(unit_price, quantity)').eq('organization_id', organizationId).not('delivery_driver_id', 'is', null),
     supabase.from('delivery_settlements').select('delivery_driver_id, amount').eq('organization_id', organizationId),
   ])
   if (driversError) throw new Error(driversError.message)
@@ -18,7 +19,7 @@ export async function getDeliveryDrivers(organizationId: string): Promise<Delive
     const assigned = orders?.filter((order) => order.delivery_driver_id === driver.id) ?? []
     const metricOrders = assigned.map((order) => {
       const lines = (order.order_lines as unknown as { unit_price: number; quantity: number }[]) ?? []
-      return { status: order.status, amount: lines.reduce((sum, line) => sum + line.unit_price * line.quantity, 0) }
+      return { status: order.status, amount: orderCollectibleAmount(lines, Number(order.confirmation_amount ?? 0)) }
     })
     const amountRemitted = settlements
       ?.filter((settlement) => settlement.delivery_driver_id === driver.id)
@@ -55,7 +56,7 @@ export async function addDeliverySettlement(
 
   const [{ data: deliveredOrders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
     supabase.from('orders')
-      .select('order_lines(unit_price, quantity)')
+      .select('confirmation_amount, order_lines(unit_price, quantity)')
       .eq('organization_id', organizationId)
       .eq('delivery_driver_id', driverId)
       .eq('status', 'delivered'),
@@ -67,9 +68,9 @@ export async function addDeliverySettlement(
   if (ordersError) throw new Error(ordersError.message)
   if (settlementsError) throw new Error(settlementsError.message)
 
-  const collected = deliveredOrders?.reduce((orderTotal, order) => {
+  const collected = deliveredOrders?.reduce((total, order) => {
     const lines = (order.order_lines as unknown as { unit_price: number; quantity: number }[]) ?? []
-    return orderTotal + lines.reduce((lineTotal, line) => lineTotal + Number(line.unit_price) * line.quantity, 0)
+    return total + orderCollectibleAmount(lines, Number(order.confirmation_amount ?? 0))
   }, 0) ?? 0
   const alreadyRemitted = settlements?.reduce((total, settlement) => total + Number(settlement.amount), 0) ?? 0
   const amountDue = Math.max(0, collected - alreadyRemitted)

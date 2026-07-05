@@ -13,7 +13,7 @@ export function calculateDeliveryMetrics(orders: DeliveryMetricOrder[], amountRe
 
   return {
     packages_assigned: orders.length,
-    packages_in_progress: orders.filter((order) => order.status === 'received' || order.status === 'in_progress').length,
+    packages_in_progress: orders.filter((order) => order.status === 'received' || order.status === 'confirmed' || order.status === 'in_progress').length,
     packages_delivered: delivered.length,
     packages_cancelled: cancelled.length,
     success_rate: completed === 0 ? 0 : Math.round((delivered.length / completed) * 100),

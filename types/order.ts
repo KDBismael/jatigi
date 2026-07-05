@@ -1,4 +1,4 @@
-import { Channel, OrderStatus } from '@/lib/constants'
+import { Channel, OrderStatus, PaymentMethod } from '@/lib/constants'
 import type { DeliveryDriver } from '@/types/delivery-driver'
 
 export interface OrderLine {
@@ -22,6 +22,8 @@ export interface Order {
   client_phone: string | null
   channel: Channel
   status: OrderStatus
+  confirmation_amount: number
+  payment_method: PaymentMethod | null
   order_date: string
   created_by: string | null
   created_at: string

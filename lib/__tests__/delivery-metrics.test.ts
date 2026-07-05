@@ -5,12 +5,13 @@ describe('calculateDeliveryMetrics', () => {
   it('compte les colis par état et uniquement les livrés comme encaissés', () => {
     const result = calculateDeliveryMetrics([
       { status: 'received', amount: 10_000 },
+      { status: 'confirmed', amount: 15_000 },
       { status: 'in_progress', amount: 20_000 },
       { status: 'delivered', amount: 30_000 },
       { status: 'cancelled', amount: 40_000 },
     ], 0)
-    expect(result.packages_assigned).toBe(4)
-    expect(result.packages_in_progress).toBe(2)
+    expect(result.packages_assigned).toBe(5)
+    expect(result.packages_in_progress).toBe(3)
     expect(result.packages_delivered).toBe(1)
     expect(result.packages_cancelled).toBe(1)
     expect(result.amount_collected).toBe(30_000)

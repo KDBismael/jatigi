@@ -1,7 +1,8 @@
 import { createAdminClient, createClient } from '@/services/supabase/server'
 import type { Order } from '@/types/order'
 import type { OrderInput, OrderStatusUpdate } from '@/lib/schemas/order.schema'
-import type { Channel } from '@/lib/constants'
+import type { Channel, OrderStatus, PaymentMethod } from '@/lib/constants'
+import { nextStatusForConfirmation } from '@/lib/order-amounts'
 
 export interface OrderUpdate {
   client_name?: string
@@ -9,6 +10,8 @@ export interface OrderUpdate {
   channel?: Channel
   order_date?: string
   delivery_driver_id?: string | null
+  confirmation_amount?: number
+  payment_method?: PaymentMethod | '' | null
 }
 
 export async function getOrders(organizationId: string): Promise<Order[]> {
@@ -46,6 +49,8 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     p_channel: input.channel,
     p_order_date: input.order_date,
     p_delivery_driver_id: input.delivery_driver_id || null,
+    p_confirmation_amount: input.confirmation_amount ?? 0,
+    p_payment_method: input.payment_method || null,
     p_lines: input.lines,
   })
   if (error) {
@@ -64,15 +69,27 @@ export async function updateOrder(id: string, input: OrderUpdate, organizationId
       .eq('id', input.delivery_driver_id).eq('organization_id', organizationId).single()
     if (!driver) throw new Error('Livreur introuvable dans votre organisation')
   }
-  const { data, error } = await supabase
+
+  const update: Record<string, unknown> = { ...input }
+
+  // A confirmation change flips the order between the two initial states.
+  if (input.confirmation_amount !== undefined) {
+    const { data: current } = await supabase.from('orders').select('status')
+      .eq('id', id).eq('organization_id', organizationId).single()
+    if (!current) throw new Error('Commande introuvable')
+    update.confirmation_amount = input.confirmation_amount
+    update.payment_method = input.payment_method || null
+    update.status = nextStatusForConfirmation(current.status as OrderStatus, input.confirmation_amount)
+  }
+
+  const { error } = await supabase
     .from('orders')
-    .update(input)
+    .update(update)
     .eq('id', id)
     .eq('organization_id', organizationId)
     .select()
     .single()
   if (error) throw new Error(error.message)
-  void data
   const order = await getOrderById(id, organizationId)
   if (!order) throw new Error('Commande introuvable')
   return order
