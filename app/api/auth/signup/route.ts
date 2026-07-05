@@ -6,6 +6,7 @@ const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   full_name: z.string().min(1).max(100),
+  phone: z.string().min(6, 'Numéro de téléphone requis').max(30),
   organization_name: z.string().min(1).max(120),
 })
 
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { email, password, full_name, organization_name } = parsed.data
+  const { email, password, full_name, phone, organization_name } = parsed.data
   const supabase = await createAdminClient()
 
   // Step 1: Create auth user
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
   const { error: profileErr } = await supabase.from('profiles').insert({
     id: userId,
     full_name,
+    phone,
     role: 'admin',
     organization_id: org.id,
   })
@@ -59,6 +61,9 @@ export async function POST(request: NextRequest) {
     await supabase.from('organizations').delete().eq('id', org.id)
     return NextResponse.json({ error: profileErr.message }, { status: 500 })
   }
+
+  // Mark the signup admin as the organization owner.
+  await supabase.from('organizations').update({ owner_id: userId }).eq('id', org.id)
 
   return NextResponse.json({ success: true, organization: org }, { status: 201 })
 }

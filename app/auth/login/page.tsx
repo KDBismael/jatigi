@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
   const [orgName, setOrgName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -39,7 +40,7 @@ export default function LoginPage() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, full_name: fullName, organization_name: orgName }),
+      body: JSON.stringify({ email, password, full_name: fullName, phone, organization_name: orgName }),
     })
     if (!res.ok) {
       const data = await res.json()
@@ -105,6 +106,7 @@ export default function LoginPage() {
             <form onSubmit={handleSignup} className="space-y-4">
               <Field label="Nom de votre boutique" id="orgName" type="text" value={orgName} onChange={setOrgName} placeholder="Ex : Boutique Aminata" />
               <Field label="Votre nom complet" id="fullName" type="text" value={fullName} onChange={setFullName} placeholder="Aminata Diallo" />
+              <Field label="Téléphone" id="phone" type="tel" value={phone} onChange={setPhone} placeholder="+225 07 00 00 00 00" />
               <Field label="Email" id="email2" type="email" value={email} onChange={setEmail} placeholder="vous@exemple.com" />
               <PasswordInput
                 id="password2"

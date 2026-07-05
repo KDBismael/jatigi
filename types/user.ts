@@ -9,6 +9,7 @@ export interface Organization {
 export interface Profile {
   id: string
   full_name: string
+  phone: string | null
   role: Role
   organization_id: string
   created_at: string
