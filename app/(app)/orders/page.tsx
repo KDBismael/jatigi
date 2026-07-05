@@ -16,13 +16,13 @@ export default function OrdersPage() {
   const { orders, filters, isLoading, updateStatus, setFilters } = useOrders()
   const { organization } = useAuthStore()
 
-  const [preset, setPreset] = useState<DatePreset>('last30d')
+  const [preset, setPreset] = useState<DatePreset>('today')
   const [customFrom, setCustomFrom] = useState<string | undefined>()
   const [customTo, setCustomTo] = useState<string | undefined>()
 
   // Initialize date filter to default preset on first render
   useEffect(() => {
-    const range = getPeriodDates('last30d')
+    const range = getPeriodDates('today')
     setFilters({ dateFrom: range.dateFrom, dateTo: range.dateTo })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 

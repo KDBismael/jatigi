@@ -11,7 +11,7 @@ import { formatCurrency } from '@/lib/utils'
 import { getPeriodDates, type DatePreset } from '@/lib/date-periods'
 
 export default function AnalyticsPage() {
-  const [preset, setPreset] = useState<DatePreset>('last30d')
+  const [preset, setPreset] = useState<DatePreset>('today')
   const [customFrom, setCustomFrom] = useState<string | undefined>()
   const [customTo, setCustomTo] = useState<string | undefined>()
 
@@ -19,7 +19,7 @@ export default function AnalyticsPage() {
     ? { dateFrom: customFrom, dateTo: customTo }
     : preset !== 'custom'
     ? getPeriodDates(preset)
-    : getPeriodDates('last30d')
+    : getPeriodDates('today')
 
   const { data, isLoading } = useAnalytics(range)
 
