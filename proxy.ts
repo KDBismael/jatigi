@@ -66,9 +66,30 @@ export async function proxy(request: NextRequest) {
     const { data } = await supabase.auth.getUser()
     user = data.user ?? null
 
+    // Is the logged-in user a platform (super) admin? They live above all orgs
+    // in their own /admin area and have no profile/organization.
+    let isPlatformAdmin = false
+    if (user) {
+      const { data: pa } = await supabase
+        .from('platform_admins')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      isPlatformAdmin = Boolean(pa)
+    }
+
+    const isAdminArea = pathname === '/admin' || pathname.startsWith('/admin/')
+
+    // Platform admin area gating
+    if (isAdminArea) {
+      if (!user) return NextResponse.redirect(new URL('/auth/login', request.url))
+      if (!isPlatformAdmin) return NextResponse.redirect(new URL('/orders', request.url))
+      return supabaseResponse
+    }
+
     // Redirect authenticated users away from public auth pages
     if (user && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup'))) {
-      return NextResponse.redirect(new URL('/orders', request.url))
+      return NextResponse.redirect(new URL(isPlatformAdmin ? '/admin' : '/orders', request.url))
     }
 
     // Allow public paths through
@@ -80,6 +101,11 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       const loginUrl = new URL('/auth/login', request.url)
       return NextResponse.redirect(loginUrl)
+    }
+
+    // A platform admin has no organization — keep them inside /admin.
+    if (isPlatformAdmin) {
+      return NextResponse.redirect(new URL('/admin', request.url))
     }
 
     // Admin-only routes: check role
