@@ -1,3 +1,4 @@
+this is built for mobile or tablet first users, optimize UX and UI in consequence.
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. CONTENT IS IN FRENCH as WELL as ERRORs
