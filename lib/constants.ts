@@ -29,7 +29,7 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: 'bg-red-100 text-red-800',
 }
 
-export const PAYMENT_METHODS = ['wave', 'orange_money', 'mtn_momo', 'moov_money'] as const
+export const PAYMENT_METHODS = ['wave', 'orange_money', 'mtn_momo', 'moov_money', 'cash'] as const
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number]
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -37,6 +37,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   orange_money: 'Orange Money',
   mtn_momo: 'MTN MoMo',
   moov_money: 'Moov Money',
+  cash: 'Espèce',
 }
 
 export const ROLES = ['admin', 'employee'] as const
