@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CHANNELS, CHANNEL_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
+import { useAuthStore } from '@/stores/auth-store'
 import type { Product } from '@/types/product'
 import type { DeliveryDriverSummary } from '@/types/delivery-driver'
 
@@ -23,9 +24,10 @@ const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c]
 const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
 
 export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormProps) {
+  const isAdmin = useAuthStore((s) => s.isAdmin())
   const productOptions = products.map((p) => ({
     value: p.id,
-    label: `${p.name} (stock: ${p.stock_quantity})`,
+    label: isAdmin ? `${p.name} (stock: ${p.stock_quantity})` : p.name,
   }))
 
   const {
@@ -178,7 +180,7 @@ export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormP
               {...register('payment_method')}
             />
           </div>
-          {orderTotal > 0 && (
+          {isAdmin && orderTotal > 0 && (
             <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm">
               <div className="flex justify-between text-gray-500">
                 <span>Total de la commande</span>
