@@ -34,6 +34,7 @@ export default function OrderDetailPage() {
   const [editChannel, setEditChannel] = useState('')
   const [editDate, setEditDate] = useState('')
   const [editDriverId, setEditDriverId] = useState('')
+  const [editLocation, setEditLocation] = useState('')
   const [editConfirmationAmount, setEditConfirmationAmount] = useState('')
   const [editPaymentMethod, setEditPaymentMethod] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -53,6 +54,7 @@ export default function OrderDetailPage() {
     setEditChannel(order.channel)
     setEditDate(order.order_date)
     setEditDriverId(order.delivery_driver_id ?? '')
+    setEditLocation(order.delivery_location ?? '')
     setEditConfirmationAmount(order.confirmation_amount ? String(order.confirmation_amount) : '')
     setEditPaymentMethod(order.payment_method ?? '')
     setSaveError(null)
@@ -72,6 +74,7 @@ export default function OrderDetailPage() {
           channel: editChannel,
           order_date: editDate,
           delivery_driver_id: editDriverId || null,
+          delivery_location: editLocation || null,
           confirmation_amount: Number(editConfirmationAmount) || 0,
           payment_method: editPaymentMethod || '',
         }),
@@ -178,6 +181,12 @@ export default function OrderDetailPage() {
               placeholder="Aucun livreur"
               value={editDriverId}
               onChange={(event) => setEditDriverId(event.target.value)}
+            />
+            <Input
+              label="Lieu de livraison (optionnel)"
+              placeholder="Ex : Cocody, Angré 8e tranche"
+              value={editLocation}
+              onChange={(e) => setEditLocation(e.target.value)}
             />
             <div className="grid grid-cols-2 gap-4">
               <Select
@@ -398,13 +407,21 @@ export default function OrderDetailPage() {
       )}
 
       {/* Client info */}
-      {order.client_phone && !isEditing && (
+      {(order.client_phone || order.delivery_location) && !isEditing && (
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Contact client</h2>
+            <h2 className="font-semibold text-gray-900">Contact &amp; livraison</h2>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-700">{order.client_phone}</p>
+          <CardContent className="space-y-2">
+            {order.client_phone && (
+              <p className="text-sm text-gray-700">{order.client_phone}</p>
+            )}
+            {order.delivery_location && (
+              <div>
+                <p className="text-xs text-gray-500">Lieu de livraison</p>
+                <p className="text-sm text-gray-700">{order.delivery_location}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

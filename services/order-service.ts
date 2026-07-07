@@ -10,6 +10,7 @@ export interface OrderUpdate {
   channel?: Channel
   order_date?: string
   delivery_driver_id?: string | null
+  delivery_location?: string | null
   confirmation_amount?: number
   payment_method?: PaymentMethod | '' | null
 }
@@ -49,6 +50,7 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     p_channel: input.channel,
     p_order_date: input.order_date,
     p_delivery_driver_id: input.delivery_driver_id || null,
+    p_delivery_location: input.delivery_location || null,
     p_confirmation_amount: input.confirmation_amount ?? 0,
     p_payment_method: input.payment_method || null,
     p_lines: input.lines,
@@ -71,6 +73,8 @@ export async function updateOrder(id: string, input: OrderUpdate, organizationId
   }
 
   const update: Record<string, unknown> = { ...input }
+
+  if (input.delivery_location !== undefined) update.delivery_location = input.delivery_location || null
 
   // A confirmation change flips the order between the two initial states.
   if (input.confirmation_amount !== undefined) {

@@ -29,6 +29,7 @@ export interface Order {
   created_at: string
   updated_at: string
   delivery_driver_id: string | null
+  delivery_location: string | null
   delivery_driver?: Pick<DeliveryDriver, 'id' | 'name' | 'phone'> | null
   order_lines?: OrderLine[]
 }

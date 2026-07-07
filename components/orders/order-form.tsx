@@ -96,6 +96,12 @@ export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormP
             error={errors.delivery_driver_id?.message}
             {...register('delivery_driver_id')}
           />
+          <Input
+            label="Lieu de livraison (optionnel)"
+            placeholder="Ex : Cocody, Angré 8e tranche"
+            error={errors.delivery_location?.message}
+            {...register('delivery_location')}
+          />
         </CardContent>
       </Card>
 

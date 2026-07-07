@@ -39,6 +39,7 @@ export const orderSchema = z.object({
   channel: channelEnum,
   order_date: z.string().min(1, 'Date requise'),
   delivery_driver_id: z.string().uuid().optional().nullable().or(z.literal('')),
+  delivery_location: z.string().max(200).optional().nullable().or(z.literal('')),
   confirmation_amount: z.coerce.number().min(0, 'Montant invalide').optional().default(0),
   payment_method: paymentMethodEnum.optional().nullable().or(z.literal('')),
   lines: z.array(orderLineSchema).min(1, 'Au moins un produit requis'),
@@ -54,6 +55,7 @@ export const orderUpdateSchema = z.object({
   channel: channelEnum.optional(),
   order_date: z.string().optional(),
   delivery_driver_id: z.string().uuid().optional().nullable().or(z.literal('')),
+  delivery_location: z.string().max(200).optional().nullable().or(z.literal('')),
   confirmation_amount: z.coerce.number().min(0, 'Montant invalide').optional(),
   payment_method: paymentMethodEnum.optional().nullable().or(z.literal('')),
 }).superRefine(confirmationRefine)
