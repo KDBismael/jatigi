@@ -281,15 +281,17 @@ export default function TeamPage() {
                       <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
                         <button
                           onClick={() => handleRoleToggle(m)}
-                          className={`text-sm font-medium hover:underline ${
-                            m.role === 'admin' ? 'text-orange-500' : 'text-indigo-600'
+                          className={`text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                            m.role === 'admin'
+                              ? 'text-orange-600 border-orange-300 bg-white hover:bg-orange-50'
+                              : 'text-indigo-600 border-indigo-300 bg-white hover:bg-indigo-50'
                           }`}
                         >
                           {m.role === 'admin' ? '→ Employé' : '→ Admin'}
                         </button>
                         <button
                           onClick={() => setRemoveTarget(m)}
-                          className="text-sm font-medium text-red-500 hover:underline"
+                          className="text-sm font-medium text-red-600 border border-red-300 bg-white px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
                         >
                           Supprimer
                         </button>
@@ -323,15 +325,17 @@ export default function TeamPage() {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => handleRoleToggle(m)}
-                                className={`text-xs hover:underline ${
-                                  m.role === 'admin' ? 'text-orange-500' : 'text-indigo-600'
+                                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
+                                  m.role === 'admin'
+                                    ? 'text-orange-600 border-orange-300 bg-white hover:bg-orange-50'
+                                    : 'text-indigo-600 border-indigo-300 bg-white hover:bg-indigo-50'
                                 }`}
                               >
                                 {m.role === 'admin' ? '→ Employé' : '→ Admin'}
                               </button>
                               <button
                                 onClick={() => setRemoveTarget(m)}
-                                className="text-xs text-red-500 hover:underline"
+                                className="text-xs font-medium text-red-600 border border-red-300 bg-white px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
                               >
                                 Supprimer
                               </button>

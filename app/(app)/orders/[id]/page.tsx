@@ -14,6 +14,7 @@ import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, PAYMENT_METHODS, PAY
 import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
 import { useDeliveryDrivers } from '@/hooks/use-delivery-drivers'
+import { useOrderOptions } from '@/hooks/use-order-options'
 
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
@@ -23,6 +24,7 @@ export default function OrderDetailPage() {
   const router = useRouter()
   const isAdmin = useAuthStore((s) => s.isAdmin())
   const { drivers } = useDeliveryDrivers()
+  const { sellers, lives } = useOrderOptions()
   const [order, setOrder] = useState<Order | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
@@ -35,6 +37,8 @@ export default function OrderDetailPage() {
   const [editDate, setEditDate] = useState('')
   const [editDriverId, setEditDriverId] = useState('')
   const [editLocation, setEditLocation] = useState('')
+  const [editSellerId, setEditSellerId] = useState('')
+  const [editLiveId, setEditLiveId] = useState('')
   const [editConfirmationAmount, setEditConfirmationAmount] = useState('')
   const [editPaymentMethod, setEditPaymentMethod] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -55,6 +59,8 @@ export default function OrderDetailPage() {
     setEditDate(order.order_date)
     setEditDriverId(order.delivery_driver_id ?? '')
     setEditLocation(order.delivery_location ?? '')
+    setEditSellerId(order.seller_id ?? '')
+    setEditLiveId(order.live_session_id ?? '')
     setEditConfirmationAmount(order.confirmation_amount ? String(order.confirmation_amount) : '')
     setEditPaymentMethod(order.payment_method ?? '')
     setSaveError(null)
@@ -75,6 +81,7 @@ export default function OrderDetailPage() {
           order_date: editDate,
           delivery_driver_id: editDriverId || null,
           delivery_location: editLocation || null,
+          ...(isAdmin ? { seller_id: editSellerId, live_session_id: editLiveId || null } : {}),
           confirmation_amount: Number(editConfirmationAmount) || 0,
           payment_method: editPaymentMethod || '',
         }),
@@ -182,6 +189,10 @@ export default function OrderDetailPage() {
               value={editDriverId}
               onChange={(event) => setEditDriverId(event.target.value)}
             />
+            {isAdmin && <div className="grid grid-cols-2 gap-4">
+              <Select label="Vendeur" options={sellers.map(s=>({value:s.id,label:s.full_name}))} value={editSellerId} onChange={e=>setEditSellerId(e.target.value)} />
+              <Select label="Session live" options={lives.map(l=>({value:l.id,label:`${l.name||'Live'} · ${l.session_date}`}))} placeholder="Aucun live" value={editLiveId} onChange={e=>setEditLiveId(e.target.value)} />
+            </div>}
             <Input
               label="Lieu de livraison (optionnel)"
               placeholder="Ex : Cocody, Angré 8e tranche"
@@ -235,6 +246,7 @@ export default function OrderDetailPage() {
       <Card>
         <CardHeader><h2 className="font-semibold text-gray-900">Livraison</h2></CardHeader>
         <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4 text-sm"><div><p className="text-gray-500">Vendeur</p><p className="font-medium">{order.seller?.full_name ?? '—'}</p></div><div><p className="text-gray-500">Live</p><p className="font-medium">{order.live_session?.name ?? (order.live_session ? 'Live' : '—')}</p></div></div>
           {order.delivery_driver ? (
             <div><p className="font-medium text-gray-900">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-sm text-gray-500 mt-1">{order.delivery_driver.phone}</p>}</div>
           ) : <p className="text-sm text-gray-500">Aucun livreur assigné.</p>}

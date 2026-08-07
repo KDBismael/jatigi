@@ -53,6 +53,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
+  if (ctx.profile.role !== 'admin' && (parsed.data.seller_id !== undefined || parsed.data.live_session_id !== undefined)) {
+    return NextResponse.json({ error: 'Seul un administrateur peut modifier le vendeur ou le live' }, { status: 403 })
+  }
 
   try {
     const order = await updateOrder(id, parsed.data, ctx.profile.organization_id)

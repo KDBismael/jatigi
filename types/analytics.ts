@@ -1,4 +1,5 @@
 import { Channel } from '@/lib/constants'
+import type { CeoMetrics, SellerPerformance, LivePerformance, SlotPerformance, MonthlyGoal } from './pilotage'
 
 export interface DashboardStats {
   total_revenue: number
@@ -15,6 +16,16 @@ export interface ProductPerformance {
   total_quantity: number
   total_revenue: number
   total_profit: number
+  rank?: number
+}
+
+export interface CeoDashboardData {
+  today: CeoMetrics
+  month: CeoMetrics
+  goals: MonthlyGoal[]
+  sellerPerformance: SellerPerformance[]
+  livePerformance: LivePerformance[]
+  slotPerformance: SlotPerformance[]
 }
 
 export interface ChannelStat {

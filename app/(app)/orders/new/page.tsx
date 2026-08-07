@@ -8,12 +8,14 @@ import { useProducts } from '@/hooks/use-products'
 import type { OrderInput } from '@/lib/schemas/order.schema'
 import type { Product } from '@/types/product'
 import { useDeliveryDrivers } from '@/hooks/use-delivery-drivers'
+import { useOrderOptions } from '@/hooks/use-order-options'
 
 export default function NewOrderPage() {
   const router = useRouter()
   const { create } = useOrders()
   const { products } = useProducts()
   const { drivers } = useDeliveryDrivers()
+  const { sellers, lives } = useOrderOptions()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,7 +42,7 @@ export default function NewOrderPage() {
           {error}
         </div>
       )}
-      <OrderForm onSubmit={handleSubmit} products={products as Product[]} drivers={drivers} isLoading={isLoading} />
+      <OrderForm onSubmit={handleSubmit} products={products as Product[]} drivers={drivers} sellers={sellers} lives={lives} isLoading={isLoading} />
     </div>
   )
 }

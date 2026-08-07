@@ -26,10 +26,15 @@ export interface Order {
   payment_method: PaymentMethod | null
   order_date: string
   created_by: string | null
+  seller_id: string
+  live_session_id: string | null
+  delivered_at: string | null
   created_at: string
   updated_at: string
   delivery_driver_id: string | null
   delivery_location: string | null
   delivery_driver?: Pick<DeliveryDriver, 'id' | 'name' | 'phone'> | null
+  seller?: { id: string; full_name: string } | null
+  live_session?: { id: string; name: string | null; session_date: string; slot: 'morning' | 'afternoon' | 'evening' } | null
   order_lines?: OrderLine[]
 }

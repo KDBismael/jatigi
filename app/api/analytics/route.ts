@@ -5,6 +5,7 @@ import {
   getProductPerformance,
   getChannelStats,
   getRevenueByPeriod,
+  getCeoDashboard,
 } from '@/services/analytics-service'
 import { getPeriodDates, type DateRange } from '@/lib/date-periods'
 
@@ -35,14 +36,19 @@ export async function GET(request: NextRequest) {
     : getPeriodDates('today')
 
   try {
-    const [stats, products, channels, revenue] = await Promise.all([
+    const abidjanToday = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Abidjan', year:'numeric', month:'2-digit', day:'2-digit' }).format(new Date())
+    const [year, month] = abidjanToday.split('-').map(Number)
+    const monthStart = `${year}-${String(month).padStart(2,'0')}-01`
+    const nextMonth = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2,'0')}-01`
+    const [stats, products, channels, revenue, ceo] = await Promise.all([
       getDashboardStats(range, admin.profile.organization_id),
       getProductPerformance(range, admin.profile.organization_id),
       getChannelStats(range, admin.profile.organization_id),
       getRevenueByPeriod(range, admin.profile.organization_id),
+      getCeoDashboard(admin.profile.organization_id, abidjanToday, monthStart, nextMonth),
     ])
 
-    return NextResponse.json({ stats, products, channels, revenue })
+    return NextResponse.json({ stats, products, channels, revenue, ...ceo })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

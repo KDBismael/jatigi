@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/callback', '/auth/signup', '/auth/forgot-password', '/auth/reset-password']
 
 // Admin-only paths — authenticated non-admins get redirected to /orders
-const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/deliveries', '/analytics', '/team']
+const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/deliveries', '/analytics', '/team', '/expenses', '/pilotage', '/reports']
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))
@@ -89,7 +89,9 @@ export async function proxy(request: NextRequest) {
 
     // Redirect authenticated users away from public auth pages
     if (user && (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/signup'))) {
-      return NextResponse.redirect(new URL(isPlatformAdmin ? '/admin' : '/orders', request.url))
+      if (isPlatformAdmin) return NextResponse.redirect(new URL('/admin', request.url))
+      const { data: member } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
+      return NextResponse.redirect(new URL(member?.role === 'admin' ? '/dashboard' : '/orders', request.url))
     }
 
     // Allow public paths through

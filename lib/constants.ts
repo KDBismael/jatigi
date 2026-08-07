@@ -6,7 +6,7 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   facebook: 'Facebook',
   instagram: 'Instagram',
   whatsapp: 'WhatsApp',
-  magasin: 'Magasin physique',
+  magasin: 'Boutique',
   other: 'Autre',
 }
 

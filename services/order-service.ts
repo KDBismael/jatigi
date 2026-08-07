@@ -9,6 +9,8 @@ export interface OrderUpdate {
   client_phone?: string | null
   channel?: Channel
   order_date?: string
+  seller_id?: string
+  live_session_id?: string | null
   delivery_driver_id?: string | null
   delivery_location?: string | null
   confirmation_amount?: number
@@ -19,7 +21,7 @@ export async function getOrders(organizationId: string): Promise<Order[]> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('orders')
-    .select('*, delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name))')
+    .select('*, seller:profiles!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name))')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -31,7 +33,7 @@ export async function getOrderById(id: string, organizationId: string): Promise<
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('orders')
-    .select('*, delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name, purchase_cost, import_cost, packaging_cost))')
+    .select('*, seller:profiles!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name, purchase_cost, import_cost, packaging_cost))')
     .eq('id', id)
     .eq('organization_id', organizationId)
     .single()
@@ -42,6 +44,13 @@ export async function getOrderById(id: string, organizationId: string): Promise<
 
 export async function createOrder(input: OrderInput, userId: string, organizationId: string): Promise<Order> {
   const supabase = await createClient()
+  const admin = await createAdminClient()
+  const { data: seller } = await admin.from('profiles').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).single()
+  if (!seller) throw new Error('Vendeur introuvable dans votre organisation')
+  if (input.live_session_id) {
+    const { data: live } = await admin.from('live_sessions').select('id').eq('id', input.live_session_id).eq('organization_id', organizationId).single()
+    if (!live) throw new Error('Live introuvable dans votre organisation')
+  }
   void userId
   void organizationId
   const { data: orderId, error } = await supabase.rpc('create_order_with_fifo', {
@@ -59,6 +68,11 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     if (error.message.includes('INSUFFICIENT_STOCK')) throw new Error('Stock insuffisant pour ce produit')
     throw new Error(error.message)
   }
+  const { error: assignmentError } = await admin.from('orders').update({
+    seller_id: input.seller_id,
+    live_session_id: input.live_session_id || null,
+  }).eq('id', orderId as string).eq('organization_id', organizationId)
+  if (assignmentError) throw new Error(assignmentError.message)
   const order = await getOrderById(orderId as string, organizationId)
   if (!order) throw new Error('Commande créée mais introuvable')
   return order
@@ -70,6 +84,14 @@ export async function updateOrder(id: string, input: OrderUpdate, organizationId
     const { data: driver } = await supabase.from('delivery_drivers').select('id')
       .eq('id', input.delivery_driver_id).eq('organization_id', organizationId).single()
     if (!driver) throw new Error('Livreur introuvable dans votre organisation')
+  }
+  if (input.seller_id) {
+    const { data: seller } = await supabase.from('profiles').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).single()
+    if (!seller) throw new Error('Vendeur introuvable dans votre organisation')
+  }
+  if (input.live_session_id) {
+    const { data: live } = await supabase.from('live_sessions').select('id').eq('id', input.live_session_id).eq('organization_id', organizationId).single()
+    if (!live) throw new Error('Live introuvable dans votre organisation')
   }
 
   const update: Record<string, unknown> = { ...input }
@@ -103,6 +125,9 @@ export async function updateOrderStatus(id: string, update: OrderStatusUpdate, o
   const supabase = await createClient()
   const { error } = await supabase.rpc('update_order_status_safe', { p_order_id: id, p_status: update.status })
   if (error) throw new Error(error.message)
+  const admin = await createAdminClient()
+  await admin.from('orders').update({ delivered_at: update.status === 'delivered' ? new Date().toISOString() : null })
+    .eq('id', id).eq('organization_id', organizationId)
   const order = await getOrderById(id, organizationId)
   if (!order) throw new Error('Commande introuvable')
   return order

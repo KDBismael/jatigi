@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm, useFieldArray, useWatch, type Resolver } from 'react-hook-form'
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { orderSchema, type OrderInput } from '@/lib/schemas/order.schema'
 import { Input } from '@/components/ui/input'
@@ -12,19 +13,23 @@ import { formatCurrency } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Product } from '@/types/product'
 import type { DeliveryDriverSummary } from '@/types/delivery-driver'
+import type { SellerOption, LiveOption } from '@/hooks/use-order-options'
 
 interface OrderFormProps {
   onSubmit: (data: OrderInput) => Promise<void>
   products: Product[]
   drivers: DeliveryDriverSummary[]
+  sellers: SellerOption[]
+  lives: LiveOption[]
   isLoading?: boolean
 }
 
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
 
-export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormProps) {
+export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoading }: OrderFormProps) {
   const isAdmin = useAuthStore((s) => s.isAdmin())
+  const profile = useAuthStore((s) => s.profile)
   const productOptions = products.map((p) => ({
     value: p.id,
     label: isAdmin ? `${p.name} (stock: ${p.stock_quantity})` : p.name,
@@ -34,16 +39,22 @@ export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormP
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<OrderInput>({
     resolver: zodResolver(orderSchema) as unknown as Resolver<OrderInput>,
     defaultValues: {
       order_date: new Date().toISOString().split('T')[0],
+      seller_id: profile?.id ?? '',
+      live_session_id: '',
       confirmation_amount: 0,
       payment_method: '',
       lines: [{ product_id: '', quantity: 1 }],
     },
   })
+  useEffect(() => {
+    if (profile?.id && sellers.some((seller) => seller.id === profile.id)) setValue('seller_id', profile.id)
+  }, [profile?.id, sellers, setValue])
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' })
 
@@ -88,6 +99,12 @@ export function OrderForm({ onSubmit, products, drivers, isLoading }: OrderFormP
               error={errors.order_date?.message}
               {...register('order_date')}
             />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select label="Vendeur" options={sellers.map(s => ({ value: s.id, label: s.full_name }))}
+              placeholder="Sélectionner un vendeur" error={errors.seller_id?.message} {...register('seller_id')} />
+            <Select label="Session live (optionnel)" options={lives.map(l => ({ value: l.id, label: `${l.name || 'Live'} · ${l.session_date}` }))}
+              placeholder="Aucun live" error={errors.live_session_id?.message} {...register('live_session_id')} />
           </div>
           <Select
             label="Livreur assigné"

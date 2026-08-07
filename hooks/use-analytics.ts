@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { DashboardStats, ProductPerformance, ChannelStat, RevenueByPeriod } from '@/types/analytics'
+import type { CeoMetrics, SellerPerformance, LivePerformance, SlotPerformance, MonthlyGoal } from '@/types/pilotage'
 import type { DateRange } from '@/lib/date-periods'
 
 interface AnalyticsData {
@@ -9,6 +10,12 @@ interface AnalyticsData {
   products: ProductPerformance[]
   channels: ChannelStat[]
   revenue: RevenueByPeriod[]
+  today: CeoMetrics
+  month: CeoMetrics
+  goals: MonthlyGoal[]
+  sellerPerformance: SellerPerformance[]
+  livePerformance: LivePerformance[]
+  slotPerformance: SlotPerformance[]
 }
 
 export function useAnalytics(range: DateRange) {

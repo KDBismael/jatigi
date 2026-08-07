@@ -30,7 +30,8 @@ export default function LoginPage() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(translateAuthError(error.message)); setLoading(false); return }
-    window.location.href = '/orders'
+    const me = await fetch('/api/me').then((r) => r.ok ? r.json() : null)
+    window.location.href = me?.profile?.role === 'admin' ? '/dashboard' : '/orders'
   }
 
   async function handleSignup(e: React.FormEvent) {
