@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { AddStockModal } from './add-stock-modal'
 import { useProductStore } from '@/stores/product-store'
+import { MobileMetric, MobileRecordCard } from '@/components/ui/mobile-record-card'
 
 interface ProductTableProps {
   products: Product[]
@@ -36,7 +37,8 @@ export function ProductTable({ products, onDelete }: ProductTableProps) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className="space-y-3 sm:hidden">{products.map(p=>{const totalCost=p.purchase_cost+p.import_cost+p.packaging_cost;const margin=computeMargin({sale_price:p.sale_price,purchase_cost:p.purchase_cost,import_cost:p.import_cost,packaging_cost:p.packaging_cost});return <MobileRecordCard key={p.id} onClick={()=>router.push(`/products/${p.id}`)}><div className="flex items-start justify-between gap-3"><p className="font-semibold text-gray-900">{p.name}</p><span className={`rounded-full px-2 py-1 text-xs font-medium ${p.stock_quantity>5?'bg-green-100 text-green-800':p.stock_quantity>0?'bg-yellow-100 text-yellow-800':'bg-red-100 text-red-800'}`}>{p.stock_quantity} unités</span></div><div className="mt-4 grid grid-cols-3 gap-2"><MobileMetric label="Prix vente" value={formatCurrency(p.sale_price)}/><MobileMetric label="Coût" value={formatCurrency(totalCost)}/><MobileMetric label="Marge" value={<span className={margin>=0?'text-green-600':'text-red-600'}>{formatCurrency(margin)}</span>}/></div><div className="mt-4 flex gap-2 border-t border-gray-100 pt-3" onClick={e=>e.stopPropagation()}><Button variant="secondary" className="min-h-11 flex-1" onClick={()=>setAddStockProduct(p)}>+ Stock</Button>{onDelete&&<Button variant="secondary" className="min-h-11 flex-1 border-red-300 text-red-600 hover:bg-red-50" onClick={()=>setDeleteTarget(p)}>Supprimer</Button>}</div></MobileRecordCard>})}</div>
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left">

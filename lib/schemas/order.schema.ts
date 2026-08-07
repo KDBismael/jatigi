@@ -42,6 +42,7 @@ export const orderSchema = z.object({
   live_session_id: z.string().uuid().optional().nullable().or(z.literal('')),
   delivery_driver_id: z.string().uuid().optional().nullable().or(z.literal('')),
   delivery_location: z.string().max(200).optional().nullable().or(z.literal('')),
+  delivery_fee: z.coerce.number().min(0, 'Coût de livraison invalide').optional().default(0),
   confirmation_amount: z.coerce.number().min(0, 'Montant invalide').optional().default(0),
   payment_method: paymentMethodEnum.optional().nullable().or(z.literal('')),
   lines: z.array(orderLineSchema).min(1, 'Au moins un produit requis'),
@@ -60,6 +61,7 @@ export const orderUpdateSchema = z.object({
   live_session_id: z.string().uuid().optional().nullable().or(z.literal('')),
   delivery_driver_id: z.string().uuid().optional().nullable().or(z.literal('')),
   delivery_location: z.string().max(200).optional().nullable().or(z.literal('')),
+  delivery_fee: z.coerce.number().min(0, 'Coût de livraison invalide').optional(),
   confirmation_amount: z.coerce.number().min(0, 'Montant invalide').optional(),
   payment_method: paymentMethodEnum.optional().nullable().or(z.literal('')),
 }).superRefine(confirmationRefine)

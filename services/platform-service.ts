@@ -14,7 +14,7 @@ type AdminClient = Awaited<ReturnType<typeof createAdminClient>>
 
 // order_lines select shared across the cross-org queries.
 const ORDER_SELECT =
-  'organization_id, status, order_date, confirmation_amount, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))'
+  'organization_id, status, order_date, confirmation_amount, delivery_fee, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))'
 
 type OrgRow = { id: string; name: string; owner_id: string | null; created_at?: string }
 
@@ -23,6 +23,7 @@ type OrderRow = {
   status: string
   order_date: string
   confirmation_amount: number | null
+  delivery_fee: number | null
   order_lines?: {
     unit_price: number
     unit_cost: number
@@ -109,7 +110,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
   const orderStats = summarizeOrders(orderRows)
   const { revenue, profit } = revenueProfitFromDelivered(orderRows)
   const delivery = summarizeDeliveries(
-    orderRows.map((o) => ({ status: o.status, confirmation_amount: o.confirmation_amount ?? 0, order_lines: o.order_lines })),
+    orderRows.map((o) => ({ status: o.status, confirmation_amount: o.confirmation_amount ?? 0, delivery_fee: o.delivery_fee ?? 0, order_lines: o.order_lines })),
     keptSettlements,
   )
 
@@ -186,7 +187,7 @@ export async function getOrganizationsOverview(): Promise<PlatformOrganization[]
       const orgOrders = orderRows.filter((o) => o.organization_id === org.id)
       const { revenue } = revenueProfitFromDelivered(orgOrders)
       const { collected } = summarizeDeliveries(
-        orgOrders.map((o) => ({ status: o.status, confirmation_amount: o.confirmation_amount ?? 0, order_lines: o.order_lines })),
+        orgOrders.map((o) => ({ status: o.status, confirmation_amount: o.confirmation_amount ?? 0, delivery_fee: o.delivery_fee ?? 0, order_lines: o.order_lines })),
         [],
       )
       return {

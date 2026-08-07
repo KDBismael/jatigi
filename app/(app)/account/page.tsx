@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PasswordInput } from '@/components/ui/password-input'
 import { translateAuthError } from '@/lib/auth-errors'
+import { ThemeSelect } from '@/components/layout/theme-select'
 
 export default function AccountPage() {
   const { profile } = useAuthStore()
@@ -92,6 +93,7 @@ export default function AccountPage() {
           </form>
         </CardContent>
       </Card>
+      <Card><CardHeader><h2 className="font-semibold text-gray-900">Apparence</h2></CardHeader><CardContent><ThemeSelect /><p className="mt-2 text-xs text-gray-500">Le mode système suit automatiquement les réglages de cet appareil.</p></CardContent></Card>
     </div>
   )
 }

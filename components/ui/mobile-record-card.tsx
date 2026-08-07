@@ -1,0 +1,3 @@
+import { cn } from '@/lib/utils'
+export function MobileRecordCard({children,onClick,className}:{children:React.ReactNode;onClick?:()=>void;className?:string}) { return <article onClick={onClick} className={cn('rounded-xl border border-gray-200 bg-white p-4 shadow-sm',onClick&&'cursor-pointer active:bg-gray-50',className)}>{children}</article> }
+export function MobileMetric({label,value}:{label:string;value:React.ReactNode}) { return <div><p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{label}</p><div className="mt-0.5 text-sm font-medium text-gray-800">{value}</div></div> }

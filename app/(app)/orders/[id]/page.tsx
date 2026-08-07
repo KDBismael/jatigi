@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
-import { orderCollectibleAmount } from '@/lib/order-amounts'
+import { orderAmounts } from '@/lib/order-amounts'
 import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type OrderStatus } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
@@ -37,6 +38,7 @@ export default function OrderDetailPage() {
   const [editDate, setEditDate] = useState('')
   const [editDriverId, setEditDriverId] = useState('')
   const [editLocation, setEditLocation] = useState('')
+  const [editDeliveryFee, setEditDeliveryFee] = useState('')
   const [editSellerId, setEditSellerId] = useState('')
   const [editLiveId, setEditLiveId] = useState('')
   const [editConfirmationAmount, setEditConfirmationAmount] = useState('')
@@ -59,6 +61,7 @@ export default function OrderDetailPage() {
     setEditDate(order.order_date)
     setEditDriverId(order.delivery_driver_id ?? '')
     setEditLocation(order.delivery_location ?? '')
+    setEditDeliveryFee(String(order.delivery_fee ?? 0))
     setEditSellerId(order.seller_id ?? '')
     setEditLiveId(order.live_session_id ?? '')
     setEditConfirmationAmount(order.confirmation_amount ? String(order.confirmation_amount) : '')
@@ -81,6 +84,7 @@ export default function OrderDetailPage() {
           order_date: editDate,
           delivery_driver_id: editDriverId || null,
           delivery_location: editLocation || null,
+          delivery_fee: Number(editDeliveryFee) || 0,
           ...(isAdmin ? { seller_id: editSellerId, live_session_id: editLiveId || null } : {}),
           confirmation_amount: Number(editConfirmationAmount) || 0,
           payment_method: editPaymentMethod || '',
@@ -142,7 +146,8 @@ export default function OrderDetailPage() {
   const totalRevenue = lines.reduce((s, l) => s + (l.unit_price ?? 0) * l.quantity, 0)
   const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity, 0)
   const totalProfit = totalRevenue - totalCost
-  const toReverse = orderCollectibleAmount(lines, order.confirmation_amount ?? 0)
+  const amounts = orderAmounts(lines, order.delivery_fee ?? 0, order.confirmation_amount ?? 0)
+  const toReverse = amounts.remainingAmount
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -156,6 +161,7 @@ export default function OrderDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <OrderStatusBadge status={order.status} />
+          <Link href={`/orders/${order.id}/print`}><Button variant="secondary" size="sm">Imprimer</Button></Link>
           {!isEditing && (
             <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
           )}
@@ -199,6 +205,7 @@ export default function OrderDetailPage() {
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
             />
+            <Input label="Coût de livraison (FCFA)" type="number" min={0} value={editDeliveryFee} onChange={(e) => setEditDeliveryFee(e.target.value)} />
             <div className="grid grid-cols-2 gap-4">
               <Select
                 label="Canal"
@@ -397,8 +404,9 @@ export default function OrderDetailPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-5">
-              <p className="text-xs text-gray-500 font-medium">Chiffre d&apos;affaires</p>
-              <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(totalRevenue)}</p>
+              <p className="text-xs text-gray-500 font-medium">Total avec livraison</p>
+              <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(amounts.totalAmount)}</p>
+              <p className="text-xs text-gray-400 mt-1">Colis {formatCurrency(totalRevenue)} + livraison {formatCurrency(amounts.deliveryFee)}</p>
             </CardContent>
           </Card>
           <Card>

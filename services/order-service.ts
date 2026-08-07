@@ -13,6 +13,7 @@ export interface OrderUpdate {
   live_session_id?: string | null
   delivery_driver_id?: string | null
   delivery_location?: string | null
+  delivery_fee?: number
   confirmation_amount?: number
   payment_method?: PaymentMethod | '' | null
 }
@@ -60,6 +61,7 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     p_order_date: input.order_date,
     p_delivery_driver_id: input.delivery_driver_id || null,
     p_delivery_location: input.delivery_location || null,
+    p_delivery_fee: input.delivery_fee ?? 0,
     p_confirmation_amount: input.confirmation_amount ?? 0,
     p_payment_method: input.payment_method || null,
     p_lines: input.lines,

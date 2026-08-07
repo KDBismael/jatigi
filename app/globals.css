@@ -25,3 +25,34 @@ body {
   font-feature-settings: "cv11", "ss01";
   font-variant-ligatures: contextual;
 }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  body { background: #fff !important; color: #111827 !important; }
+  .print-actions { display: none !important; }
+  .app-navigation, .mobile-top-spacer { display: none !important; }
+  .app-shell > main { overflow: visible !important; background: #fff !important; }
+  .print-page { padding: 0 !important; background: #fff !important; }
+  .print-sheet { width: 210mm; min-height: 297mm; max-width: none; box-shadow: none !important; padding: 16mm !important; }
+}
+
+html[data-warko-theme="dark"] { color-scheme: dark; }
+html[data-warko-theme="dark"] .app-shell { background: #0f172a; color: #f8fafc; }
+html[data-warko-theme="dark"] .app-shell .bg-white { background-color: #111827; }
+html[data-warko-theme="dark"] .app-shell .bg-gray-50 { background-color: #0f172a; }
+html[data-warko-theme="dark"] .app-shell .bg-gray-50\/50 { background-color: rgb(15 23 42 / .5); }
+html[data-warko-theme="dark"] .app-shell .bg-gray-100 { background-color: #1f2937; }
+html[data-warko-theme="dark"] .app-shell .text-gray-900 { color: #f8fafc; }
+html[data-warko-theme="dark"] .app-shell .text-gray-800 { color: #f1f5f9; }
+html[data-warko-theme="dark"] .app-shell .text-gray-700 { color: #e2e8f0; }
+html[data-warko-theme="dark"] .app-shell .text-gray-600 { color: #cbd5e1; }
+html[data-warko-theme="dark"] .app-shell .text-gray-500 { color: #94a3b8; }
+html[data-warko-theme="dark"] .app-shell .text-gray-400 { color: #94a3b8; }
+html[data-warko-theme="dark"] .app-shell .border-gray-100,
+html[data-warko-theme="dark"] .app-shell .border-gray-200,
+html[data-warko-theme="dark"] .app-shell .border-gray-300 { border-color: #334155; }
+html[data-warko-theme="dark"] .app-shell input,
+html[data-warko-theme="dark"] .app-shell select,
+html[data-warko-theme="dark"] .app-shell textarea { background-color: #111827; border-color: #475569; color: #f8fafc; color-scheme: dark; }
+html[data-warko-theme="dark"] .app-shell .hover\:bg-gray-50:hover,
+html[data-warko-theme="dark"] .app-shell .hover\:bg-gray-100:hover { background-color: #1f2937; }

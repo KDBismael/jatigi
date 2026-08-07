@@ -48,6 +48,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
       seller_id: profile?.id ?? '',
       live_session_id: '',
       confirmation_amount: 0,
+      delivery_fee: 0,
       payment_method: '',
       lines: [{ product_id: '', quantity: 1 }],
     },
@@ -62,12 +63,15 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
   const priceById = new Map(products.map((p) => [p.id, p.sale_price]))
   const watchedLines = useWatch({ control, name: 'lines' }) ?? []
   const watchedConfirmation = useWatch({ control, name: 'confirmation_amount' })
+  const watchedDeliveryFee = useWatch({ control, name: 'delivery_fee' })
   const orderTotal = watchedLines.reduce(
     (sum, line) => sum + (priceById.get(line?.product_id ?? '') ?? 0) * (Number(line?.quantity) || 0),
     0
   )
   const confirmationAmount = Number(watchedConfirmation) || 0
-  const toCollect = Math.max(0, orderTotal - confirmationAmount)
+  const deliveryFee = Number(watchedDeliveryFee) || 0
+  const totalWithDelivery = orderTotal + deliveryFee
+  const toCollect = Math.max(0, totalWithDelivery - confirmationAmount)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
@@ -119,6 +123,8 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
             error={errors.delivery_location?.message}
             {...register('delivery_location')}
           />
+          <Input label="Coût de livraison (FCFA)" type="number" min={0} placeholder="0"
+            error={errors.delivery_fee?.message} {...register('delivery_fee')} />
         </CardContent>
       </Card>
 
@@ -206,9 +212,10 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
           {isAdmin && orderTotal > 0 && (
             <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm">
               <div className="flex justify-between text-gray-500">
-                <span>Total de la commande</span>
+                <span>Coût du colis</span>
                 <span>{formatCurrency(orderTotal)}</span>
               </div>
+              <div className="flex justify-between text-gray-500 mt-1"><span>Livraison</span><span>+ {formatCurrency(deliveryFee)}</span></div>
               {confirmationAmount > 0 && (
                 <div className="flex justify-between text-gray-500 mt-1">
                   <span>Confirmation payée</span>
@@ -216,7 +223,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
                 </div>
               )}
               <div className="flex justify-between font-semibold text-gray-900 mt-2 pt-2 border-t border-gray-200">
-                <span>À collecter par le livreur</span>
+                <span>À collecter · total {formatCurrency(totalWithDelivery)}</span>
                 <span className="text-indigo-600">{formatCurrency(toCollect)}</span>
               </div>
             </div>

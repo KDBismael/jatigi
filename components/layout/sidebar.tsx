@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useRole } from '@/hooks/use-role'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
+import { ThemeSelect } from './theme-select'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Tableau de bord', short: 'Tableau', adminOnly: true, icon: 'dashboard' },
@@ -17,12 +18,14 @@ const NAV_ITEMS = [
   { href: '/pilotage', label: 'Objectifs & lives', short: 'Objectifs', adminOnly: true, icon: 'target' },
   { href: '/reports', label: 'Bilans mensuels', short: 'Bilans', adminOnly: true, icon: 'report' },
   { href: '/team', label: 'Équipe', short: 'Équipe', adminOnly: true, icon: 'users' },
+  { href: '/support', label: 'Support', short: 'Support', adminOnly: false, icon: 'support' },
 ] as const
 
 const ICONS: Record<string, React.ReactNode> = {
   receipt: <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21l-3.75-1.5L12 21l-3.75-1.5L4.5 21V4.757A2.25 2.25 0 016.75 2.5h10.5a2.25 2.25 0 012.25 2.257z" />,
   target: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />,
   report: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H6.75A2.25 2.25 0 004.5 4.5v15A2.25 2.25 0 006.75 21h10.5a2.25 2.25 0 002.25-2.25v-4.5z" />,
+  support: <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a3.375 3.375 0 116.75 0c0 2.25-3.375 2.25-3.375 4.5m.008 3.75h-.008M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
   dashboard: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" />,
   cart: <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />,
   truck: <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />,
@@ -145,7 +148,7 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
+      <div className="app-navigation md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200">
         <span className="text-base font-bold text-indigo-600 tracking-tight">Warko</span>
 
         <div className="relative">
@@ -174,6 +177,8 @@ export function Sidebar() {
                 >
                   Mon compte
                 </Link>
+                <Link href="/support" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">Support</Link>
+                <div className="border-t border-gray-100 px-4 py-3"><ThemeSelect compact /></div>
                 <form action="/api/auth/signout" method="POST">
                   <button
                     type="submit"
@@ -189,9 +194,9 @@ export function Sidebar() {
       </div>
 
       {/* Mobile bottom tab bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
+      <nav className="app-navigation md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
         <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {bottomItems.map((item) => {
+          {bottomItems.filter(item => item.href !== '/support').slice(0, 5).map((item) => {
             const active = pathname.startsWith(item.href)
             return (
               <Link
@@ -211,7 +216,7 @@ export function Sidebar() {
       </nav>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 bg-gray-900 text-white flex-col min-h-screen shrink-0">
+      <aside className="app-navigation hidden md:flex w-64 bg-gray-900 text-white flex-col min-h-screen shrink-0">
         <SidebarContent />
       </aside>
     </>

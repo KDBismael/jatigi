@@ -31,13 +31,14 @@ export function summarizeOrders(orders: { status: string }[]) {
 interface DeliveryOrder {
   status: string
   confirmation_amount?: number
+  delivery_fee?: number
   order_lines?: { unit_price: number; quantity: number }[]
 }
 
 export function summarizeDeliveries(orders: DeliveryOrder[], settlements: { amount: number }[]) {
   const collected = orders
     .filter((o) => o.status === 'delivered')
-    .reduce((sum, o) => sum + orderCollectibleAmount(o.order_lines ?? [], Number(o.confirmation_amount ?? 0)), 0)
+    .reduce((sum, o) => sum + orderCollectibleAmount(o.order_lines ?? [], Number(o.confirmation_amount ?? 0), Number(o.delivery_fee ?? 0)), 0)
   const remitted = settlements.reduce((sum, s) => sum + Number(s.amount), 0)
   return { collected, remitted, due: Math.max(0, collected - remitted) }
 }

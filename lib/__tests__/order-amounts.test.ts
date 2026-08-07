@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { orderTotal, orderCollectibleAmount, nextStatusForConfirmation } from '@/lib/order-amounts'
+import { orderTotal, orderCollectibleAmount, orderAmounts, nextStatusForConfirmation } from '@/lib/order-amounts'
 
 describe('orderTotal', () => {
   it('additionne prix unitaire × quantité de chaque ligne', () => {
@@ -11,6 +11,15 @@ describe('orderTotal', () => {
 
   it('retourne 0 pour une commande sans ligne', () => {
     expect(orderTotal([])).toBe(0)
+  })
+})
+
+describe('orderAmounts', () => {
+  it('additionne colis et livraison puis déduit l’acompte', () => {
+    expect(orderAmounts([{unit_price:5_000,quantity:2},{unit_price:2_000,quantity:1}], 1_500, 4_000)).toEqual({parcelAmount:12_000,deliveryFee:1_500,totalAmount:13_500,confirmationAmount:4_000,remainingAmount:9_500})
+  })
+  it('normalise les valeurs négatives et ne produit pas un reste négatif', () => {
+    expect(orderAmounts([], -100, 500)).toEqual({parcelAmount:0,deliveryFee:0,totalAmount:0,confirmationAmount:500,remainingAmount:0})
   })
 })
 

@@ -1,0 +1,2 @@
+import {describe,expect,it} from 'vitest';import{normalizeWhatsAppNumber,supportWhatsAppUrl}from'@/lib/support'
+describe('support WhatsApp',()=>{it('normalise un numéro international',()=>expect(normalizeWhatsAppNumber('+225 07 00 00 00 00')).toBe('2250700000000'));it('retourne null sans numéro',()=>expect(supportWhatsAppUrl()).toBeNull());it('construit un lien wa.me',()=>expect(supportWhatsAppUrl('+225 01')).toContain('https://wa.me/22501'))})

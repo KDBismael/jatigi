@@ -8,6 +8,7 @@ import { STATUSES, STATUS_LABELS, CHANNEL_LABELS } from '@/lib/constants'
 import { OrderStatusBadge } from './order-status-badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
+import { MobileMetric, MobileRecordCard } from '@/components/ui/mobile-record-card'
 
 interface OrderTableProps {
   orders: Order[]
@@ -38,7 +39,15 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <>
+    <div className="space-y-3 sm:hidden">
+      {orders.map(order => { const parcel=order.order_lines?.reduce((sum,l)=>sum+l.unit_price*l.quantity,0)??0; return <MobileRecordCard key={order.id} onClick={()=>router.push(`/orders/${order.id}`)}>
+        <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-gray-900">{order.client_name}</p><p className="text-xs text-gray-500">{order.client_phone||'Sans contact'} · {formatDate(order.order_date)}</p></div><OrderStatusBadge status={order.status}/></div>
+        <div className="mt-4 grid grid-cols-2 gap-3"><MobileMetric label="Canal" value={CHANNEL_LABELS[order.channel]}/><MobileMetric label="Montant" value={isAdmin?formatCurrency(parcel+(order.delivery_fee??0)):`${order.order_lines?.reduce((s,l)=>s+l.quantity,0)??0} article(s)`}/><MobileMetric label="Livreur" value={order.delivery_driver?.name??'Non assigné'}/><MobileMetric label="Adresse" value={<span className="line-clamp-1">{order.delivery_location||'Non renseignée'}</span>}/></div>
+        <div className="mt-4 border-t border-gray-100 pt-3" onClick={e=>e.stopPropagation()}><label className="sr-only" htmlFor={`status-${order.id}`}>Statut</label><select id={`status-${order.id}`} value={order.status} disabled={updating===order.id} onChange={e=>handleStatusChange(e,order.id)} className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500">{STATUSES.map(s=><option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
+      </MobileRecordCard>})}
+    </div>
+    <div className="hidden sm:block overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left">
@@ -70,11 +79,6 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
                     <p className="text-gray-400 text-xs">{order.client_phone}</p>
                   )}
                 </td>
-                <td className="py-3 pr-4">
-                  {order.delivery_driver ? (
-                    <><p className="font-medium text-gray-700">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-xs text-gray-400">{order.delivery_driver.phone}</p>}</>
-                  ) : <span className="text-gray-400">Non assigné</span>}
-                </td>
                 <td className="py-3 pr-4 text-gray-600">{CHANNEL_LABELS[order.channel]}</td>
                 <td className="py-3 pr-4">
                   {order.order_lines?.map((l) => (
@@ -83,9 +87,14 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
                     </div>
                   ))}
                 </td>
+                <td className="py-3 pr-4">
+                  {order.delivery_driver ? (
+                    <><p className="font-medium text-gray-700">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-xs text-gray-400">{order.delivery_driver.phone}</p>}</>
+                  ) : <span className="text-gray-400">Non assigné</span>}
+                </td>
                 {isAdmin && (
                   <td className="py-3 pr-4 font-medium text-gray-900">
-                    {formatCurrency(total)}
+                    {formatCurrency(total + (order.delivery_fee ?? 0))}
                   </td>
                 )}
                 <td className="py-3 pr-4 text-gray-600">{formatDate(order.order_date)}</td>
@@ -115,5 +124,6 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
         </tbody>
       </table>
     </div>
+    </>
   )
 }

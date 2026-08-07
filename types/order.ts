@@ -33,6 +33,7 @@ export interface Order {
   updated_at: string
   delivery_driver_id: string | null
   delivery_location: string | null
+  delivery_fee: number
   delivery_driver?: Pick<DeliveryDriver, 'id' | 'name' | 'phone'> | null
   seller?: { id: string; full_name: string } | null
   live_session?: { id: string; name: string | null; session_date: string; slot: 'morning' | 'afternoon' | 'evening' } | null

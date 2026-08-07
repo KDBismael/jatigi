@@ -14,8 +14,17 @@ export function orderTotal(lines: AmountLine[]): number {
  * Amount the delivery driver must collect / reverse: the order total minus the
  * confirmation deposit already paid by the customer, floored at 0.
  */
-export function orderCollectibleAmount(lines: AmountLine[], confirmationAmount: number): number {
-  return Math.max(0, orderTotal(lines) - Number(confirmationAmount || 0))
+export function orderCollectibleAmount(lines: AmountLine[], confirmationAmount: number, deliveryFee = 0): number {
+  return orderAmounts(lines, deliveryFee, confirmationAmount).remainingAmount
+}
+
+export function orderAmounts(lines: AmountLine[], deliveryFee = 0, confirmationAmount = 0) {
+  const parcelAmount = orderTotal(lines)
+  const safeDeliveryFee = Math.max(0, Number(deliveryFee || 0))
+  const totalAmount = parcelAmount + safeDeliveryFee
+  const safeConfirmation = Math.max(0, Number(confirmationAmount || 0))
+  return { parcelAmount, deliveryFee: safeDeliveryFee, totalAmount,
+    confirmationAmount: safeConfirmation, remainingAmount: Math.max(0, totalAmount - safeConfirmation) }
 }
 
 /**

@@ -39,3 +39,10 @@ export interface MonthlyReport {
   id: string; organization_id: string; month: string; snapshot: Record<string, number | Array<Record<string, string | number>>>
   generated_at: string; regenerated_at: string | null
 }
+
+export interface PeriodicReport {
+  id?: string; organization_id?: string; period_type: import('@/lib/report-periods').ReportPeriod
+  period_start: string; period_end: string
+  snapshot: Record<string, number | Array<Record<string, string | number>>>
+  generated_at?: string; regenerated_at?: string | null; is_closed: boolean; is_current?: boolean; label?: string
+}

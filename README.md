@@ -33,9 +33,11 @@ Renseigner ensuite :
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPPORT_WHATSAPP=
 ```
 
 La clé `SUPABASE_SERVICE_ROLE_KEY` est strictement serveur et ne doit jamais être exposée avec un préfixe `NEXT_PUBLIC_`.
+Le numéro WhatsApp doit être fourni au format international, par exemple `2250700000000`, sans être inscrit dans Git.
 
 Appliquer les migrations de `supabase/migrations/` dans leur ordre numérique, puis lancer :
 
