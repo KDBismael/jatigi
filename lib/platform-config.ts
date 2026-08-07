@@ -7,7 +7,7 @@
 // Example:
 //   export const EXCLUDED_EMAILS = ['moi@bonplan.com', 'demo@warko.app']
 export const EXCLUDED_EMAILS: string[] = [
-  'ismaelkondombo1@gmail.com'
+'ismaelkondombo1@gmail.com'
 ]
 
 const excludedSet = new Set(EXCLUDED_EMAILS.map((e) => e.trim().toLowerCase()))
