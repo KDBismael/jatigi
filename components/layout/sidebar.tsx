@@ -195,15 +195,15 @@ export function Sidebar() {
 
       {/* Mobile bottom tab bar */}
       <nav className="app-navigation md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200">
-        <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {bottomItems.filter(item => item.href !== '/support').slice(0, 5).map((item) => {
+        <div className="flex overflow-x-auto px-2 pb-[env(safe-area-inset-bottom)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {bottomItems.filter(item => item.href !== '/support').map((item) => {
             const active = pathname.startsWith(item.href)
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex-1 basis-0 min-w-[64px] flex flex-col items-center gap-1 py-2.5 transition-colors',
+                  'min-w-[76px] flex flex-col items-center gap-1 py-2.5 transition-colors',
                   active ? 'text-indigo-600' : 'text-gray-500'
                 )}
               >
