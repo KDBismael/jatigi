@@ -5,6 +5,7 @@ export const expenseSchema = z.object({
   category: z.enum(expenseCategories), label: z.string().trim().min(1).max(160),
   amount: z.coerce.number().positive(), expense_date: z.string().date(),
   receipt_url: z.string().url().optional().nullable().or(z.literal('')),
+  sales_person_id: z.string().uuid().optional().nullable().or(z.literal('')),
   recurring: z.boolean().optional().default(false), day_of_month: z.coerce.number().int().min(1).max(28).optional(),
 })
 export const goalSchema = z.object({

@@ -49,6 +49,22 @@ export async function createTeamMember(params: {
     throw new Error(profileErr.message)
   }
 
+  const { error: salesPersonErr } = await supabase.from('sales_people').insert({
+    id: authData.user.id,
+    organization_id: params.organization_id,
+    profile_id: authData.user.id,
+    full_name: params.full_name,
+    person_type: 'account',
+    base_salary: 0,
+    salary_mode: 'manual',
+    hired_on: new Date().toISOString().slice(0, 10),
+    is_active: true,
+  })
+  if (salesPersonErr) {
+    await supabase.auth.admin.deleteUser(authData.user.id)
+    throw new Error(salesPersonErr.message)
+  }
+
   return profile as Profile
 }
 

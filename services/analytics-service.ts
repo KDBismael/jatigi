@@ -110,7 +110,7 @@ function summarize(orders: PilotOrder[], expenseTotal: number): CeoMetrics {
 export async function getCeoDashboard(organizationId: string, today: string, monthStart: string, monthEnd: string) {
   const supabase = await createAdminClient()
   const [ordersResult, expenseResult, goalsResult] = await Promise.all([
-    supabase.from('orders').select('id,status,order_date,delivered_at,seller_id,live_session_id,seller:profiles!orders_seller_id_fkey(full_name),live_session:live_sessions(name,slot,session_date,target_amount),order_lines(unit_price,unit_cost,quantity,product:products(purchase_cost,import_cost,packaging_cost))')
+    supabase.from('orders').select('id,status,order_date,delivered_at,seller_id,live_session_id,seller:sales_people!orders_seller_id_fkey(full_name),live_session:live_sessions(name,slot,session_date,target_amount),order_lines(unit_price,unit_cost,quantity,product:products(purchase_cost,import_cost,packaging_cost))')
       .eq('organization_id', organizationId).or(`and(delivered_at.gte.${monthStart}T00:00:00Z,delivered_at.lt.${monthEnd}T00:00:00Z),and(order_date.gte.${monthStart},order_date.lt.${monthEnd})`),
     supabase.from('expenses').select('amount,expense_date,category').eq('organization_id', organizationId).gte('expense_date', monthStart).lt('expense_date', monthEnd),
     supabase.from('monthly_goals').select('*').eq('organization_id', organizationId).eq('month', monthStart),

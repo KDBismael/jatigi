@@ -22,7 +22,7 @@ export async function getOrders(organizationId: string): Promise<Order[]> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('orders')
-    .select('*, seller:profiles!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name))')
+    .select('*, seller:sales_people!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name))')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -34,7 +34,7 @@ export async function getOrderById(id: string, organizationId: string): Promise<
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('orders')
-    .select('*, seller:profiles!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name, purchase_cost, import_cost, packaging_cost))')
+    .select('*, seller:sales_people!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name, purchase_cost, import_cost, packaging_cost))')
     .eq('id', id)
     .eq('organization_id', organizationId)
     .single()
@@ -46,7 +46,7 @@ export async function getOrderById(id: string, organizationId: string): Promise<
 export async function createOrder(input: OrderInput, userId: string, organizationId: string): Promise<Order> {
   const supabase = await createClient()
   const admin = await createAdminClient()
-  const { data: seller } = await admin.from('profiles').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).single()
+  const { data: seller } = await admin.from('sales_people').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).eq('is_active', true).single()
   if (!seller) throw new Error('Vendeur introuvable dans votre organisation')
   if (input.live_session_id) {
     const { data: live } = await admin.from('live_sessions').select('id').eq('id', input.live_session_id).eq('organization_id', organizationId).single()
@@ -88,7 +88,7 @@ export async function updateOrder(id: string, input: OrderUpdate, organizationId
     if (!driver) throw new Error('Livreur introuvable dans votre organisation')
   }
   if (input.seller_id) {
-    const { data: seller } = await supabase.from('profiles').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).single()
+    const { data: seller } = await supabase.from('sales_people').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).single()
     if (!seller) throw new Error('Vendeur introuvable dans votre organisation')
   }
   if (input.live_session_id) {

@@ -8,7 +8,8 @@ export interface LiveSession {
 
 export interface Expense {
   id: string; organization_id: string; category: ExpenseCategory; label: string; amount: number
-  expense_date: string; receipt_url: string | null; recurrence_id: string | null; created_at: string
+  expense_date: string; receipt_url: string | null; recurrence_id: string | null; sales_person_id: string | null; created_at: string
+  sales_person?: { id: string; full_name: string } | null
 }
 
 export interface MonthlyGoal {

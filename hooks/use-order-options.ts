@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-export interface SellerOption { id: string; full_name: string }
+export interface SellerOption { id: string; full_name: string; person_type?: 'account' | 'internal' | 'external'; is_active?: boolean }
 export interface LiveOption { id: string; name: string | null; session_date: string; slot: 'morning' | 'afternoon' | 'evening' }
 
 export function useOrderOptions() {

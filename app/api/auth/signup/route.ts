@@ -62,6 +62,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: profileErr.message }, { status: 500 })
   }
 
+  const { error: salesPersonErr } = await supabase.from('sales_people').insert({
+    id: userId,
+    organization_id: org.id,
+    profile_id: userId,
+    full_name,
+    phone,
+    person_type: 'account',
+    base_salary: 0,
+    salary_mode: 'manual',
+    hired_on: new Date().toISOString().slice(0, 10),
+    is_active: true,
+  })
+
+  if (salesPersonErr) {
+    await supabase.auth.admin.deleteUser(userId)
+    await supabase.from('organizations').delete().eq('id', org.id)
+    return NextResponse.json({ error: salesPersonErr.message }, { status: 500 })
+  }
+
   // Mark the signup admin as the organization owner.
   await supabase.from('organizations').update({ owner_id: userId }).eq('id', org.id)
 

@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { inviteEmployeeSchema, type InviteEmployeeInput } from '@/lib/schemas/team.schema'
+import { salesPersonSchema, type SalesPersonInput } from '@/lib/schemas/sales-person.schema'
 import { useTeam } from '@/hooks/use-team'
+import { useSalesPeople } from '@/hooks/use-sales-people'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -12,345 +14,341 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
 import type { Profile } from '@/types/user'
+import type { SalesPerson, SalesPersonEvaluation } from '@/types/sales-person'
 
 const roleOptions = [
   { value: 'employee', label: 'Employé' },
   { value: 'admin', label: 'Administrateur' },
 ]
 
-interface DemoteDialogProps {
-  member: Profile
-  onConfirm: () => Promise<void>
-  onCancel: () => void
+const personTypeOptions = [
+  { value: 'internal', label: 'Interne sans compte' },
+  { value: 'external', label: 'Externe' },
+]
+
+const salaryModeOptions = [
+  { value: 'manual', label: 'Manuel' },
+  { value: 'automatic', label: 'Automatique' },
+]
+
+function roleLabel(role: Profile['role']) {
+  return role === 'admin' ? 'Administrateur' : 'Employé'
 }
 
-function DemoteDialog({ member, onConfirm, onCancel }: DemoteDialogProps) {
-  const [loading, setLoading] = useState(false)
-  const [typed, setTyped] = useState('')
-
-  const CONFIRM_WORD = 'CONFIRMER'
-
-  async function handleConfirm() {
-    if (typed !== CONFIRM_WORD) return
-    setLoading(true)
-    await onConfirm()
-    setLoading(false)
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
-
-      {/* Dialog */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-red-100">
-        {/* Warning icon */}
-        <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
-          <span className="text-2xl">⚠️</span>
-        </div>
-
-        <h2 className="text-lg font-bold text-gray-900 text-center mb-1">
-          Rétrograder en employé
-        </h2>
-        <p className="text-sm text-gray-500 text-center mb-5">
-          Vous êtes sur le point de retirer les droits administrateur à <strong className="text-gray-800">{member.full_name}</strong>.
-        </p>
-
-        {/* Consequences */}
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5 space-y-2">
-          <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">Conséquences immédiates</p>
-          {[
-            'Accès au tableau de bord retiré',
-            'Accès aux produits et marges retiré',
-            'Accès aux analyses retiré',
-            'Accès à la gestion d\'équipe retiré',
-            'Seul l\'accès aux commandes sera conservé',
-          ].map((c) => (
-            <div key={c} className="flex items-start gap-2">
-              <span className="text-red-500 mt-0.5 shrink-0">✕</span>
-              <span className="text-sm text-red-700">{c}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Confirmation input */}
-        <div className="mb-5">
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            Tapez <span className="font-mono font-bold text-red-600">{CONFIRM_WORD}</span> pour confirmer
-          </label>
-          <input
-            type="text"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-red-400"
-            placeholder={CONFIRM_WORD}
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <Button variant="secondary" className="flex-1" onClick={onCancel} disabled={loading}>
-            Annuler
-          </Button>
-          <button
-            onClick={handleConfirm}
-            disabled={typed !== CONFIRM_WORD || loading}
-            className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Traitement...' : 'Rétrograder'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-interface RemoveDialogProps {
-  member: Profile
-  onConfirm: () => Promise<void>
-  onCancel: () => void
-}
-
-function RemoveDialog({ member, onConfirm, onCancel }: RemoveDialogProps) {
-  const [loading, setLoading] = useState(false)
-
-  async function handleConfirm() {
-    setLoading(true)
-    await onConfirm()
-    setLoading(false)
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-red-100">
-        <div className="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
-          <span className="text-2xl">🗑️</span>
-        </div>
-        <h2 className="text-lg font-bold text-gray-900 text-center mb-1">Supprimer le membre</h2>
-        <p className="text-sm text-gray-500 text-center mb-5">
-          Le compte de <strong className="text-gray-800">{member.full_name}</strong> sera définitivement supprimé. Cette action est irréversible.
-        </p>
-        <div className="flex gap-3">
-          <Button variant="secondary" className="flex-1" onClick={onCancel} disabled={loading}>
-            Annuler
-          </Button>
-          <button
-            onClick={handleConfirm}
-            disabled={loading}
-            className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-40 transition-colors"
-          >
-            {loading ? 'Suppression...' : 'Supprimer'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+function typeLabel(type: SalesPerson['person_type']) {
+  if (type === 'account') return 'Compte utilisateur'
+  if (type === 'external') return 'Externe'
+  return 'Interne'
 }
 
 export default function TeamPage() {
   const { members, isLoading, invite, remove, changeRole } = useTeam()
-  const [showForm, setShowForm] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { people, isLoading: peopleLoading, create, update, addEvaluation } = useSalesPeople()
+  const [showAccountForm, setShowAccountForm] = useState(false)
+  const [showPersonForm, setShowPersonForm] = useState(false)
+  const [accountError, setAccountError] = useState<string | null>(null)
+  const [personError, setPersonError] = useState<string | null>(null)
+  const [openHistoryId, setOpenHistoryId] = useState<string | null>(null)
+  const [histories, setHistories] = useState<Record<string, SalesPersonEvaluation[]>>({})
+  const [busy, setBusy] = useState(false)
 
-  // Dialogs state
-  const [demoteTarget, setDemoteTarget] = useState<Profile | null>(null)
-  const [removeTarget, setRemoveTarget] = useState<Profile | null>(null)
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<InviteEmployeeInput>({
+  const accountForm = useForm<InviteEmployeeInput>({
     resolver: zodResolver(inviteEmployeeSchema),
     defaultValues: { role: 'employee' },
   })
 
-  async function onSubmit(data: InviteEmployeeInput) {
-    setError(null)
-    setSubmitting(true)
+  const personForm = useForm<SalesPersonInput>({
+    resolver: zodResolver(salesPersonSchema) as unknown as Resolver<SalesPersonInput>,
+    defaultValues: {
+      full_name: '',
+      phone: '',
+      person_type: 'internal',
+      base_salary: 0,
+      salary_mode: 'manual',
+      hired_on: new Date().toISOString().slice(0, 10),
+      is_active: true,
+    },
+  })
+
+  async function createAccount(data: InviteEmployeeInput) {
+    setAccountError(null)
+    setBusy(true)
     try {
       await invite(data)
-      reset()
-      setShowForm(false)
+      accountForm.reset({ role: 'employee', full_name: '', email: '', password: '' })
+      setShowAccountForm(false)
     } catch (err) {
-      setError(String(err))
+      setAccountError(err instanceof Error ? err.message : String(err))
     } finally {
-      setSubmitting(false)
+      setBusy(false)
     }
   }
 
-  function handleRoleToggle(member: Profile) {
-    if (member.role === 'admin') {
-      // Admin → employee: requires confirmation dialog
-      setDemoteTarget(member)
-    } else {
-      // Employee → admin: no warning needed, straightforward promotion
-      changeRole(member.id, 'admin')
+  async function createPerson(data: SalesPersonInput) {
+    setPersonError(null)
+    setBusy(true)
+    try {
+      await create(data)
+      personForm.reset({
+        full_name: '',
+        phone: '',
+        person_type: 'internal',
+        base_salary: 0,
+        salary_mode: 'manual',
+        hired_on: new Date().toISOString().slice(0, 10),
+        is_active: true,
+      })
+      setShowPersonForm(false)
+    } catch (err) {
+      setPersonError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setBusy(false)
     }
+  }
+
+  async function editPerson(person: SalesPerson) {
+    const fullName = prompt('Nom complet', person.full_name)
+    if (!fullName) return
+    const phone = prompt('Téléphone', person.phone ?? '') ?? ''
+    const salary = prompt('Salaire mensuel FCFA', String(person.base_salary))
+    if (salary === null) return
+    const mode = confirm('OK = salaire automatique chaque mois. Annuler = salaire manuel.')
+      ? 'automatic'
+      : 'manual'
+    await update({
+      id: person.id,
+      full_name: fullName,
+      phone,
+      base_salary: Number(salary) || 0,
+      salary_mode: mode,
+    })
+  }
+
+  async function evaluatePerson(person: SalesPerson) {
+    const rating = prompt(`Note de ${person.full_name} sur 5`, String(person.latest_evaluation?.rating ?? 4))
+    if (!rating) return
+    const note = prompt('Commentaire', person.latest_evaluation?.note ?? '') ?? ''
+    await addEvaluation(person.id, {
+      rating: Number(rating),
+      note,
+      evaluated_on: new Date().toISOString().slice(0, 10),
+    })
+    setHistories((prev) => {
+      const next = { ...prev }
+      delete next[person.id]
+      return next
+    })
+  }
+
+  async function toggleHistory(person: SalesPerson) {
+    if (openHistoryId === person.id) {
+      setOpenHistoryId(null)
+      return
+    }
+    setOpenHistoryId(person.id)
+    if (histories[person.id]) return
+    const res = await fetch(`/api/sales-people/${person.id}/evaluations`)
+    const data = await res.json()
+    setHistories((prev) => ({ ...prev, [person.id]: Array.isArray(data) ? data : [] }))
+  }
+
+  async function deleteMember(member: Profile) {
+    if (!confirm(`Supprimer définitivement le compte de ${member.full_name} ?`)) return
+    await remove(member.id)
+  }
+
+  async function toggleRole(member: Profile) {
+    if (member.role === 'admin' && !confirm(`Retirer les droits admin à ${member.full_name} ?`)) return
+    await changeRole(member.id, member.role === 'admin' ? 'employee' : 'admin')
   }
 
   return (
-    <>
-      {/* Demote confirmation dialog */}
-      {demoteTarget && (
-        <DemoteDialog
-          member={demoteTarget}
-          onConfirm={async () => {
-            await changeRole(demoteTarget.id, 'employee')
-            setDemoteTarget(null)
-          }}
-          onCancel={() => setDemoteTarget(null)}
-        />
-      )}
-
-      {/* Remove confirmation dialog */}
-      {removeTarget && (
-        <RemoveDialog
-          member={removeTarget}
-          onConfirm={async () => {
-            await remove(removeTarget.id)
-            setRemoveTarget(null)
-          }}
-          onCancel={() => setRemoveTarget(null)}
-        />
-      )}
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Équipe</h1>
-            <p className="text-gray-500 text-sm mt-1">{members.length} membre(s)</p>
-          </div>
-          <Button onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Annuler' : '+ Ajouter un membre'}
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Équipe</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Comptes de connexion, vendeurs internes et suivi humain.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => setShowPersonForm((v) => !v)}>
+            {showPersonForm ? 'Annuler' : '+ Personne commerciale'}
+          </Button>
+          <Button onClick={() => setShowAccountForm((v) => !v)}>
+            {showAccountForm ? 'Annuler' : '+ Compte utilisateur'}
           </Button>
         </div>
+      </div>
 
-        {showForm && (
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold text-gray-900">Nouveau membre</h2>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="Nom complet" error={errors.full_name?.message} {...register('full_name')} />
-                  <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
-                  <PasswordInput label="Mot de passe" error={errors.password?.message} {...register('password')} />
-                  <Select label="Rôle" options={roleOptions} error={errors.role?.message} {...register('role')} />
-                </div>
-                {error && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? 'Création...' : 'Créer le compte'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
+      {showAccountForm && (
         <Card>
-          <CardHeader>
-            <h2 className="font-semibold text-gray-900">Membres de l&apos;équipe</h2>
-          </CardHeader>
+          <CardHeader><h2 className="font-semibold text-gray-900">Nouveau compte utilisateur</h2></CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            <form onSubmit={accountForm.handleSubmit(createAccount)} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input label="Nom complet" error={accountForm.formState.errors.full_name?.message} {...accountForm.register('full_name')} />
+                <Input label="Email" type="email" error={accountForm.formState.errors.email?.message} {...accountForm.register('email')} />
+                <PasswordInput label="Mot de passe" error={accountForm.formState.errors.password?.message} {...accountForm.register('password')} />
+                <Select label="Rôle" options={roleOptions} error={accountForm.formState.errors.role?.message} {...accountForm.register('role')} />
               </div>
-            ) : members.length === 0 ? (
-              <p className="text-center text-gray-500 py-8">Aucun membre</p>
-            ) : (
-              <>
-                {/* Mobile: stacked cards */}
-                <div className="space-y-3 sm:hidden">
-                  {members.map((m) => (
-                    <div key={m.id} className="border border-gray-200 rounded-xl p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{m.full_name}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">Depuis le {formatDate(m.created_at)}</p>
-                        </div>
-                        <Badge className={m.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}>
-                          {m.role === 'admin' ? 'Administrateur' : 'Employé'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
-                        <button
-                          onClick={() => handleRoleToggle(m)}
-                          className={`text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                            m.role === 'admin'
-                              ? 'text-orange-600 border-orange-300 bg-white hover:bg-orange-50'
-                              : 'text-indigo-600 border-indigo-300 bg-white hover:bg-indigo-50'
-                          }`}
-                        >
-                          {m.role === 'admin' ? '→ Employé' : '→ Admin'}
-                        </button>
-                        <button
-                          onClick={() => setRemoveTarget(m)}
-                          className="text-sm font-medium text-red-600 border border-red-300 bg-white px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Desktop: table */}
-                <div className="hidden sm:block overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 text-left">
-                        <th className="pb-3 pr-4 font-medium text-gray-600">Nom</th>
-                        <th className="pb-3 pr-4 font-medium text-gray-600">Rôle</th>
-                        <th className="pb-3 pr-4 font-medium text-gray-600">Depuis</th>
-                        <th className="pb-3 font-medium text-gray-600">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {members.map((m) => (
-                        <tr key={m.id} className="hover:bg-gray-50">
-                          <td className="py-3 pr-4 font-medium text-gray-900">{m.full_name}</td>
-                          <td className="py-3 pr-4">
-                            <Badge className={m.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}>
-                              {m.role === 'admin' ? 'Administrateur' : 'Employé'}
-                            </Badge>
-                          </td>
-                          <td className="py-3 pr-4 text-gray-500">{formatDate(m.created_at)}</td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => handleRoleToggle(m)}
-                                className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors ${
-                                  m.role === 'admin'
-                                    ? 'text-orange-600 border-orange-300 bg-white hover:bg-orange-50'
-                                    : 'text-indigo-600 border-indigo-300 bg-white hover:bg-indigo-50'
-                                }`}
-                              >
-                                {m.role === 'admin' ? '→ Employé' : '→ Admin'}
-                              </button>
-                              <button
-                                onClick={() => setRemoveTarget(m)}
-                                className="text-xs font-medium text-red-600 border border-red-300 bg-white px-2.5 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                              >
-                                Supprimer
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
+              {accountError && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{accountError}</p>}
+              <Button type="submit" disabled={busy}>{busy ? 'Création…' : 'Créer le compte'}</Button>
+            </form>
           </CardContent>
         </Card>
-      </div>
-    </>
+      )}
+
+      {showPersonForm && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">Nouvelle personne commerciale</h2>
+            <p className="text-sm text-gray-500">Pour un vendeur ou employé suivi sans créer de compte de connexion.</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={personForm.handleSubmit(createPerson)} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input label="Nom complet" error={personForm.formState.errors.full_name?.message} {...personForm.register('full_name')} />
+                <Input label="Téléphone" type="tel" error={personForm.formState.errors.phone?.message} {...personForm.register('phone')} />
+                <Select label="Type" options={personTypeOptions} error={personForm.formState.errors.person_type?.message} {...personForm.register('person_type')} />
+                <Input label="Date d’entrée" type="date" error={personForm.formState.errors.hired_on?.message} {...personForm.register('hired_on')} />
+                <Input label="Salaire mensuel (FCFA)" type="number" min="0" error={personForm.formState.errors.base_salary?.message} {...personForm.register('base_salary')} />
+                <Select label="Mode salaire" options={salaryModeOptions} error={personForm.formState.errors.salary_mode?.message} {...personForm.register('salary_mode')} />
+              </div>
+              {personError && <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{personError}</p>}
+              <Button type="submit" disabled={busy}>{busy ? 'Enregistrement…' : 'Créer la personne'}</Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900">Personnes commerciales</h2>
+          <p className="text-sm text-gray-500">Sélectionnables comme vendeurs dans Commandes et Objectifs.</p>
+        </CardHeader>
+        <CardContent>
+          {peopleLoading ? (
+            <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
+          ) : people.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">Aucune personne commerciale.</p>
+          ) : (
+            <div className="grid lg:grid-cols-2 gap-3">
+              {people.map((person) => (
+                <div key={person.id} className="rounded-xl border border-gray-200 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{person.full_name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {typeLabel(person.person_type)} · Entrée {formatDate(person.hired_on)}
+                      </p>
+                    </div>
+                    <Badge className={person.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}>
+                      {person.is_active ? 'Actif' : 'Inactif'}
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">CA du mois</p>
+                      <p className="font-semibold">{formatCurrency(Number(person.month_revenue ?? 0))}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Commandes livrées</p>
+                      <p className="font-semibold">{person.month_order_count ?? 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Salaire</p>
+                      <p className="font-semibold">{formatCurrency(Number(person.base_salary))}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Mode</p>
+                      <p className="font-semibold">{person.salary_mode === 'automatic' ? 'Auto' : 'Manuel'}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                    Dernière évaluation : {person.latest_evaluation ? `${person.latest_evaluation.rating}/5 · ${person.latest_evaluation.note || 'Sans commentaire'}` : 'aucune'}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <Button size="sm" variant="secondary" onClick={() => editPerson(person)}>Modifier</Button>
+                    <Button size="sm" variant="secondary" onClick={() => evaluatePerson(person)}>Évaluer</Button>
+                    <Button size="sm" variant="secondary" onClick={() => toggleHistory(person)}>Historique</Button>
+                    <Button size="sm" variant="ghost" onClick={() => update({ id: person.id, is_active: !person.is_active })}>
+                      {person.is_active ? 'Désactiver' : 'Réactiver'}
+                    </Button>
+                  </div>
+                  {openHistoryId === person.id && (
+                    <div className="mt-4 border-t border-gray-100 pt-3 space-y-2">
+                      {(histories[person.id] ?? []).length === 0 ? (
+                        <p className="text-sm text-gray-500">Aucune évaluation enregistrée.</p>
+                      ) : histories[person.id].map((evaluation) => (
+                        <div key={evaluation.id} className="rounded-lg bg-white border border-gray-100 px-3 py-2 text-sm">
+                          <div className="flex justify-between gap-3">
+                            <strong>{evaluation.rating}/5</strong>
+                            <span className="text-xs text-gray-500">{formatDate(evaluation.evaluated_on)}</span>
+                          </div>
+                          {evaluation.note && <p className="text-gray-600 mt-1">{evaluation.note}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900">Comptes utilisateurs</h2>
+          <p className="text-sm text-gray-500">Personnes qui peuvent se connecter à Warko.</p>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+          ) : members.length === 0 ? (
+            <p className="text-center text-gray-500 py-8">Aucun compte utilisateur.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 text-left">
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Nom</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Rôle</th>
+                    <th className="pb-3 pr-4 font-medium text-gray-600">Depuis</th>
+                    <th className="pb-3 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {members.map((member) => (
+                    <tr key={member.id} className="hover:bg-gray-50">
+                      <td className="py-3 pr-4 font-medium text-gray-900">{member.full_name}</td>
+                      <td className="py-3 pr-4">
+                        <Badge className={member.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'}>
+                          {roleLabel(member.role)}
+                        </Badge>
+                      </td>
+                      <td className="py-3 pr-4 text-gray-500">{formatDate(member.created_at)}</td>
+                      <td className="py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => toggleRole(member)}>
+                            {member.role === 'admin' ? '→ Employé' : '→ Admin'}
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-red-600" onClick={() => deleteMember(member)}>
+                            Supprimer
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }
