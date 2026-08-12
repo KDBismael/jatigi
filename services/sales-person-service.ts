@@ -165,6 +165,51 @@ export async function updateSalesPerson(input: SalesPersonUpdateInput, organizat
   return person
 }
 
+export async function deleteSalesPerson(id: string, organizationId: string): Promise<{ deleted: boolean; person?: SalesPerson; message: string }> {
+  const supabase = await createAdminClient()
+  const { data: person, error: personError } = await supabase
+    .from('sales_people')
+    .select('*')
+    .eq('id', id)
+    .eq('organization_id', organizationId)
+    .single()
+
+  if (personError || !person) throw new Error('Personne commerciale introuvable')
+
+  const [orders, goals, expenses, recurrences, evaluations] = await Promise.all([
+    supabase.from('orders').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('seller_id', id),
+    supabase.from('monthly_goals').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('seller_id', id),
+    supabase.from('expenses').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('sales_person_id', id),
+    supabase.from('expense_recurrences').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('sales_person_id', id),
+    supabase.from('sales_person_evaluations').select('id', { count: 'exact', head: true }).eq('organization_id', organizationId).eq('sales_person_id', id),
+  ])
+
+  for (const result of [orders, goals, expenses, recurrences, evaluations]) {
+    if (result.error) throw new Error(result.error.message)
+  }
+
+  const linkedCount = [orders, goals, expenses, recurrences, evaluations]
+    .reduce((sum, result) => sum + (result.count ?? 0), 0)
+
+  if (linkedCount > 0) {
+    const updated = await updateSalesPerson({ id, is_active: false }, organizationId)
+    return {
+      deleted: false,
+      person: updated,
+      message: 'Cette personne a déjà un historique. Elle a été désactivée pour préserver les commandes, objectifs, dépenses et évaluations.',
+    }
+  }
+
+  const { error } = await supabase
+    .from('sales_people')
+    .delete()
+    .eq('id', id)
+    .eq('organization_id', organizationId)
+
+  if (error) throw new Error(error.message)
+  return { deleted: true, message: 'Personne commerciale supprimée.' }
+}
+
 export async function getSalesPersonEvaluations(salesPersonId: string, organizationId: string): Promise<SalesPersonEvaluation[]> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase

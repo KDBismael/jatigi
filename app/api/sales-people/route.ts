@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireOrganizationAdmin } from '@/lib/admin-context'
 import { salesPersonSchema, salesPersonUpdateSchema } from '@/lib/schemas/sales-person.schema'
-import { createSalesPerson, getSalesPeople, updateSalesPerson } from '@/services/sales-person-service'
+import { createSalesPerson, deleteSalesPerson, getSalesPeople, updateSalesPerson } from '@/services/sales-person-service'
 
 export async function GET() {
   const auth = await requireOrganizationAdmin()
@@ -52,6 +52,20 @@ export async function PATCH(request: NextRequest) {
 
   try {
     return NextResponse.json(await updateSalesPerson(parsed.data, auth.organizationId))
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  const auth = await requireOrganizationAdmin()
+  if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(await request.json())
+  if (!parsed.success) return NextResponse.json({ error: 'ID invalide' }, { status: 400 })
+
+  try {
+    return NextResponse.json(await deleteSalesPerson(parsed.data.id, auth.organizationId))
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

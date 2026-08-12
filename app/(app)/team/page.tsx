@@ -45,7 +45,7 @@ function typeLabel(type: SalesPerson['person_type']) {
 
 export default function TeamPage() {
   const { members, isLoading, invite, remove, changeRole } = useTeam()
-  const { people, isLoading: peopleLoading, create, update, addEvaluation } = useSalesPeople()
+  const { people, isLoading: peopleLoading, create, update, remove: removePerson, addEvaluation } = useSalesPeople()
   const [showAccountForm, setShowAccountForm] = useState(false)
   const [showPersonForm, setShowPersonForm] = useState(false)
   const [accountError, setAccountError] = useState<string | null>(null)
@@ -140,6 +140,12 @@ export default function TeamPage() {
       delete next[person.id]
       return next
     })
+  }
+
+  async function deletePerson(person: SalesPerson) {
+    if (!confirm(`Supprimer ${person.full_name} ? Si un historique existe, la personne sera seulement désactivée.`)) return
+    const result = await removePerson(person.id)
+    alert(result.message)
   }
 
   async function toggleHistory(person: SalesPerson) {
@@ -276,6 +282,9 @@ export default function TeamPage() {
                     <Button size="sm" variant="secondary" onClick={() => toggleHistory(person)}>Historique</Button>
                     <Button size="sm" variant="ghost" onClick={() => update({ id: person.id, is_active: !person.is_active })}>
                       {person.is_active ? 'Désactiver' : 'Réactiver'}
+                    </Button>
+                    <Button size="sm" variant="ghost" className="text-red-600" onClick={() => deletePerson(person)}>
+                      Supprimer
                     </Button>
                   </div>
                   {openHistoryId === person.id && (

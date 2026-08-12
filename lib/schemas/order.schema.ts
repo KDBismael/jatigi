@@ -21,14 +21,14 @@ const confirmationRefine = (
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['payment_method'],
-      message: 'Sélectionnez le moyen de paiement de la confirmation',
+      message: 'Sélectionnez le moyen de paiement du dépôt',
     })
   }
   if (method && amount <= 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['confirmation_amount'],
-      message: 'Saisissez le montant de la confirmation',
+      message: 'Saisissez un montant de dépôt ou retirez le moyen de paiement',
     })
   }
 }

@@ -56,5 +56,19 @@ export function useSalesPeople() {
     return evaluation
   }
 
-  return { people, isLoading, load, create, update, addEvaluation }
+  async function remove(id: string) {
+    const res = await fetch('/api/sales-people', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    if (!res.ok) throw new Error(await res.text())
+    const result = await res.json() as { deleted: boolean; person?: SalesPerson; message: string }
+    setPeople((prev) => result.deleted
+      ? prev.filter((person) => person.id !== id)
+      : prev.map((person) => (person.id === id && result.person ? { ...person, ...result.person } : person)))
+    return result
+  }
+
+  return { people, isLoading, load, create, update, remove, addEvaluation }
 }

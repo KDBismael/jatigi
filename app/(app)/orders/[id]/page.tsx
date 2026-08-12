@@ -222,7 +222,7 @@ export default function OrderDetailPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Montant de confirmation (FCFA)"
+                label="Montant du dépôt (FCFA)"
                 type="number"
                 min={0}
                 placeholder="0"
@@ -230,9 +230,9 @@ export default function OrderDetailPage() {
                 onChange={(e) => setEditConfirmationAmount(e.target.value)}
               />
               <Select
-                label="Moyen de paiement"
+                label="Moyen de paiement du dépôt"
                 options={paymentMethodOptions}
-                placeholder="Non confirmée"
+                placeholder="Aucun dépôt"
                 value={editPaymentMethod}
                 onChange={(e) => setEditPaymentMethod(e.target.value)}
               />
@@ -266,13 +266,13 @@ export default function OrderDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Confirmation (read-only) */}
+      {/* Deposit (read-only) */}
       {order.confirmation_amount > 0 && !isEditing && (
         <Card>
-          <CardHeader><h2 className="font-semibold text-gray-900">Confirmation</h2></CardHeader>
+          <CardHeader><h2 className="font-semibold text-gray-900">Dépôt de réservation</h2></CardHeader>
           <CardContent>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Acompte payé par le client</span>
+              <span className="text-gray-500">Dépôt payé par le client</span>
               <span className="font-semibold text-gray-900">{formatCurrency(order.confirmation_amount)}</span>
             </div>
             {order.payment_method && (

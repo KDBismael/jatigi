@@ -185,16 +185,16 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
       <Card>
         <CardHeader>
           <div>
-            <h2 className="font-semibold text-gray-900">Confirmation de commande</h2>
+            <h2 className="font-semibold text-gray-900">Dépôt de réservation optionnel</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Acompte déjà payé par le client (Mobile Money). Optionnel.
+              Laissez le montant à 0 et le moyen de paiement vide si le client n’a rien payé d’avance.
             </p>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Montant de confirmation (FCFA)"
+              label="Montant du dépôt (FCFA)"
               type="number"
               min={0}
               placeholder="0"
@@ -202,9 +202,9 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
               {...register('confirmation_amount')}
             />
             <Select
-              label="Moyen de paiement"
+              label="Moyen de paiement du dépôt"
               options={paymentMethodOptions}
-              placeholder="Non confirmée"
+              placeholder="Aucun dépôt"
               error={errors.payment_method?.message}
               {...register('payment_method')}
             />
@@ -218,7 +218,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
               <div className="flex justify-between text-gray-500 mt-1"><span>Livraison</span><span>+ {formatCurrency(deliveryFee)}</span></div>
               {confirmationAmount > 0 && (
                 <div className="flex justify-between text-gray-500 mt-1">
-                  <span>Confirmation payée</span>
+                  <span>Dépôt payé</span>
                   <span>− {formatCurrency(confirmationAmount)}</span>
                 </div>
               )}
