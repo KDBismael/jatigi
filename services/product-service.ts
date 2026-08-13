@@ -1,7 +1,8 @@
 import { createAdminClient, createClient } from '@/services/supabase/server'
 import type { Product } from '@/types/product'
 
-type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at'>
+type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at' | 'is_active'>
+type ProductUpdate = Partial<ProductInsert> & { is_active?: boolean }
 
 export async function getProducts(organizationId: string): Promise<Product[]> {
   const supabase = await createAdminClient()
@@ -13,6 +14,25 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
 
   if (error) throw new Error(error.message)
   return data as Product[]
+}
+
+async function productHistoryCount(id: string, organizationId: string): Promise<number> {
+  const supabase = await createAdminClient()
+  const { data: lines, error: linesError } = await supabase
+    .from('order_lines')
+    .select('id, order:orders!inner(organization_id)')
+    .eq('product_id', id)
+    .eq('order.organization_id', organizationId)
+  if (linesError) throw new Error(linesError.message)
+  const lineIds = (lines ?? []).map((line) => line.id as string)
+  if (lineIds.length === 0) return 0
+
+  const { count, error: allocationsError } = await supabase
+    .from('order_line_lots')
+    .select('id', { count: 'exact', head: true })
+    .in('order_line_id', lineIds)
+  if (allocationsError) throw new Error(allocationsError.message)
+  return lineIds.length + (count ?? 0)
 }
 
 export async function getProductById(id: string, organizationId: string): Promise<Product | null> {
@@ -39,7 +59,7 @@ export async function createProduct(input: ProductInsert, organizationId: string
   return product
 }
 
-export async function updateProduct(id: string, input: Partial<ProductInsert>, organizationId: string): Promise<Product> {
+export async function updateProduct(id: string, input: ProductUpdate, organizationId: string): Promise<Product> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('products')
@@ -52,8 +72,29 @@ export async function updateProduct(id: string, input: Partial<ProductInsert>, o
   return data as Product
 }
 
-export async function deleteProduct(id: string, organizationId: string): Promise<void> {
+export async function deleteProduct(id: string, organizationId: string): Promise<{ deleted: boolean; product?: Product; message: string }> {
   const supabase = await createAdminClient()
+  const product = await getProductById(id, organizationId)
+  if (!product) throw new Error('Produit introuvable')
+
+  const historyCount = await productHistoryCount(id, organizationId)
+  if (historyCount > 0) {
+    const { data, error } = await supabase
+      .from('products')
+      .update({ is_active: false })
+      .eq('id', id)
+      .eq('organization_id', organizationId)
+      .select()
+      .single()
+    if (error) throw new Error(error.message)
+    return {
+      deleted: false,
+      product: data as Product,
+      message: 'Ce produit a déjà un historique de commandes. Il a été archivé pour préserver les données.',
+    }
+  }
+
   const { error } = await supabase.from('products').delete().eq('id', id).eq('organization_id', organizationId)
   if (error) throw new Error(error.message)
+  return { deleted: true, message: 'Produit supprimé définitivement.' }
 }

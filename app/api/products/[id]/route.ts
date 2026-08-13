@@ -12,6 +12,7 @@ const COST_FIELDS = [
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   sale_price: z.coerce.number().positive().optional(),
+  is_active: z.boolean().optional(),
 })
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -85,8 +86,7 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params
   try {
-    await deleteProduct(id, admin.profile.organization_id)
-    return NextResponse.json({ success: true })
+    return NextResponse.json(await deleteProduct(id, admin.profile.organization_id))
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

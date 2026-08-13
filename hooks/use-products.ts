@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useProductStore } from '@/stores/product-store'
 import type { ProductInput } from '@/lib/schemas/product.schema'
+import type { Product } from '@/types/product'
 
 export function useProducts() {
   const { products, isLoading, setProducts, addProduct, updateProduct, removeProduct, setLoading } =
@@ -32,7 +33,7 @@ export function useProducts() {
     return product
   }
 
-  async function update(id: string, input: Partial<ProductInput>) {
+  async function update(id: string, input: Partial<ProductInput> & { is_active?: boolean }) {
     const res = await fetch(`/api/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -47,7 +48,10 @@ export function useProducts() {
   async function remove(id: string) {
     const res = await fetch(`/api/products/${id}`, { method: 'DELETE' })
     if (!res.ok) throw new Error(await res.text())
-    removeProduct(id)
+    const result = await res.json() as { deleted: boolean; product?: Product; message: string }
+    if (result.deleted) removeProduct(id)
+    else if (result.product) updateProduct(id, result.product)
+    return result
   }
 
   return { products, isLoading, create, update, remove }

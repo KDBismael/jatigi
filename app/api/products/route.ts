@@ -31,6 +31,7 @@ export async function GET() {
         name: product.name,
         sale_price: product.sale_price,
         stock_quantity: product.stock_quantity,
+        is_active: product.is_active,
         created_at: product.created_at,
         updated_at: product.updated_at,
       }))

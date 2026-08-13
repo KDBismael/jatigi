@@ -83,6 +83,19 @@ export default function ProductDetailPage() {
     } finally { setIsSaving(false) }
   }
 
+  async function setProductActive(isActive: boolean) {
+    if (!product) return
+    const res = await fetch(`/api/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: isActive }),
+    })
+    if (!res.ok) return
+    const updated = await res.json()
+    setProduct(updated)
+    updateStoreProduct(updated.id, updated)
+  }
+
   function startEditLot(lot: (typeof lots)[number]) {
     setEditingLotId(lot.id)
     setLotEditSalePrice(String(lot.sale_price ?? ''))
@@ -149,12 +162,24 @@ export default function ProductDetailPage() {
       <div className="flex items-start gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-0.5 shrink-0">←</Button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-gray-900 truncate">{product.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-900 truncate">{product.name}</h1>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${product.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
+              {product.is_active !== false ? 'Actif' : 'Archivé'}
+            </span>
+          </div>
         </div>
         {isAdmin && !isEditing && (
           <div className="flex gap-2 shrink-0">
             <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
-            <Button size="sm" onClick={() => setShowAddStock(true)}>+ Stock</Button>
+            {product.is_active !== false ? (
+              <>
+                <Button size="sm" onClick={() => setShowAddStock(true)}>+ Stock</Button>
+                <Button variant="ghost" size="sm" onClick={() => setProductActive(false)}>Archiver</Button>
+              </>
+            ) : (
+              <Button size="sm" onClick={() => setProductActive(true)}>Réactiver</Button>
+            )}
           </div>
         )}
       </div>

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CHANNELS, CHANNEL_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
+import { selectableOrderProducts } from '@/lib/product-archive'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Product } from '@/types/product'
 import type { DeliveryDriverSummary } from '@/types/delivery-driver'
@@ -30,7 +31,8 @@ const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYM
 export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoading }: OrderFormProps) {
   const isAdmin = useAuthStore((s) => s.isAdmin())
   const profile = useAuthStore((s) => s.profile)
-  const productOptions = products.map((p) => ({
+  const activeProducts = selectableOrderProducts(products)
+  const productOptions = activeProducts.map((p) => ({
     value: p.id,
     label: isAdmin ? `${p.name} (stock: ${p.stock_quantity})` : p.name,
   }))
@@ -60,7 +62,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' })
 
   // Live "à collecter par le livreur" = order total − confirmation deposit.
-  const priceById = new Map(products.map((p) => [p.id, p.sale_price]))
+  const priceById = new Map(activeProducts.map((p) => [p.id, p.sale_price]))
   const watchedLines = useWatch({ control, name: 'lines' }) ?? []
   const watchedConfirmation = useWatch({ control, name: 'confirmation_amount' })
   const watchedDeliveryFee = useWatch({ control, name: 'delivery_fee' })

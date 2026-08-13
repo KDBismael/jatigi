@@ -11,6 +11,7 @@ export interface Product {
   packaging_cost: number
   sale_price: number
   stock_quantity: number
+  is_active: boolean
   created_at: string
   updated_at: string
 }
@@ -20,5 +21,6 @@ export interface ProductPublic {
   name: string
   sale_price: number
   stock_quantity: number
+  is_active: boolean
   created_at: string
 }
