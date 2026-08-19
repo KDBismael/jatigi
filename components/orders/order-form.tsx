@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CHANNELS, CHANNEL_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants'
 import { formatCurrency } from '@/lib/utils'
 import { selectableOrderProducts } from '@/lib/product-archive'
+import { calculateOfferSale, calculateUnitSale } from '@/lib/product-pricing'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Product } from '@/types/product'
 import type { DeliveryDriverSummary } from '@/types/delivery-driver'
@@ -52,7 +53,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
       confirmation_amount: 0,
       delivery_fee: 0,
       payment_method: '',
-      lines: [{ product_id: '', quantity: 1 }],
+      lines: [{ product_id: '', pricing_type: 'unit', quantity: 1, offer_id: '', offer_count: 1 }],
     },
   })
   useEffect(() => {
@@ -62,12 +63,19 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' })
 
   // Live "à collecter par le livreur" = order total − confirmation deposit.
-  const priceById = new Map(activeProducts.map((p) => [p.id, p.sale_price]))
   const watchedLines = useWatch({ control, name: 'lines' }) ?? []
   const watchedConfirmation = useWatch({ control, name: 'confirmation_amount' })
   const watchedDeliveryFee = useWatch({ control, name: 'delivery_fee' })
   const orderTotal = watchedLines.reduce(
-    (sum, line) => sum + (priceById.get(line?.product_id ?? '') ?? 0) * (Number(line?.quantity) || 0),
+    (sum, line) => {
+      const product = activeProducts.find(p => p.id === line?.product_id)
+      if (!product) return sum
+      if (line.pricing_type === 'offer') {
+        const offer = product.offers?.find(o => o.id === line.offer_id && o.is_active)
+        return sum + (offer ? calculateOfferSale(offer, Number(line.offer_count) || 0).revenue : 0)
+      }
+      return sum + calculateUnitSale(product.sale_price, Number(line.quantity) || 0).revenue
+    },
     0
   )
   const confirmationAmount = Number(watchedConfirmation) || 0
@@ -138,7 +146,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
               type="button"
               variant="secondary"
               size="sm"
-              onClick={() => append({ product_id: '', quantity: 1 })}
+              onClick={() => append({ product_id: '', pricing_type: 'unit', quantity: 1, offer_id: '', offer_count: 1 })}
             >
               + Ajouter
             </Button>
@@ -148,26 +156,44 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
           {errors.lines?.root && (
             <p className="text-xs text-red-600">{errors.lines.root.message}</p>
           )}
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-3 items-end">
+          {fields.map((field, index) => {
+            const line = watchedLines[index]
+            const selectedProduct = activeProducts.find(p => p.id === line?.product_id)
+            const pricingOptions = selectedProduct ? [
+              ...(selectedProduct.pricing_mode !== 'offers' ? [{ value: 'unit', label: `À l’unité · ${formatCurrency(selectedProduct.sale_price)}` }] : []),
+              ...(selectedProduct.pricing_mode !== 'unit' ? [{ value: 'offer', label: 'Offre / lot' }] : []),
+            ] : [{ value: 'unit', label: 'À l’unité' }]
+            const productField = register(`lines.${index}.product_id`)
+            return <div key={field.id} className="flex flex-wrap gap-3 items-end">
               <div className="flex-1">
                 <Select
                   label={index === 0 ? 'Produit' : undefined}
                   options={productOptions}
                   placeholder="Sélectionner un produit"
                   error={(errors.lines?.[index] as { product_id?: { message?: string } })?.product_id?.message}
-                  {...register(`lines.${index}.product_id`)}
+                  {...productField}
+                  onChange={(event) => {
+                    productField.onChange(event)
+                    const product = activeProducts.find(p => p.id === event.target.value)
+                    setValue(`lines.${index}.pricing_type`, product?.pricing_mode === 'offers' ? 'offer' : 'unit')
+                    setValue(`lines.${index}.offer_id`, '')
+                  }}
                 />
               </div>
-              <div className="w-24">
-                <Input
-                  label={index === 0 ? 'Qté' : undefined}
-                  type="number"
-                  min={1}
-                  error={(errors.lines?.[index] as { quantity?: { message?: string } })?.quantity?.message}
-                  {...register(`lines.${index}.quantity`)}
-                />
-              </div>
+              <div className="min-w-44 flex-1"><Select label={index === 0 ? 'Tarif' : undefined}
+                options={pricingOptions} {...register(`lines.${index}.pricing_type`)} /></div>
+              {line?.pricing_type === 'offer' ? <>
+                <div className="min-w-48 flex-1"><Select label={index === 0 ? 'Offre' : undefined}
+                  placeholder="Sélectionner une offre" options={(selectedProduct?.offers ?? []).filter(o => o.is_active)
+                    .map(o => ({ value: o.id, label: `${o.name} · ${o.units_per_offer} unités · ${formatCurrency(o.price)}` }))}
+                  error={(errors.lines?.[index] as { offer_id?: { message?: string } })?.offer_id?.message}
+                  {...register(`lines.${index}.offer_id`)} /></div>
+                <div className="w-28"><Input label={index === 0 ? "Nb d’offres" : undefined} type="number" min={1}
+                  error={(errors.lines?.[index] as { offer_count?: { message?: string } })?.offer_count?.message}
+                  {...register(`lines.${index}.offer_count`)} /></div>
+              </> : <div className="w-28"><Input label={index === 0 ? 'Nb unités' : undefined} type="number" min={1}
+                error={(errors.lines?.[index] as { quantity?: { message?: string } })?.quantity?.message}
+                {...register(`lines.${index}.quantity`)} /></div>}
               {fields.length > 1 && (
                 <Button
                   type="button"
@@ -180,7 +206,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
                 </Button>
               )}
             </div>
-          ))}
+          })}
         </CardContent>
       </Card>
 

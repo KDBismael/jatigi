@@ -8,7 +8,7 @@ export async function getDeliveryDrivers(organizationId: string): Promise<Delive
   const supabase = await createAdminClient()
   const [{ data: drivers, error: driversError }, { data: orders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
     supabase.from('delivery_drivers').select('*').eq('organization_id', organizationId).order('name'),
-    supabase.from('orders').select('delivery_driver_id, status, confirmation_amount, delivery_fee, order_lines(unit_price, quantity)').eq('organization_id', organizationId).not('delivery_driver_id', 'is', null),
+    supabase.from('orders').select('delivery_driver_id, status, confirmation_amount, delivery_fee, order_lines(line_total, unit_price, quantity)').eq('organization_id', organizationId).not('delivery_driver_id', 'is', null),
     supabase.from('delivery_settlements').select('delivery_driver_id, amount').eq('organization_id', organizationId),
   ])
   if (driversError) throw new Error(driversError.message)
@@ -18,7 +18,7 @@ export async function getDeliveryDrivers(organizationId: string): Promise<Delive
   return (drivers as DeliveryDriver[]).map((driver) => {
     const assigned = orders?.filter((order) => order.delivery_driver_id === driver.id) ?? []
     const metricOrders = assigned.map((order) => {
-      const lines = (order.order_lines as unknown as { unit_price: number; quantity: number }[]) ?? []
+      const lines = (order.order_lines as unknown as { line_total?: number; unit_price?: number | null; quantity: number }[]) ?? []
       return { status: order.status, amount: orderCollectibleAmount(lines, Number(order.confirmation_amount ?? 0), Number(order.delivery_fee ?? 0)) }
     })
     const amountRemitted = settlements
@@ -56,7 +56,7 @@ export async function addDeliverySettlement(
 
   const [{ data: deliveredOrders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
     supabase.from('orders')
-      .select('confirmation_amount, delivery_fee, order_lines(unit_price, quantity)')
+      .select('confirmation_amount, delivery_fee, order_lines(line_total, unit_price, quantity)')
       .eq('organization_id', organizationId)
       .eq('delivery_driver_id', driverId)
       .eq('status', 'delivered'),
@@ -69,7 +69,7 @@ export async function addDeliverySettlement(
   if (settlementsError) throw new Error(settlementsError.message)
 
   const collected = deliveredOrders?.reduce((total, order) => {
-    const lines = (order.order_lines as unknown as { unit_price: number; quantity: number }[]) ?? []
+    const lines = (order.order_lines as unknown as { line_total?: number; unit_price?: number | null; quantity: number }[]) ?? []
     return total + orderCollectibleAmount(lines, Number(order.confirmation_amount ?? 0), Number(order.delivery_fee ?? 0))
   }, 0) ?? 0
   const alreadyRemitted = settlements?.reduce((total, settlement) => total + Number(settlement.amount), 0) ?? 0

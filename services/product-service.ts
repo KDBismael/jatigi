@@ -8,7 +8,7 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('*, offers:product_offers(*)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -37,7 +37,7 @@ async function productHistoryCount(id: string, organizationId: string): Promise<
 
 export async function getProductById(id: string, organizationId: string): Promise<Product | null> {
   const supabase = await createAdminClient()
-  const { data, error } = await supabase.from('products').select('*').eq('id', id).eq('organization_id', organizationId).single()
+  const { data, error } = await supabase.from('products').select('*, offers:product_offers(*)').eq('id', id).eq('organization_id', organizationId).single()
   if (error) return null
   return data as Product
 }
@@ -48,6 +48,7 @@ export async function createProduct(input: ProductInsert, organizationId: string
   const { data: id, error } = await supabase.rpc('create_product_with_initial_lot', {
     p_name: input.name,
     p_sale_price: input.sale_price,
+    p_pricing_mode: input.pricing_mode,
     p_stock_quantity: qty,
     p_total_purchase: input.purchase_cost * Math.max(qty, 1),
     p_total_transport: input.import_cost * Math.max(qty, 1),
@@ -66,7 +67,7 @@ export async function updateProduct(id: string, input: ProductUpdate, organizati
     .update(input)
     .eq('id', id)
     .eq('organization_id', organizationId)
-    .select()
+    .select('*, offers:product_offers(*)')
     .single()
   if (error) throw new Error(error.message)
   return data as Product

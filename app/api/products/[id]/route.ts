@@ -11,7 +11,8 @@ const COST_FIELDS = [
 // Costs must go through /lots — only descriptive/price/qty fields are editable
 const productUpdateSchema = z.object({
   name: z.string().min(1).max(120).optional(),
-  sale_price: z.coerce.number().positive().optional(),
+  sale_price: z.coerce.number().min(0).optional(),
+  pricing_mode: z.enum(['unit', 'offers', 'both']).optional(),
   is_active: z.boolean().optional(),
 })
 
@@ -32,7 +33,8 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
   if (!product) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
 
   if (profile?.role !== 'admin') {
-    return NextResponse.json({ id: product.id, name: product.name, stock_quantity: product.stock_quantity })
+    return NextResponse.json({ id: product.id, name: product.name, sale_price: product.sale_price,
+      pricing_mode: product.pricing_mode, stock_quantity: product.stock_quantity, offers: product.offers })
   }
   return NextResponse.json(product)
 }

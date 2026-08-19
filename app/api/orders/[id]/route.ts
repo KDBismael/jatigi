@@ -35,6 +35,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
         order_id: line.order_id,
         product_id: line.product_id,
         quantity: line.quantity,
+        pricing_type: line.pricing_type,
+        offer_name: line.offer_name,
+        units_per_offer: line.units_per_offer,
+        offer_count: line.offer_count,
         product: line.product ? { name: line.product.name } : undefined,
       })),
     })

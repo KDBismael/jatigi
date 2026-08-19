@@ -4,7 +4,6 @@ import { z } from 'zod'
 import { updateStockLot } from '@/services/stock-lot-service'
 
 const lotUpdateSchema = z.object({
-  sale_price: z.coerce.number().positive().optional(),
   quantity_available: z.coerce.number().int().min(0).optional(),
   total_purchase: z.coerce.number().min(0).optional(),
   total_transport: z.coerce.number().min(0).optional(),

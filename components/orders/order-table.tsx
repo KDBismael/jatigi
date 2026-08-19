@@ -9,6 +9,7 @@ import { OrderStatusBadge } from './order-status-badge'
 import { formatDate, formatCurrency } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth-store'
 import { MobileMetric, MobileRecordCard } from '@/components/ui/mobile-record-card'
+import { orderTotal } from '@/lib/order-amounts'
 
 interface OrderTableProps {
   orders: Order[]
@@ -41,7 +42,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
   return (
     <>
     <div className="space-y-3 sm:hidden">
-      {orders.map(order => { const parcel=order.order_lines?.reduce((sum,l)=>sum+l.unit_price*l.quantity,0)??0; return <MobileRecordCard key={order.id} onClick={()=>router.push(`/orders/${order.id}`)}>
+      {orders.map(order => { const parcel=orderTotal(order.order_lines ?? []); return <MobileRecordCard key={order.id} onClick={()=>router.push(`/orders/${order.id}`)}>
         <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-semibold text-gray-900">{order.client_name}</p><p className="text-xs text-gray-500">{order.client_phone||'Sans contact'} · {formatDate(order.order_date)}</p></div><OrderStatusBadge status={order.status}/></div>
         <div className="mt-4 grid grid-cols-2 gap-3"><MobileMetric label="Canal" value={CHANNEL_LABELS[order.channel]}/><MobileMetric label="Montant" value={isAdmin?formatCurrency(parcel+(order.delivery_fee??0)):`${order.order_lines?.reduce((s,l)=>s+l.quantity,0)??0} article(s)`}/><MobileMetric label="Livreur" value={order.delivery_driver?.name??'Non assigné'}/><MobileMetric label="Adresse" value={<span className="line-clamp-1">{order.delivery_location||'Non renseignée'}</span>}/></div>
         <div className="mt-4 border-t border-gray-100 pt-3" onClick={e=>e.stopPropagation()}><label className="sr-only" htmlFor={`status-${order.id}`}>Statut</label><select id={`status-${order.id}`} value={order.status} disabled={updating===order.id} onChange={e=>handleStatusChange(e,order.id)} className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500">{STATUSES.map(s=><option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
@@ -62,10 +63,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
         </thead>
         <tbody className="divide-y divide-gray-100">
           {orders.map((order) => {
-            const total = order.order_lines?.reduce(
-              (sum, l) => sum + l.unit_price * l.quantity,
-              0,
-            ) ?? 0
+            const total = orderTotal(order.order_lines ?? [])
 
             return (
               <tr
@@ -83,7 +81,7 @@ export function OrderTable({ orders, onStatusChange }: OrderTableProps) {
                 <td className="py-3 pr-4">
                   {order.order_lines?.map((l) => (
                     <div key={l.id} className="text-gray-600">
-                      {l.product?.name ?? 'Produit'} × {l.quantity}
+                      {l.product?.name ?? 'Produit'}{l.pricing_type === 'offer' ? ` · ${l.offer_name} × ${l.offer_count}` : ` × ${l.quantity}`}
                     </div>
                   ))}
                 </td>

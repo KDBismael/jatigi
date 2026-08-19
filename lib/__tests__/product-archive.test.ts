@@ -13,6 +13,7 @@ function product(id: string, is_active: boolean): Product {
     import_batch_size: null,
     packaging_cost: 0,
     sale_price: 1_000,
+    pricing_mode: 'unit',
     stock_quantity: 0,
     is_active,
     created_at: '2026-08-13T00:00:00Z',

@@ -80,7 +80,7 @@ export async function getSalesPeople(organizationId: string): Promise<SalesPerso
       .order('full_name', { ascending: true }),
     supabase
       .from('orders')
-      .select('seller_id, status, delivered_at, order_lines(unit_price, quantity)')
+      .select('seller_id, status, delivered_at, order_lines(line_total, unit_price, quantity)')
       .eq('organization_id', organizationId)
       .eq('status', 'delivered')
       .gte('delivered_at', `${start}T00:00:00Z`)
@@ -102,8 +102,8 @@ export async function getSalesPeople(organizationId: string): Promise<SalesPerso
     const sellerId = order.seller_id as string
     const current = metrics.get(sellerId) ?? { count: 0, revenue: 0 }
     current.count += 1
-    current.revenue += ((order.order_lines as { unit_price: number; quantity: number }[]) ?? [])
-      .reduce((sum, line) => sum + Number(line.unit_price) * line.quantity, 0)
+    current.revenue += ((order.order_lines as { line_total?: number; unit_price?: number | null; quantity: number }[]) ?? [])
+      .reduce((sum, line) => sum + (line.line_total == null ? Number(line.unit_price ?? 0) * line.quantity : Number(line.line_total)), 0)
     metrics.set(sellerId, current)
   }
 

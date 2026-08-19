@@ -7,7 +7,20 @@ export const paymentMethodEnum = z.enum(PAYMENT_METHODS)
 
 export const orderLineSchema = z.object({
   product_id: z.string().uuid('Produit requis'),
-  quantity: z.coerce.number().int().positive('Quantité requise'),
+  pricing_type: z.enum(['unit', 'offer']).default('unit'),
+  quantity: z.coerce.number().int().positive('Quantité requise').optional(),
+  offer_id: z.string().uuid('Offre requise').optional().or(z.literal('')),
+  offer_count: z.coerce.number().int().positive("Nombre d'offres requis").optional(),
+}).superRefine((line, ctx) => {
+  if (line.pricing_type === 'unit' && !line.quantity) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantity'], message: 'Quantité requise' })
+  }
+  if (line.pricing_type === 'offer' && !line.offer_id) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['offer_id'], message: 'Offre requise' })
+  }
+  if (line.pricing_type === 'offer' && !line.offer_count) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['offer_count'], message: "Nombre d'offres requis" })
+  }
 })
 
 // Confirmation amount and payment method must be provided together (both-or-neither).

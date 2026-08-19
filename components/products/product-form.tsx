@@ -4,6 +4,7 @@ import { useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { productSchema, type ProductInput } from '@/lib/schemas/product.schema'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils'
@@ -28,6 +29,8 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
       total_transport: 0,
       total_packaging: 0,
       stock_quantity: 0,
+      pricing_mode: 'unit',
+      sale_price: 0,
       ...defaultValues,
     },
   })
@@ -39,6 +42,7 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
     + (Number(watched.total_packaging) || 0)
   const unitCost = totalCost / qty
   const salePrice = Number(watched.sale_price) || 0
+  const pricingMode = watched.pricing_mode ?? 'unit'
   const margin = salePrice - unitCost
   const totalProfit = margin * qty
 
@@ -50,12 +54,16 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
           <h2 className="font-semibold text-gray-900">Informations produit</h2>
         </CardHeader>
         <CardContent>
-          <Input
-            label="Nom du produit"
-            placeholder="Ex: Sac en cuir noir"
-            error={errors.name?.message}
-            {...register('name')}
-          />
+          <div className="space-y-4">
+            <Input label="Nom du produit" placeholder="Ex: Sac en cuir noir"
+              error={errors.name?.message} {...register('name')} />
+            <Select label="Mode de vente" options={[
+              { value: 'unit', label: "Vente à l’unité" },
+              { value: 'offers', label: 'Vente par offres / lots' },
+              { value: 'both', label: 'Unité + offres / lots' },
+            ]} error={errors.pricing_mode?.message} {...register('pricing_mode')} />
+            <p className="text-xs text-gray-500">Les offres (packs, kits, cartons…) se configurent ensuite dans la fiche produit.</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -105,17 +113,11 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
             </div>
 
             {/* Étape 3 : prix de vente */}
-            <Input
-              label="Prix de vente unitaire (FCFA)"
-              type="number"
-              min={0}
-              placeholder="Ex : 3 000"
-              error={errors.sale_price?.message}
-              {...register('sale_price')}
-            />
+            {pricingMode !== 'offers' && <Input label="Prix de vente unitaire (FCFA)" type="number"
+              min={0} placeholder="Ex : 3 000" error={errors.sale_price?.message} {...register('sale_price')} />}
 
             {/* Résultats calculés automatiquement */}
-            <div className="grid grid-cols-3 gap-3 pt-1">
+            {pricingMode !== 'offers' && <div className="grid grid-cols-3 gap-3 pt-1">
               <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <p className="text-xs text-gray-500">Coût unitaire</p>
                 <p className="text-lg font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
@@ -132,7 +134,7 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
                   {formatCurrency(totalProfit)}
                 </p>
               </div>
-            </div>
+            </div>}
           </CardContent>
         </Card>
       )}
@@ -143,14 +145,14 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Prix de vente</h2>
           </CardHeader>
-          <CardContent>
-            <Input
-              label="Prix de vente unitaire (FCFA)"
-              type="number"
-              min={0}
-              error={errors.sale_price?.message}
-              {...register('sale_price')}
-            />
+          <CardContent className="space-y-4">
+            <Select label="Mode de vente" options={[
+              { value: 'unit', label: "Vente à l’unité" },
+              { value: 'offers', label: 'Vente par offres / lots' },
+              { value: 'both', label: 'Unité + offres / lots' },
+            ]} error={errors.pricing_mode?.message} {...register('pricing_mode')} />
+            {pricingMode !== 'offers' && <Input label="Prix de vente unitaire (FCFA)" type="number"
+              min={0} error={errors.sale_price?.message} {...register('sale_price')} />}
           </CardContent>
         </Card>
       )}

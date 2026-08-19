@@ -32,7 +32,7 @@ interface DeliveryOrder {
   status: string
   confirmation_amount?: number
   delivery_fee?: number
-  order_lines?: { unit_price: number; quantity: number }[]
+  order_lines?: { line_total?: number; unit_price?: number | null; quantity: number }[]
 }
 
 export function summarizeDeliveries(orders: DeliveryOrder[], settlements: { amount: number }[]) {
@@ -44,7 +44,9 @@ export function summarizeDeliveries(orders: DeliveryOrder[], settlements: { amou
 }
 
 interface RevenueLine {
-  unit_price: number
+  line_total?: number
+  total_cost?: number
+  unit_price?: number | null
   unit_cost: number
   quantity: number
   product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null
@@ -56,8 +58,12 @@ export function revenueProfitFromDelivered(orders: { status: string; order_lines
   for (const order of orders) {
     if (order.status !== 'delivered') continue
     const lines = order.order_lines ?? []
-    revenue += lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-    profit += lines.reduce((s, l) => s + (l.unit_price - resolveUnitCost(l.unit_cost, l.product)) * l.quantity, 0)
+    revenue += lines.reduce((s, l) => s + (l.line_total == null ? Number(l.unit_price ?? 0) * l.quantity : Number(l.line_total)), 0)
+    profit += lines.reduce((s, l) => {
+      const lineRevenue = l.line_total == null ? Number(l.unit_price ?? 0) * l.quantity : Number(l.line_total)
+      const lineCost = l.total_cost == null ? resolveUnitCost(l.unit_cost, l.product) * l.quantity : Number(l.total_cost)
+      return s + lineRevenue - lineCost
+    }, 0)
   }
   return { revenue, profit }
 }

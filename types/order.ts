@@ -6,8 +6,16 @@ export interface OrderLine {
   order_id: string
   product_id: string
   quantity: number
-  unit_price: number
+  unit_price: number | null
   unit_cost: number
+  pricing_type: 'unit' | 'offer'
+  product_offer_id: string | null
+  offer_name: string | null
+  units_per_offer: number | null
+  offer_count: number | null
+  offer_price: number | null
+  line_total: number
+  total_cost: number
   product?: {
     name: string
     purchase_cost?: number

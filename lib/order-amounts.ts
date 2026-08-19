@@ -1,13 +1,16 @@
 import type { OrderStatus } from '@/lib/constants'
 
 interface AmountLine {
-  unit_price: number
+  line_total?: number
+  unit_price?: number | null
   quantity: number
 }
 
-/** Sum of unit_price × quantity across every order line. */
+/** Exact selling total snapshotted on each line; legacy lines use unit price. */
 export function orderTotal(lines: AmountLine[]): number {
-  return lines.reduce((sum, line) => sum + Number(line.unit_price) * line.quantity, 0)
+  return lines.reduce((sum, line) => sum + (line.line_total == null
+    ? Number(line.unit_price ?? 0) * line.quantity
+    : Number(line.line_total)), 0)
 }
 
 /**

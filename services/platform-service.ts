@@ -14,7 +14,7 @@ type AdminClient = Awaited<ReturnType<typeof createAdminClient>>
 
 // order_lines select shared across the cross-org queries.
 const ORDER_SELECT =
-  'organization_id, status, order_date, confirmation_amount, delivery_fee, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))'
+  'organization_id, status, order_date, confirmation_amount, delivery_fee, order_lines(line_total, total_cost, unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))'
 
 type OrgRow = { id: string; name: string; owner_id: string | null; created_at?: string }
 
@@ -25,7 +25,9 @@ type OrderRow = {
   confirmation_amount: number | null
   delivery_fee: number | null
   order_lines?: {
-    unit_price: number
+    line_total?: number
+    total_cost?: number
+    unit_price?: number | null
     unit_cost: number
     quantity: number
     product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null
@@ -67,7 +69,7 @@ function buildRevenueSeries(orders: OrderRow[]): RevenueByPeriod[] {
   for (const order of orders) {
     if (order.status !== 'delivered') continue
     const lines = order.order_lines ?? []
-    const revenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
+    const revenue = lines.reduce((s, l) => s + (l.line_total == null ? Number(l.unit_price ?? 0) * l.quantity : Number(l.line_total)), 0)
     const { profit } = revenueProfitFromDelivered([order])
     const existing = map.get(order.order_date)
     if (existing) {

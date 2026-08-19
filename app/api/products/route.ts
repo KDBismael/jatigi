@@ -30,10 +30,12 @@ export async function GET() {
         id: product.id,
         name: product.name,
         sale_price: product.sale_price,
+        pricing_mode: product.pricing_mode,
         stock_quantity: product.stock_quantity,
         is_active: product.is_active,
         created_at: product.created_at,
         updated_at: product.updated_at,
+        offers: product.offers,
       }))
       return NextResponse.json(safe)
     }

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AddStockModal } from '@/components/products/add-stock-modal'
+import { ProductOffersCard } from '@/components/products/product-offers-card'
+import { Select } from '@/components/ui/select'
 import { formatCurrency, formatDate, computeMargin } from '@/lib/utils'
 import type { Product } from '@/types/product'
 import type { StockLot } from '@/types/stock-lot'
@@ -26,11 +28,11 @@ export default function ProductDetailPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState('')
   const [editPrice, setEditPrice] = useState('')
+  const [editPricingMode, setEditPricingMode] = useState<Product['pricing_mode']>('unit')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   const [editingLotId, setEditingLotId] = useState<string | null>(null)
-  const [lotEditSalePrice, setLotEditSalePrice] = useState('')
   const [lotEditQtyAvail, setLotEditQtyAvail] = useState('')
   const [lotEditPurchase, setLotEditPurchase] = useState('')
   const [lotEditTransport, setLotEditTransport] = useState('')
@@ -61,6 +63,7 @@ export default function ProductDetailPage() {
     if (!product) return
     setEditName(product.name)
     setEditPrice(String(product.sale_price))
+    setEditPricingMode(product.pricing_mode)
     setSaveError(null)
     setIsEditing(true)
   }
@@ -73,7 +76,8 @@ export default function ProductDetailPage() {
       const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, sale_price: Number(editPrice) }),
+        body: JSON.stringify({ name: editName, pricing_mode: editPricingMode,
+          sale_price: editPricingMode === 'offers' ? 0 : Number(editPrice) }),
       })
       if (!res.ok) { setSaveError((await res.json()).error ?? 'Erreur'); return }
       const updated = await res.json()
@@ -98,7 +102,6 @@ export default function ProductDetailPage() {
 
   function startEditLot(lot: (typeof lots)[number]) {
     setEditingLotId(lot.id)
-    setLotEditSalePrice(String(lot.sale_price ?? ''))
     setLotEditQtyAvail(String(lot.quantity_available))
     setLotEditPurchase(String(Math.round(lot.purchase_cost * lot.quantity_received)))
     setLotEditTransport(String(Math.round(lot.import_cost * lot.quantity_received)))
@@ -115,7 +118,6 @@ export default function ProductDetailPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sale_price: Number(lotEditSalePrice),
           quantity_available: Number(lotEditQtyAvail),
           total_purchase: Number(lotEditPurchase),
           total_transport: Number(lotEditTransport),
@@ -190,10 +192,12 @@ export default function ProductDetailPage() {
           <CardHeader><h2 className="font-semibold text-gray-900">Modifier le produit</h2></CardHeader>
           <CardContent className="space-y-4">
             <Input label="Nom du produit" value={editName} onChange={(e) => setEditName(e.target.value)} />
-            <div>
+            <Select label="Mode de vente" value={editPricingMode} onChange={e => setEditPricingMode(e.target.value as Product['pricing_mode'])}
+              options={[{value:'unit',label:"Vente à l’unité"},{value:'offers',label:'Vente par offres / lots'},{value:'both',label:'Unité + offres / lots'}]} />
+            {editPricingMode !== 'offers' && <div>
               <Input label="Prix de vente (FCFA)" type="number" min={0} value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)} />
-            </div>
+            </div>}
             {saveError && <p className="text-sm text-red-600">{saveError}</p>}
             <div className="flex gap-2">
               <Button onClick={saveEdit} disabled={isSaving} size="sm">
@@ -211,8 +215,8 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardContent className="pt-4">
-            <p className="text-xs text-gray-500">Prix de vente</p>
-            <p className="text-base font-bold text-indigo-600 mt-1">{formatCurrency(product.sale_price)}</p>
+            <p className="text-xs text-gray-500">Mode de vente</p>
+            <p className="text-base font-bold text-indigo-600 mt-1">{{unit:'À l’unité',offers:'Offres / lots',both:'Unité + offres'}[product.pricing_mode]}</p>
           </CardContent>
         </Card>
         <Card>
@@ -225,9 +229,9 @@ export default function ProductDetailPage() {
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <p className="text-xs text-gray-500">Marge unitaire</p>
+            <p className="text-xs text-gray-500">{product.pricing_mode === 'offers' ? 'Offres actives' : 'Marge unitaire'}</p>
             <p className={`text-base font-bold mt-1 ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(margin)}
+              {product.pricing_mode === 'offers' ? (product.offers ?? []).filter(o => o.is_active).length : formatCurrency(margin)}
             </p>
           </CardContent>
         </Card>
@@ -279,6 +283,10 @@ export default function ProductDetailPage() {
         </Card>
       )}
 
+      {isAdmin && product.pricing_mode !== 'unit' && <ProductOffersCard productId={product.id}
+        offers={product.offers ?? []} unitCost={product.purchase_cost + product.import_cost + product.packaging_cost}
+        onChange={fetchData} />}
+
       {/* Lot history — admin only */}
       {isAdmin && lots.length > 0 && (
         <Card>
@@ -309,18 +317,13 @@ export default function ProductDetailPage() {
                         </span>
                       </span>
                       <span>Coût : <strong className="text-gray-800">{formatCurrency(lot.unit_cost)}</strong></span>
-                      <span className="text-indigo-600">
-                        Vente : <strong>{lot.sale_price > 0 ? formatCurrency(lot.sale_price) : '—'}</strong>
-                      </span>
                     </div>
                   </div>
 
                   {/* Inline edit form */}
                   {isEditingThis && (
                     <div className="p-3 space-y-3 border-t border-gray-100">
-                      <div className="grid grid-cols-2 gap-3">
-                        <Input label="Prix de vente (FCFA)" type="number" min={0}
-                          value={lotEditSalePrice} onChange={(e) => setLotEditSalePrice(e.target.value)} />
+                      <div>
                         <Input label="Stock dispo (unités)" type="number" min={0}
                           value={lotEditQtyAvail} onChange={(e) => setLotEditQtyAvail(e.target.value)} />
                       </div>
@@ -349,7 +352,6 @@ export default function ProductDetailPage() {
         <AddStockModal
           productName={product.name}
           productId={product.id}
-          salePrice={product.sale_price}
           onSuccess={(qty) => {
             setProduct((p) => p ? { ...p, stock_quantity: p.stock_quantity + qty } : p)
             fetchData()

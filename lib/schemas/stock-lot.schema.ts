@@ -5,7 +5,6 @@ export const stockLotSchema = z.object({
   total_purchase: z.coerce.number().min(0, 'Doit être positif'),
   total_transport: z.coerce.number().min(0, 'Doit être positif').default(0),
   total_packaging: z.coerce.number().min(0, 'Doit être positif').default(0),
-  sale_price: z.coerce.number().positive('Prix de vente requis'),
   received_at: z.string().optional(),
 })
 

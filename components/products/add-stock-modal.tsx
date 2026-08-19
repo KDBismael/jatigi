@@ -11,12 +11,11 @@ import { formatCurrency } from '@/lib/utils'
 interface AddStockModalProps {
   productName: string
   productId: string
-  salePrice?: number
   onSuccess: (newQuantity: number) => void
   onClose: () => void
 }
 
-export function AddStockModal({ productName, productId, salePrice = 0, onSuccess, onClose }: AddStockModalProps) {
+export function AddStockModal({ productName, productId, onSuccess, onClose }: AddStockModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -32,7 +31,6 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
       total_purchase: 0,
       total_transport: 0,
       total_packaging: 0,
-      sale_price: salePrice || undefined,
     },
   })
 
@@ -42,9 +40,6 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
     + (Number(watched.total_transport) || 0)
     + (Number(watched.total_packaging) || 0)
   const unitCost = totalCost / qty
-  const lotSalePrice = Number(watched.sale_price) || 0
-  const margin = lotSalePrice - unitCost
-  const totalProfit = margin * qty
 
   async function onSubmit(data: StockLotInput) {
     setIsSubmitting(true)
@@ -117,33 +112,10 @@ export function AddStockModal({ productName, productId, salePrice = 0, onSuccess
             />
           </div>
 
-          {/* Étape 3 : prix de vente */}
-          <Input
-            label="Prix de vente unitaire (FCFA)"
-            type="number"
-            min={0}
-            placeholder="Ex : 3 000"
-            error={errors.sale_price?.message}
-            {...register('sale_price')}
-          />
-
-          {/* Résultats calculés automatiquement */}
-          <div className="grid grid-cols-3 gap-3 pt-1">
+          <div className="pt-1">
             <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
               <p className="text-xs text-gray-500">Coût unitaire</p>
               <p className="text-base font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
-            </div>
-            <div className={`p-3 rounded-lg border-2 ${margin >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-              <p className="text-xs text-gray-500">Marge / unité</p>
-              <p className={`text-base font-bold mt-0.5 ${margin >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {formatCurrency(margin)}
-              </p>
-            </div>
-            <div className={`p-3 rounded-lg border-2 ${totalProfit >= 0 ? 'border-indigo-200 bg-indigo-50' : 'border-red-200 bg-red-50'}`}>
-              <p className="text-xs text-gray-500">Bénéfice total estimé</p>
-              <p className={`text-base font-bold mt-0.5 ${totalProfit >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
-                {formatCurrency(totalProfit)}
-              </p>
             </div>
           </div>
 

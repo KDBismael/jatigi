@@ -39,13 +39,13 @@ export function ProductTable({ products, mode = 'active', onDelete, onToggleActi
 
   return (
     <>
-      <div className="space-y-3 sm:hidden">{products.map(p=>{const totalCost=p.purchase_cost+p.import_cost+p.packaging_cost;const margin=computeMargin({sale_price:p.sale_price,purchase_cost:p.purchase_cost,import_cost:p.import_cost,packaging_cost:p.packaging_cost});return <MobileRecordCard key={p.id} onClick={()=>router.push(`/products/${p.id}`)}><div className="flex items-start justify-between gap-3"><p className="font-semibold text-gray-900">{p.name}</p><span className={`rounded-full px-2 py-1 text-xs font-medium ${p.is_active?(p.stock_quantity>5?'bg-green-100 text-green-800':p.stock_quantity>0?'bg-yellow-100 text-yellow-800':'bg-red-100 text-red-800'):'bg-gray-100 text-gray-700'}`}>{p.is_active?`${p.stock_quantity} unités`:'Archivé'}</span></div><div className="mt-4 grid grid-cols-3 gap-2"><MobileMetric label="Prix vente" value={formatCurrency(p.sale_price)}/><MobileMetric label="Coût" value={formatCurrency(totalCost)}/><MobileMetric label="Marge" value={<span className={margin>=0?'text-green-600':'text-red-600'}>{formatCurrency(margin)}</span>}/></div><div className="mt-4 flex gap-2 border-t border-gray-100 pt-3" onClick={e=>e.stopPropagation()}>{p.is_active&&<Button variant="secondary" className="min-h-11 flex-1" onClick={()=>setAddStockProduct(p)}>+ Stock</Button>}{!p.is_active&&onToggleActive&&<Button variant="secondary" className="min-h-11 flex-1" onClick={()=>onToggleActive(p.id,true)}>Réactiver</Button>}{onDelete&&p.is_active&&<Button variant="secondary" className="min-h-11 flex-1 border-red-300 text-red-600 hover:bg-red-50" onClick={()=>setDeleteTarget(p)}>Supprimer</Button>}</div></MobileRecordCard>})}</div>
+      <div className="space-y-3 sm:hidden">{products.map(p=>{const totalCost=p.purchase_cost+p.import_cost+p.packaging_cost;const margin=computeMargin({sale_price:p.sale_price,purchase_cost:p.purchase_cost,import_cost:p.import_cost,packaging_cost:p.packaging_cost});const pricing=p.pricing_mode==='unit'?formatCurrency(p.sale_price):p.pricing_mode==='offers'?`${(p.offers??[]).filter(o=>o.is_active).length} offre(s)`:`${formatCurrency(p.sale_price)} + offres`;return <MobileRecordCard key={p.id} onClick={()=>router.push(`/products/${p.id}`)}><div className="flex items-start justify-between gap-3"><p className="font-semibold text-gray-900">{p.name}</p><span className={`rounded-full px-2 py-1 text-xs font-medium ${p.is_active?(p.stock_quantity>5?'bg-green-100 text-green-800':p.stock_quantity>0?'bg-yellow-100 text-yellow-800':'bg-red-100 text-red-800'):'bg-gray-100 text-gray-700'}`}>{p.is_active?`${p.stock_quantity} unités`:'Archivé'}</span></div><div className="mt-4 grid grid-cols-3 gap-2"><MobileMetric label="Tarification" value={pricing}/><MobileMetric label="Coût" value={formatCurrency(totalCost)}/><MobileMetric label="Marge unité" value={p.pricing_mode==='offers'?'—':<span className={margin>=0?'text-green-600':'text-red-600'}>{formatCurrency(margin)}</span>}/></div><div className="mt-4 flex gap-2 border-t border-gray-100 pt-3" onClick={e=>e.stopPropagation()}>{p.is_active&&<Button variant="secondary" className="min-h-11 flex-1" onClick={()=>setAddStockProduct(p)}>+ Stock</Button>}{!p.is_active&&onToggleActive&&<Button variant="secondary" className="min-h-11 flex-1" onClick={()=>onToggleActive(p.id,true)}>Réactiver</Button>}{onDelete&&p.is_active&&<Button variant="secondary" className="min-h-11 flex-1 border-red-300 text-red-600 hover:bg-red-50" onClick={()=>setDeleteTarget(p)}>Supprimer</Button>}</div></MobileRecordCard>})}</div>
       <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 text-left">
               <th className="pb-3 pr-4 font-medium text-gray-600">Produit</th>
-              <th className="pb-3 pr-4 font-medium text-gray-600">Prix vente</th>
+              <th className="pb-3 pr-4 font-medium text-gray-600">Tarification</th>
               <th className="pb-3 pr-4 font-medium text-gray-600">Coût total</th>
               <th className="pb-3 pr-4 font-medium text-gray-600">Marge</th>
               <th className="pb-3 pr-4 font-medium text-gray-600">Stock</th>
@@ -73,12 +73,11 @@ export function ProductTable({ products, mode = 'active', onDelete, onToggleActi
                       {!p.is_active && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">Archivé</span>}
                     </div>
                   </td>
-                  <td className="py-3 pr-4 text-gray-700">{formatCurrency(p.sale_price)}</td>
+                  <td className="py-3 pr-4 text-gray-700">{p.pricing_mode==='offers'?`${(p.offers??[]).filter(o=>o.is_active).length} offre(s)`:p.pricing_mode==='both'?`${formatCurrency(p.sale_price)} + offres`:formatCurrency(p.sale_price)}</td>
                   <td className="py-3 pr-4 text-gray-700">{formatCurrency(totalCost)}</td>
                   <td className="py-3 pr-4">
-                    <span className={`font-semibold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(margin)}
-                    </span>
+                    {p.pricing_mode === 'offers' ? <span className="text-gray-400">Par offre</span> :
+                      <span className={`font-semibold ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(margin)}</span>}
                   </td>
                   <td className="py-3 pr-4">
                     <span

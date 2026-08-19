@@ -5,14 +5,16 @@ import { resolveUnitCost } from '@/lib/utils'
 import type { CeoMetrics, SellerPerformance, LivePerformance, SlotPerformance, MonthlyGoal, LiveSlot } from '@/types/pilotage'
 import { computeCeoMetrics, progressPercent } from '@/lib/ceo-metrics'
 
-type LineCosts = { unit_price: number; unit_cost: number; quantity: number; product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null }
+type LineCosts = { line_total?: number; total_cost?: number; unit_price?: number | null; unit_cost: number; quantity: number; product?: { purchase_cost?: number; import_cost?: number; packaging_cost?: number } | null }
+const lineRevenue = (line: LineCosts) => line.line_total == null ? Number(line.unit_price ?? 0) * line.quantity : Number(line.line_total)
+const lineCost = (line: LineCosts) => line.total_cost == null ? resolveUnitCost(line.unit_cost, line.product) * line.quantity : Number(line.total_cost)
 
 export async function getDashboardStats(range: DateRange, organizationId: string): Promise<DashboardStats> {
   const supabase = await createAdminClient()
 
   const { data: orders } = await supabase
     .from('orders')
-    .select('status, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
+    .select('status, order_lines(line_total, total_cost, unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
     .eq('organization_id', organizationId)
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
@@ -27,8 +29,8 @@ export async function getDashboardStats(range: DateRange, organizationId: string
 
   for (const order of orders) {
     const lines = (order.order_lines as unknown as LineCosts[]) ?? []
-    const orderRevenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-    const orderCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost, l.product) * l.quantity, 0)
+    const orderRevenue = lines.reduce((s, l) => s + lineRevenue(l), 0)
+    const orderCost = lines.reduce((s, l) => s + lineCost(l), 0)
 
     if (order.status === 'delivered') {
       total_revenue += orderRevenue
@@ -67,7 +69,7 @@ export async function getProductPerformance(range: DateRange, organizationId: st
 
   const { data } = await supabase
     .from('order_lines')
-    .select('product_id, quantity, unit_price, unit_cost, product:products(name, purchase_cost, import_cost, packaging_cost)')
+    .select('product_id, quantity, line_total, total_cost, unit_price, unit_cost, product:products(name, purchase_cost, import_cost, packaging_cost)')
     .in('order_id', ids)
 
   if (!data) return []
@@ -77,9 +79,8 @@ export async function getProductPerformance(range: DateRange, organizationId: st
   for (const line of data as unknown as (LineCosts & { product_id: string })[]) {
     const id = line.product_id
     const name = (line.product as unknown as { name?: string } | null)?.name ?? 'Inconnu'
-    const effectiveCost = resolveUnitCost(line.unit_cost, line.product)
-    const revenue = line.unit_price * line.quantity
-    const profit = (line.unit_price - effectiveCost) * line.quantity
+    const revenue = lineRevenue(line)
+    const profit = revenue - lineCost(line)
 
     const existing = map.get(id)
     if (existing) {
@@ -103,14 +104,14 @@ type PilotOrder = {
 
 function summarize(orders: PilotOrder[], expenseTotal: number): CeoMetrics {
   return computeCeoMetrics(orders.map(o => ({ status:o.status,
-    revenue:o.order_lines.reduce((s,l)=>s+Number(l.unit_price)*l.quantity,0),
-    cost:o.order_lines.reduce((s,l)=>s+resolveUnitCost(Number(l.unit_cost),l.product)*l.quantity,0) })), expenseTotal)
+    revenue:o.order_lines.reduce((s,l)=>s+lineRevenue(l),0),
+    cost:o.order_lines.reduce((s,l)=>s+lineCost(l),0) })), expenseTotal)
 }
 
 export async function getCeoDashboard(organizationId: string, today: string, monthStart: string, monthEnd: string) {
   const supabase = await createAdminClient()
   const [ordersResult, expenseResult, goalsResult] = await Promise.all([
-    supabase.from('orders').select('id,status,order_date,delivered_at,seller_id,live_session_id,seller:sales_people!orders_seller_id_fkey(full_name),live_session:live_sessions(name,slot,session_date,target_amount),order_lines(unit_price,unit_cost,quantity,product:products(purchase_cost,import_cost,packaging_cost))')
+    supabase.from('orders').select('id,status,order_date,delivered_at,seller_id,live_session_id,seller:sales_people!orders_seller_id_fkey(full_name),live_session:live_sessions(name,slot,session_date,target_amount),order_lines(line_total,total_cost,unit_price,unit_cost,quantity,product:products(purchase_cost,import_cost,packaging_cost))')
       .eq('organization_id', organizationId).or(`and(delivered_at.gte.${monthStart}T00:00:00Z,delivered_at.lt.${monthEnd}T00:00:00Z),and(order_date.gte.${monthStart},order_date.lt.${monthEnd})`),
     supabase.from('expenses').select('amount,expense_date,category').eq('organization_id', organizationId).gte('expense_date', monthStart).lt('expense_date', monthEnd),
     supabase.from('monthly_goals').select('*').eq('organization_id', organizationId).eq('month', monthStart),
@@ -128,7 +129,7 @@ export async function getCeoDashboard(organizationId: string, today: string, mon
   const sellers = new Map<string, SellerPerformance>()
   const lives = new Map<string, LivePerformance>()
   for (const order of orders.filter(o => o.status === 'delivered')) {
-    const value = order.order_lines.reduce((s, l) => s + Number(l.unit_price) * l.quantity, 0)
+    const value = order.order_lines.reduce((s, l) => s + lineRevenue(l), 0)
     const seller = sellers.get(order.seller_id) ?? { seller_id: order.seller_id, seller_name: order.seller?.full_name ?? 'Inconnu', order_count: 0, revenue: 0, average_basket: 0, target: sellerTargets.get(order.seller_id) ?? 0, progress: 0, rank: 0 }
     seller.order_count++; seller.revenue += value; sellers.set(order.seller_id, seller)
     if (order.live_session_id && order.live_session) {
@@ -150,7 +151,7 @@ export async function getChannelStats(range: DateRange, organizationId: string):
 
   const { data } = await supabase
     .from('orders')
-    .select('channel, order_lines(unit_price, quantity)')
+    .select('channel, order_lines(line_total, unit_price, quantity)')
     .eq('organization_id', organizationId)
     .eq('status', 'delivered')
     .gte('order_date', range.dateFrom)
@@ -161,8 +162,8 @@ export async function getChannelStats(range: DateRange, organizationId: string):
   const map = new Map<string, ChannelStat>()
 
   for (const order of data) {
-    const lines = (order.order_lines as { unit_price: number; quantity: number }[]) ?? []
-    const revenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
+    const lines = (order.order_lines as { line_total?: number; unit_price?: number | null; quantity: number }[]) ?? []
+    const revenue = lines.reduce((s, l) => s + (l.line_total == null ? Number(l.unit_price ?? 0) * l.quantity : Number(l.line_total)), 0)
 
     const existing = map.get(order.channel)
     if (existing) {
@@ -181,7 +182,7 @@ export async function getRevenueByPeriod(range: DateRange, organizationId: strin
 
   const { data } = await supabase
     .from('orders')
-    .select('order_date, status, order_lines(unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
+    .select('order_date, status, order_lines(line_total, total_cost, unit_price, unit_cost, quantity, product:products(purchase_cost, import_cost, packaging_cost))')
     .eq('organization_id', organizationId)
     .gte('order_date', range.dateFrom)
     .lte('order_date', range.dateTo)
@@ -194,8 +195,8 @@ export async function getRevenueByPeriod(range: DateRange, organizationId: strin
   for (const order of data) {
     if (order.status !== 'delivered') continue
     const lines = (order.order_lines as unknown as LineCosts[]) ?? []
-    const revenue = lines.reduce((s, l) => s + l.unit_price * l.quantity, 0)
-    const profit = lines.reduce((s, l) => s + (l.unit_price - resolveUnitCost(l.unit_cost, l.product)) * l.quantity, 0)
+    const revenue = lines.reduce((s, l) => s + lineRevenue(l), 0)
+    const profit = lines.reduce((s, l) => s + lineRevenue(l) - lineCost(l), 0)
 
     const existing = map.get(order.order_date)
     if (existing) {

@@ -143,8 +143,8 @@ export default function OrderDetailPage() {
   }
 
   const lines = order.order_lines ?? []
-  const totalRevenue = lines.reduce((s, l) => s + (l.unit_price ?? 0) * l.quantity, 0)
-  const totalCost = lines.reduce((s, l) => s + resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity, 0)
+  const totalRevenue = lines.reduce((s, l) => s + Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity), 0)
+  const totalCost = lines.reduce((s, l) => s + Number(l.total_cost ?? resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity), 0)
   const totalProfit = totalRevenue - totalCost
   const amounts = orderAmounts(lines, order.delivery_fee ?? 0, order.confirmation_amount ?? 0)
   const toReverse = amounts.remainingAmount
@@ -317,19 +317,20 @@ export default function OrderDetailPage() {
           <ul className="space-y-3 sm:hidden">
             {lines.map((l) => {
               const effectiveCost = resolveUnitCost(l.unit_cost ?? 0, l.product)
-              const lineRevenue = (l.unit_price ?? 0) * l.quantity
-              const lineProfit = lineRevenue - effectiveCost * l.quantity
+              const lineRevenue = Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity)
+              const lineProfit = lineRevenue - Number(l.total_cost ?? effectiveCost * l.quantity)
               return (
                 <li key={l.id} className="rounded-xl border border-gray-100 bg-gray-50/50 p-3">
                   <div className="flex items-start justify-between gap-3">
-                    <p className="font-medium text-gray-900 leading-snug">{l.product?.name ?? 'Produit'}</p>
+                    <div><p className="font-medium text-gray-900 leading-snug">{l.product?.name ?? 'Produit'}</p>
+                      {l.pricing_type === 'offer' && <p className="text-xs text-indigo-600">{l.offer_name} · {l.offer_count} offre(s) × {l.units_per_offer}</p>}</div>
                     <span className="shrink-0 text-xs text-gray-500">×{l.quantity}</span>
                   </div>
                   {isAdmin && (
                     <dl className="mt-2 space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <dt className="text-gray-500">Prix unit.</dt>
-                        <dd className="text-gray-700">{formatCurrency(l.unit_price ?? 0)}</dd>
+                        <dt className="text-gray-500">{l.pricing_type === 'offer' ? 'Prix / offre' : 'Prix unit.'}</dt>
+                        <dd className="text-gray-700">{formatCurrency(l.pricing_type === 'offer' ? (l.offer_price ?? 0) : (l.unit_price ?? 0))}</dd>
                       </div>
                       <div className="flex justify-between">
                         <dt className="text-gray-500">Coût unit.</dt>
@@ -361,7 +362,7 @@ export default function OrderDetailPage() {
                   <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Qté</th>
                   {isAdmin && (
                     <>
-                      <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Prix unit.</th>
+                      <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Prix</th>
                       <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Coût unit.</th>
                       <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Total</th>
                       <th className="pb-2 font-medium text-gray-500 text-right">Bénéfice</th>
@@ -372,17 +373,18 @@ export default function OrderDetailPage() {
               <tbody className="divide-y divide-gray-50">
                 {lines.map((l) => {
                   const effectiveCost = resolveUnitCost(l.unit_cost ?? 0, l.product)
-                  const lineRevenue = (l.unit_price ?? 0) * l.quantity
-                  const lineProfit = lineRevenue - effectiveCost * l.quantity
+                  const lineRevenue = Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity)
+                  const lineProfit = lineRevenue - Number(l.total_cost ?? effectiveCost * l.quantity)
                   return (
                     <tr key={l.id}>
                       <td className="py-2.5 pr-4 font-medium text-gray-900">
                         {l.product?.name ?? 'Produit'}
+                        {l.pricing_type === 'offer' && <span className="block text-xs font-normal text-indigo-600">{l.offer_name} · {l.offer_count} offre(s) × {l.units_per_offer}</span>}
                       </td>
                       <td className="py-2.5 pr-4 text-gray-600 text-right">{l.quantity}</td>
                       {isAdmin && (
                         <>
-                          <td className="py-2.5 pr-4 text-gray-600 text-right">{formatCurrency(l.unit_price ?? 0)}</td>
+                          <td className="py-2.5 pr-4 text-gray-600 text-right">{formatCurrency(l.pricing_type === 'offer' ? (l.offer_price ?? 0) : (l.unit_price ?? 0))}</td>
                           <td className="py-2.5 pr-4 text-gray-500 text-right">{formatCurrency(effectiveCost)}</td>
                           <td className="py-2.5 pr-4 font-medium text-gray-900 text-right">{formatCurrency(lineRevenue)}</td>
                           <td className={`py-2.5 font-semibold text-right ${lineProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>

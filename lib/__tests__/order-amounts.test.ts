@@ -12,6 +12,10 @@ describe('orderTotal', () => {
   it('retourne 0 pour une commande sans ligne', () => {
     expect(orderTotal([])).toBe(0)
   })
+
+  it('utilise le total exact d’une offre sans prix unitaire artificiel', () => {
+    expect(orderTotal([{ line_total: 54_000, unit_price: null, quantity: 36 }])).toBe(54_000)
+  })
 })
 
 describe('orderAmounts', () => {
