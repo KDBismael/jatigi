@@ -9,6 +9,7 @@ Warko est une application de gestion commerciale en français destinée aux vend
 - Gestion des livreurs, colis en circulation, taux de réussite et reversements
 - Analyse du chiffre d’affaires et de la rentabilité par période
 - Comptes administrateur/employé avec masquage des données de coût
+- Export clients par produit, période et statut en Excel ou CSV audience
 - Multi-tenant sécurisé par organisation et RLS Supabase
 
 ## Stack
@@ -55,6 +56,16 @@ npm run build
 ```
 
 ## Architecture
+
+### Export clients
+
+Les administrateurs peuvent ouvrir **Exporter les clients** dans **Commandes** ou depuis une fiche produit (y compris archivée). L’export possède ses propres filtres : commandes livrées et tout l’historique par défaut. Les dates sélectionnent la date de commande.
+
+Après **Préparer la liste**, les compteurs indiquent les clients exportables, les commandes sans téléphone exploitable et les doublons regroupés. Une ligne correspond à un téléphone normalisé. Les numéros mobiles ivoiriens locaux sont préfixés par `225` ; pour les autres pays, les numéros doivent contenir leur indicatif international.
+
+Le fichier Excel contient nom, téléphone, nombre de commandes, dates de première/dernière commande et produits. Le CSV audience contient uniquement la colonne `phone`. L’import et la création des audiences se font ensuite dans l’outil publicitaire.
+
+### Organisation du code
 
 ```text
 app/          pages et Route Handlers

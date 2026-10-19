@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useOrders } from '@/hooks/use-orders'
 import { OrderTable } from '@/components/orders/order-table'
 import { OrderFilters } from '@/components/orders/order-filters'
+import { CustomerExport } from '@/components/orders/customer-export'
 import { PeriodSelector } from '@/components/dashboard/period-selector'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -15,6 +16,7 @@ import { getPeriodDates, type DatePreset } from '@/lib/date-periods'
 export default function OrdersPage() {
   const { orders, filters, isLoading, updateStatus, setFilters } = useOrders()
   const { organization } = useAuthStore()
+  const isAdmin = useAuthStore((state) => state.isAdmin())
 
   const [preset, setPreset] = useState<DatePreset>('today')
   const [customFrom, setCustomFrom] = useState<string | undefined>()
@@ -64,6 +66,8 @@ export default function OrdersPage() {
       </div>
 
       <OrderFilters filters={filters} onChange={setFilters} />
+
+      {isAdmin && <CustomerExport />}
 
       <Card>
         <CardHeader>

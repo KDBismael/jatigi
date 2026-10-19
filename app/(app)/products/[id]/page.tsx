@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AddStockModal } from '@/components/products/add-stock-modal'
 import { ProductOffersCard } from '@/components/products/product-offers-card'
+import { CustomerExport } from '@/components/orders/customer-export'
 import { Select } from '@/components/ui/select'
 import { formatCurrency, formatDate, computeMargin } from '@/lib/utils'
 import type { Product } from '@/types/product'
@@ -160,6 +161,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="space-y-4">
+      {isAdmin && <CustomerExport key={product.id} product={product} />}
       {/* Header — stacks on mobile */}
       <div className="flex items-start gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-0.5 shrink-0">←</Button>
