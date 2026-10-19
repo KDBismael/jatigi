@@ -4,7 +4,7 @@ import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { STATUSES, STATUS_LABELS } from '@/lib/constants'
+import { STATUSES, STATUS_LABELS, CHANNELS, CHANNEL_LABELS } from '@/lib/constants'
 import { downloadCustomerExport, type CustomerExportReport } from '@/lib/customer-export'
 
 export function CustomerExport({ product }: { product?: { id: string; name: string } }) {
@@ -13,6 +13,7 @@ export function CustomerExport({ product }: { product?: { id: string; name: stri
   const [products, setProducts] = useState<{ id: string; name: string; is_active: boolean }[]>([])
   const [productId, setProductId] = useState(product?.id ?? '')
   const [status, setStatus] = useState('delivered')
+  const [channel, setChannel] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,6 +42,7 @@ export function CustomerExport({ product }: { product?: { id: string; name: stri
     try {
       const params = new URLSearchParams({ status })
       if (productId) params.set('productId', productId)
+      if (channel) params.set('channel', channel)
       if (from) params.set('from', from)
       if (to) params.set('to', to)
       const response = await fetch(`/api/customers/export?${params}`, { cache: 'no-store' })
@@ -75,6 +77,8 @@ export function CustomerExport({ product }: { product?: { id: string; name: stri
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {!product && <Select id={`${id}-product`} label="Produit" value={productId} onChange={event => setProductId(event.target.value)}
               options={[{ value: '', label: 'Tous les produits' }, ...products.map(item => ({ value: item.id, label: `${item.name}${item.is_active === false ? ' (archivé)' : ''}` }))]} />}
+            <Select id={`${id}-channel`} label="Canal de vente" value={channel} onChange={event => setChannel(event.target.value)}
+              options={[{ value: '', label: 'Tous les canaux' }, ...CHANNELS.map(value => ({ value, label: CHANNEL_LABELS[value] }))]} />
             <Select id={`${id}-status`} label="Statut des commandes" value={status} onChange={event => setStatus(event.target.value)}
               options={[{ value: 'all', label: 'Tous les statuts' }, ...STATUSES.map(value => ({ value, label: STATUS_LABELS[value] }))]} />
             <Input id={`${id}-from`} label="Du (facultatif)" type="date" value={from} max={to || undefined} onChange={event => setFrom(event.target.value)} />
@@ -90,9 +94,9 @@ export function CustomerExport({ product }: { product?: { id: string; name: stri
         <p className="text-sm text-gray-500">{report.matchedOrders} commande(s) sélectionnée(s) · {report.excludedOrders} sans téléphone exploitable · {report.duplicateOrders} doublon(s) regroupé(s)</p>
         {report.customers.length > 0 ? <div className="flex flex-wrap gap-2">
           <Button variant="secondary" disabled={busy} onClick={() => download('xlsx')}>Télécharger Excel</Button>
-          <Button disabled={busy} onClick={() => download('csv')}>Télécharger CSV audience</Button>
+          <Button disabled={busy} onClick={() => download('csv')}>Télécharger CSV</Button>
         </div> : <p className="text-sm text-gray-500">Aucun client à exporter. Modifiez les filtres ou complétez les téléphones des commandes.</p>}
-        <p className="text-xs text-gray-500">Excel contient les noms, téléphones, produits et dates. Le CSV audience contient uniquement la colonne phone, sans doublons.</p>
+        <p className="text-xs text-gray-500">Excel et CSV contiennent les noms, téléphones, produits et canaux, sans doublons. Excel inclut aussi le nombre de commandes et les dates.</p>
       </div>}
     </div>}
   </section>

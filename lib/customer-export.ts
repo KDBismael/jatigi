@@ -1,8 +1,9 @@
 import { z } from 'zod'
-import { STATUSES } from '@/lib/constants'
+import { STATUSES, CHANNELS, CHANNEL_LABELS, type Channel } from '@/lib/constants'
 
 export const customerExportSchema = z.object({
   productId: z.string().uuid().optional(),
+  channel: z.enum(CHANNELS).optional(),
   status: z.enum(['all', ...STATUSES]).default('delivered'),
   from: z.iso.date().optional(),
   to: z.iso.date().optional(),
@@ -16,6 +17,7 @@ export interface CustomerExportOrder {
   client_name: string
   client_phone: string | null
   order_date: string
+  channel: Channel
   order_lines: { product_id: string; product: { name: string } | null }[]
 }
 export interface ExportCustomer {
@@ -25,6 +27,7 @@ export interface ExportCustomer {
   firstOrderDate: string
   lastOrderDate: string
   products: string[]
+  channels: Channel[]
 }
 export interface CustomerExportReport {
   customers: ExportCustomer[]
@@ -65,18 +68,26 @@ export function buildCustomerExport(orders: CustomerExportOrder[]): CustomerExpo
         existing.name = order.client_name
       }
       existing.products = [...new Set([...existing.products, ...products])].sort()
+      existing.channels = [...new Set([...existing.channels, order.channel])].sort()
     } else {
       customers.set(phone, { name: order.client_name, phone, orderCount: 1,
         firstOrderDate: order.order_date, lastOrderDate: order.order_date,
-        products: [...new Set(products)].sort() })
+        products: [...new Set(products)].sort(), channels: [order.channel] })
     }
   }
   return { customers: [...customers.values()].sort((a, b) => a.phone.localeCompare(b.phone)), matchedOrders: orders.length, excludedOrders, duplicateOrders }
 }
 
-/** Minimal audience file: numeric identifiers only, one customer per row. */
+function csvCell(value: string): string {
+  // Keep user-entered names/product names inert when opened in a spreadsheet.
+  const safe = /^[\s\uFEFF]*[=+@-]/.test(value) ? `'${value}` : value
+  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
+}
+
 export function customerCsv(customers: ExportCustomer[]): string {
-  return ['phone', ...customers.map(customer => customer.phone)].join('\r\n') + '\r\n'
+  return ['name,phone,products,channels', ...customers.map(customer => [
+    customer.name, customer.phone, customer.products.join(', '), customer.channels.map(channel => CHANNEL_LABELS[channel]).join(', '),
+  ].map(csvCell).join(','))].join('\r\n') + '\r\n'
 }
 
 export async function downloadCustomerExport(report: CustomerExportReport, format: 'csv' | 'xlsx') {
@@ -88,6 +99,7 @@ export async function downloadCustomerExport(report: CustomerExportReport, forma
       Nom: customer.name, Téléphone: customer.phone, Commandes: customer.orderCount,
       'Première commande': customer.firstOrderDate, 'Dernière commande': customer.lastOrderDate,
       Produits: customer.products.join(', '),
+      Canaux: customer.channels.map(channel => CHANNEL_LABELS[channel]).join(', '),
     }))
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), 'Clients')
     XLSX.writeFile(workbook, `${filename}.xlsx`)

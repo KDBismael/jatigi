@@ -20,16 +20,18 @@ describe('lecture des clients à exporter', () => {
   beforeEach(() => vi.resetAllMocks())
   it('filtre la boutique, le produit, le statut et les bornes inclusives', async () => {
     const query = mockDatabase([{ data: [], error: null }])
-    await getCustomerExport('own-org', { productId: 'product-id', status: 'delivered', from: '2026-10-01', to: '2026-10-19' })
+    await getCustomerExport('own-org', { productId: 'product-id', status: 'delivered', channel: 'facebook', from: '2026-10-01', to: '2026-10-19' })
     expect(query.select).toHaveBeenCalledWith(expect.stringContaining('order_lines!inner'))
     expect(query.eq).toHaveBeenCalledWith('organization_id', 'own-org')
     expect(query.eq).toHaveBeenCalledWith('order_lines.product_id', 'product-id')
     expect(query.eq).toHaveBeenCalledWith('status', 'delivered')
+    expect(query.eq).toHaveBeenCalledWith('channel', 'facebook')
+    expect(query.select).toHaveBeenCalledWith(expect.stringContaining('channel'))
     expect(query.gte).toHaveBeenCalledWith('order_date', '2026-10-01')
     expect(query.lte).toHaveBeenCalledWith('order_date', '2026-10-19')
   })
   it('charge les pages suivantes et regroupe les doublons entre pages', async () => {
-    const order = { id: 'id', client_name: 'Awa', client_phone: '0701020304', order_date: '2026-10-19', order_lines: [] }
+    const order = { id: 'id', client_name: 'Awa', client_phone: '0701020304', channel: 'facebook', order_date: '2026-10-19', order_lines: [] }
     const query = mockDatabase([
       { data: Array.from({ length: 500 }, (_, index) => ({ ...order, id: String(index) })), error: null },
       { data: [{ ...order, id: 'last' }], error: null },

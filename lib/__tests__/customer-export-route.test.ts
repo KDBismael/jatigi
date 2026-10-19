@@ -18,10 +18,10 @@ describe('GET /api/customers/export', () => {
   it('transmet exclusivement la boutique authentifiée et les filtres validés', async () => {
     vi.mocked(requireOrganizationAdmin).mockResolvedValue({ user: { id: 'admin' }, organizationId: 'own-org' } as Awaited<ReturnType<typeof requireOrganizationAdmin>>)
     vi.mocked(getCustomerExport).mockResolvedValue({ customers: [], matchedOrders: 0, excludedOrders: 0, duplicateOrders: 0 })
-    const response = await GET(new NextRequest('http://localhost/api/customers/export?organizationId=other-org&status=all&from=2026-10-01'))
+    const response = await GET(new NextRequest('http://localhost/api/customers/export?organizationId=other-org&status=all&channel=facebook&from=2026-10-01'))
     expect(response.status).toBe(200)
     expect(response.headers.get('cache-control')).toBe('private, no-store')
-    expect(getCustomerExport).toHaveBeenCalledWith('own-org', { status: 'all', from: '2026-10-01' })
+    expect(getCustomerExport).toHaveBeenCalledWith('own-org', { status: 'all', channel: 'facebook', from: '2026-10-01' })
   })
   it('refuse un filtre invalide', async () => {
     vi.mocked(requireOrganizationAdmin).mockResolvedValue({ organizationId: 'own-org' } as Awaited<ReturnType<typeof requireOrganizationAdmin>>)

@@ -9,7 +9,7 @@ Warko est une application de gestion commerciale en français destinée aux vend
 - Gestion des livreurs, colis en circulation, taux de réussite et reversements
 - Analyse du chiffre d’affaires et de la rentabilité par période
 - Comptes administrateur/employé avec masquage des données de coût
-- Export clients par produit, période et statut en Excel ou CSV audience
+- Export clients par produit, canal, période et statut en Excel ou CSV
 - Multi-tenant sécurisé par organisation et RLS Supabase
 
 ## Stack
@@ -63,7 +63,7 @@ Les administrateurs peuvent ouvrir **Exporter les clients** dans **Commandes** o
 
 Après **Préparer la liste**, les compteurs indiquent les clients exportables, les commandes sans téléphone exploitable et les doublons regroupés. Une ligne correspond à un téléphone normalisé. Les numéros mobiles ivoiriens locaux sont préfixés par `225` ; pour les autres pays, les numéros doivent contenir leur indicatif international.
 
-Le fichier Excel contient nom, téléphone, nombre de commandes, dates de première/dernière commande et produits. Le CSV audience contient uniquement la colonne `phone`. L’import et la création des audiences se font ensuite dans l’outil publicitaire.
+Les filtres produit et canal peuvent être combinés (par exemple : acheteurs d’un parfum via Facebook). Les fichiers Excel et CSV contiennent le nom, le téléphone, les produits et les canaux des commandes sélectionnées, avec une ligne par téléphone. Excel contient aussi le nombre de commandes et les dates de première/dernière commande. Le CSV utilise les colonnes `name`, `phone`, `products`, `channels`. L’import et la création des audiences se font ensuite dans l’outil publicitaire.
 
 ### Organisation du code
 

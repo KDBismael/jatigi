@@ -22,27 +22,32 @@ describe('normalisation des téléphones clients', () => {
 describe('liste clients exportable', () => {
   it('déduplique les commandes par téléphone et compte les exclusions', () => {
     const report = buildCustomerExport([
-      { id: 'recent', client_name: 'Awa', client_phone: '+2250701020304', order_date: '2026-10-18', order_lines: [{ product_id: 'p1', product: { name: 'Parfum' } }] },
-      { id: 'old', client_name: 'Awa ancien', client_phone: '07 01 02 03 04', order_date: '2026-10-01', order_lines: [{ product_id: 'p2', product: { name: 'Crème' } }, { product_id: 'p1', product: { name: 'Parfum' } }] },
-      { id: 'missing', client_name: 'Sans numéro', client_phone: null, order_date: '2026-10-19', order_lines: [] },
+      { id: 'recent', client_name: 'Awa', client_phone: '+2250701020304', channel: 'facebook', order_date: '2026-10-18', order_lines: [{ product_id: 'p1', product: { name: 'Parfum' } }] },
+      { id: 'old', client_name: 'Awa ancien', client_phone: '07 01 02 03 04', channel: 'whatsapp', order_date: '2026-10-01', order_lines: [{ product_id: 'p2', product: { name: 'Crème' } }, { product_id: 'p1', product: { name: 'Parfum' } }] },
+      { id: 'missing', client_name: 'Sans numéro', client_phone: null, channel: 'tiktok', order_date: '2026-10-19', order_lines: [] },
     ])
     expect(report).toEqual({ matchedOrders: 3, excludedOrders: 1, duplicateOrders: 1, customers: [{
-      name: 'Awa', phone: '2250701020304', orderCount: 2, firstOrderDate: '2026-10-01', lastOrderDate: '2026-10-18', products: ['Crème', 'Parfum'],
+      name: 'Awa', phone: '2250701020304', orderCount: 2, firstOrderDate: '2026-10-01', lastOrderDate: '2026-10-18', products: ['Crème', 'Parfum'], channels: ['facebook', 'whatsapp'],
     }] })
-    expect(customerCsv(report.customers)).toBe('phone\r\n2250701020304\r\n')
+    expect(customerCsv(report.customers)).toBe('name,phone,products,channels\r\nAwa,2250701020304,"Crème, Parfum","Facebook, WhatsApp"\r\n')
   })
   it('gère une liste vide', () => {
     expect(buildCustomerExport([]).customers).toEqual([])
-    expect(customerCsv([])).toBe('phone\r\n')
+    expect(customerCsv([])).toBe('name,phone,products,channels\r\n')
+  })
+  it('échappe les noms et protège les cellules CSV contre les formules', () => {
+    const report = buildCustomerExport([{ id: '1', client_name: '=HYPERLINK("test")', client_phone: '0701020304', channel: 'facebook', order_date: '2026-10-19', order_lines: [] }])
+    expect(customerCsv(report.customers)).toContain('"\'=HYPERLINK(""test"")",2250701020304,,Facebook')
   })
   it('écrit les téléphones comme du texte dans Excel et ne transforme pas les noms en formules', async () => {
     const XLSX = await import('xlsx')
     const writer = vi.mocked(XLSX.writeFile)
     try {
-      const report = buildCustomerExport([{ id: '1', client_name: '=1+1', client_phone: '0701020304', order_date: '2026-10-19', order_lines: [] }])
+      const report = buildCustomerExport([{ id: '1', client_name: '=1+1', client_phone: '0701020304', channel: 'tiktok', order_date: '2026-10-19', order_lines: [] }])
       await downloadCustomerExport(report, 'xlsx')
       const workbook = writer.mock.calls[0][0]
       expect(workbook.Sheets.Clients.A2).toMatchObject({ t: 's', v: '=1+1' })
+      expect(workbook.Sheets.Clients.G2).toMatchObject({ t: 's', v: 'TikTok' })
       expect(workbook.Sheets.Clients.A2.f).toBeUndefined()
       expect(workbook.Sheets.Clients.B2).toMatchObject({ t: 's', v: '2250701020304' })
     } finally { writer.mockReset() }
@@ -54,9 +59,9 @@ describe('filtres export clients', () => {
     expect(customerExportSchema.parse({})).toEqual({ status: 'delivered' })
   })
   it('valide les dates, leur ordre, les statuts et le produit', () => {
-    for (const filters of [{ from: '2026-02-30' }, { from: '2026-10-19', to: '2026-10-01' }, { status: 'oops' }, { productId: 'oops' }]) {
+    for (const filters of [{ from: '2026-02-30' }, { from: '2026-10-19', to: '2026-10-01' }, { status: 'oops' }, { channel: 'oops' }, { productId: 'oops' }]) {
       expect(customerExportSchema.safeParse(filters).success).toBe(false)
     }
-    expect(customerExportSchema.safeParse({ status: 'all', from: '2026-10-01' }).success).toBe(true)
+    expect(customerExportSchema.safeParse({ status: 'all', channel: 'facebook', from: '2026-10-01' }).success).toBe(true)
   })
 })
