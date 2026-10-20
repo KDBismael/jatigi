@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { DiscountEditor } from '@/components/orders/discount-editor'
 import { OrderStatusBadge } from '@/components/orders/order-status-badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -114,7 +115,7 @@ export default function OrderDetailPage() {
       })
       if (res.ok) {
         const updated = await res.json()
-        setOrder((prev) => prev ? { ...prev, status: updated.status } : prev)
+        setOrder(updated)
       }
     } finally {
       setUpdating(false)
@@ -306,6 +307,8 @@ export default function OrderDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      <DiscountEditor order={order} onSaved={setOrder} />
 
       {/* Order lines */}
       <Card>

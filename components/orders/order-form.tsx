@@ -9,6 +9,8 @@ import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CHANNELS, CHANNEL_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@/lib/constants'
+import { calculateDiscount } from '@/lib/discounts'
+import { discountOptions } from '@/components/orders/discount-editor'
 import { formatCurrency } from '@/lib/utils'
 import { selectableOrderProducts } from '@/lib/product-archive'
 import { calculateOfferSale, calculateUnitSale } from '@/lib/product-pricing'
@@ -70,11 +72,14 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
     (sum, line) => {
       const product = activeProducts.find(p => p.id === line?.product_id)
       if (!product) return sum
+      let gross = 0
       if (line.pricing_type === 'offer') {
         const offer = product.offers?.find(o => o.id === line.offer_id && o.is_active)
-        return sum + (offer ? calculateOfferSale(offer, Number(line.offer_count) || 0).revenue : 0)
-      }
-      return sum + calculateUnitSale(product.sale_price, Number(line.quantity) || 0).revenue
+        gross = offer ? calculateOfferSale(offer, Number(line.offer_count) || 0).revenue : 0
+      } else gross = calculateUnitSale(product.sale_price, Number(line.quantity) || 0).revenue
+      try { return sum + calculateDiscount(gross, line).total }
+      catch { return sum + gross }
+
     },
     0
   )
@@ -194,6 +199,19 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
               </> : <div className="w-28"><Input label={index === 0 ? 'Nb unités' : undefined} type="number" min={1}
                 error={(errors.lines?.[index] as { quantity?: { message?: string } })?.quantity?.message}
                 {...register(`lines.${index}.quantity`)} /></div>}
+              <div className="w-full grid gap-3 sm:grid-cols-2">
+                <Select id={`line-${index}-discount-type`} label="Remise sur la ligne" options={discountOptions} {...register(`lines.${index}.discount_type`)}
+                  onChange={event => {
+                    setValue(`lines.${index}.discount_type`, event.target.value as 'none' | 'amount' | 'percent')
+                    if (event.target.value === 'none') { setValue(`lines.${index}.discount_value`, 0); setValue(`lines.${index}.discount_reason`, '') }
+                  }} />
+                {line?.discount_type && line.discount_type !== 'none' && <>
+                  <Input id={`line-${index}-discount-value`} label={line.discount_type === 'percent' ? 'Pourcentage (%)' : 'Montant sur la ligne (FCFA)'} type="number" min={0} max={line.discount_type === 'percent' ? 100 : undefined} step="0.01"
+                    error={errors.lines?.[index]?.discount_value?.message} {...register(`lines.${index}.discount_value`)} />
+                  <div className="sm:col-span-2"><Input id={`line-${index}-discount-reason`} label="Motif de la remise (obligatoire)" maxLength={300}
+                    error={errors.lines?.[index]?.discount_reason?.message} {...register(`lines.${index}.discount_reason`)} /></div>
+                </>}
+              </div>
               {fields.length > 1 && (
                 <Button
                   type="button"
@@ -237,7 +255,7 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
               {...register('payment_method')}
             />
           </div>
-          {isAdmin && orderTotal > 0 && (
+          {orderTotal >= 0 && (
             <div className="rounded-lg bg-gray-50 border border-gray-100 p-3 text-sm">
               <div className="flex justify-between text-gray-500">
                 <span>Coût du colis</span>

@@ -38,7 +38,10 @@ export function useOrders() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) {
+      const data = await res.json()
+      throw new Error(typeof data.error === 'string' ? data.error : 'Vérifiez les informations de la commande.')
+    }
     const order = await res.json()
     addOrder(order)
     return order

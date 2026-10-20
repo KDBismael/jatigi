@@ -56,3 +56,30 @@ html[data-warko-theme="dark"] .app-shell select,
 html[data-warko-theme="dark"] .app-shell textarea { background-color: #111827; border-color: #475569; color: #f8fafc; color-scheme: dark; }
 html[data-warko-theme="dark"] .app-shell .hover\:bg-gray-50:hover,
 html[data-warko-theme="dark"] .app-shell .hover\:bg-gray-100:hover { background-color: #1f2937; }
+
+/* Order documents keep a fixed paper width in preview and during printing. */
+.order-document { box-sizing: border-box; overflow-wrap: anywhere; color: #000 !important; font-family: Arial, sans-serif; }
+.order-document * { color: #000 !important; }
+.order-document-a4 { min-height: 297mm; padding: 16mm; font-size: 11pt; }
+.order-document-thermal { padding: 4mm; font-size: 9pt; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.order-document[data-format="58mm"] { font-size: 8pt; }
+.document-header { text-align: center; border-bottom: 1px dashed #777; padding-bottom: 12px; }
+.document-header h1 { font-weight: 700; font-size: 1.4em; }
+.document-title { margin: 6px 0; text-transform: uppercase; }
+.document-logo { display: block; max-width: 36mm; max-height: 22mm; margin: 0 auto 8px; object-fit: contain; filter: grayscale(1); }
+.order-document-thermal .document-logo { max-width: 24mm; max-height: 17mm; }
+.document-meta, .document-amount { display: flex; justify-content: space-between; gap: 8px; }
+.document-amount > span:last-child { flex-shrink: 0; text-align: right; }
+.document-parties { padding: 12px 0; border-bottom: 1px dashed #777; }
+.document-line { padding: 12px 0; border-bottom: 1px dashed #777; break-inside: avoid; }
+.document-product, .document-line-total { font-weight: 700; }
+.document-reason { margin-top: 4px; }
+.document-totals { padding: 12px 0; }
+.document-totals .document-amount { padding: 3px 0; }
+.document-emphasis { font-weight: 700; border-top: 1px solid #000; margin-top: 5px; padding-top: 6px !important; }
+.document-footer { border-top: 1px dashed #777; padding-top: 12px; text-align: center; font-size: .85em; }
+@media print {
+  .order-document { margin: 0 !important; box-shadow: none !important; background: #fff !important; }
+  .order-document-a4 { min-height: auto; padding: 0 !important; width: auto !important; }
+  .document-totals { break-inside: avoid; }
+}

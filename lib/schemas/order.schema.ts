@@ -1,17 +1,20 @@
 import { z } from 'zod'
 import { CHANNELS, STATUSES, PAYMENT_METHODS } from '@/lib/constants'
+import { discountFields, validateDiscount } from '@/lib/discounts'
 
 export const channelEnum = z.enum(CHANNELS)
 export const statusEnum = z.enum(STATUSES)
 export const paymentMethodEnum = z.enum(PAYMENT_METHODS)
 
 export const orderLineSchema = z.object({
+  ...discountFields,
   product_id: z.string().uuid('Produit requis'),
   pricing_type: z.enum(['unit', 'offer']).default('unit'),
   quantity: z.coerce.number().int().positive('Quantité requise').optional(),
   offer_id: z.string().uuid('Offre requise').optional().or(z.literal('')),
   offer_count: z.coerce.number().int().positive("Nombre d'offres requis").optional(),
 }).superRefine((line, ctx) => {
+  validateDiscount(line, ctx)
   if (line.pricing_type === 'unit' && !line.quantity) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['quantity'], message: 'Quantité requise' })
   }

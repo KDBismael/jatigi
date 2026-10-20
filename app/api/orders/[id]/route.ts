@@ -1,54 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/services/supabase/server'
+import { getOrderContext } from '@/lib/order-context'
+import { orderForRole } from '@/lib/order-access'
+import { orderErrorResponse } from '@/lib/order-errors'
 import { orderStatusUpdateSchema, orderUpdateSchema } from '@/lib/schemas/order.schema'
 import { updateOrderStatus, updateOrder, getOrderById } from '@/services/order-service'
 
-async function getAuthContext() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, organization_id')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile?.organization_id) return null
-  return { user, profile }
-}
-
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ctx = await getAuthContext()
+  const ctx = await getOrderContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
   const order = await getOrderById(id, ctx.profile.organization_id)
   if (!order) return NextResponse.json({ error: 'Commande introuvable' }, { status: 404 })
 
-  if (ctx.profile.role !== 'admin') {
-    const { order_lines, ...rest } = order
-    return NextResponse.json({
-      ...rest,
-      order_lines: order_lines?.map((line) => ({
-        id: line.id,
-        order_id: line.order_id,
-        product_id: line.product_id,
-        quantity: line.quantity,
-        pricing_type: line.pricing_type,
-        offer_name: line.offer_name,
-        units_per_offer: line.units_per_offer,
-        offer_count: line.offer_count,
-        product: line.product ? { name: line.product.name } : undefined,
-      })),
-    })
-  }
-
-  return NextResponse.json(order)
+  return NextResponse.json(orderForRole(order, ctx.profile.role))
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ctx = await getAuthContext()
+  const ctx = await getOrderContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
@@ -63,14 +32,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   try {
     const order = await updateOrder(id, parsed.data, ctx.profile.organization_id)
-    return NextResponse.json(order)
+    return NextResponse.json(orderForRole(order, ctx.profile.role))
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return orderErrorResponse(err)
   }
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ctx = await getAuthContext()
+  const ctx = await getOrderContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
@@ -82,8 +51,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const order = await updateOrderStatus(id, parsed.data, ctx.profile.organization_id)
-    return NextResponse.json(order)
+    return NextResponse.json(orderForRole(order, ctx.profile.role))
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return orderErrorResponse(err)
   }
 }

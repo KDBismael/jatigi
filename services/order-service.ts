@@ -67,7 +67,7 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     p_lines: input.lines,
   })
   if (error) {
-    if (error.message.includes('INSUFFICIENT_STOCK')) throw new Error('Stock insuffisant pour ce produit')
+    if (error.message.includes('INSUFFICIENT_STOCK')) throw new Error('INSUFFICIENT_STOCK')
     throw new Error(error.message)
   }
   const { error: assignmentError } = await admin.from('orders').update({

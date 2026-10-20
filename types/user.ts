@@ -1,6 +1,7 @@
 import { Role } from '@/lib/constants'
 
 export interface Organization {
+  logo_path?: string | null
   id: string
   name: string
   created_at: string

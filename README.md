@@ -10,6 +10,8 @@ Warko est une application de gestion commerciale en français destinée aux vend
 - Analyse du chiffre d’affaires et de la rentabilité par période
 - Comptes administrateur/employé avec masquage des données de coût
 - Export clients par produit, canal, période et statut en Excel ou CSV
+- Remises par ligne avec motif obligatoire, auteur et date
+- Bons de commande A4, tickets 58/80 mm et PDF avec logo de boutique
 - Multi-tenant sécurisé par organisation et RLS Supabase
 
 ## Stack
@@ -64,6 +66,24 @@ Les administrateurs peuvent ouvrir **Exporter les clients** dans **Commandes** o
 Après **Préparer la liste**, les compteurs indiquent les clients exportables, les commandes sans téléphone exploitable et les doublons regroupés. Une ligne correspond à un téléphone normalisé. Les numéros mobiles ivoiriens locaux sont préfixés par `225` ; pour les autres pays, les numéros doivent contenir leur indicatif international.
 
 Les filtres produit et canal peuvent être combinés (par exemple : acheteurs d’un parfum via Facebook). Les fichiers Excel et CSV contiennent le nom, le téléphone, les produits et les canaux des commandes sélectionnées, avec une ligne par téléphone. Excel contient aussi le nombre de commandes et les dates de première/dernière commande. Le CSV utilise les colonnes `name`, `phone`, `products`, `channels`. L’import et la création des audiences se font ensuite dans l’outil publicitaire.
+
+### Remises et documents
+
+À la création d’une commande ou dans **Remises par produit** sur son détail, les administrateurs et employés peuvent appliquer une remise en FCFA ou en pourcentage. Le montant fixe est déduit du total de la ligne, et non de chaque unité. Un motif est obligatoire pour toute remise positive. Le serveur calcule le montant, enregistre l’auteur et la date, refuse les remises excessives et verrouille leur modification après livraison ou annulation, même si le statut de livraison est ensuite corrigé.
+
+Les prix et coûts historiques restent conservés. Le total net de ligne alimente les rapports, bénéfices et reversements. Les frais de livraison ne sont pas remisés. Une remise ne peut pas rendre le montant total inférieur au dépôt déjà payé.
+
+Dans **Mon compte**, un administrateur peut importer, remplacer ou retirer le logo de sa boutique : PNG ou JPEG, 2 Mo maximum. Les images sont vérifiées puis normalisées en PNG. Les logos sont publics, les écritures passent uniquement par l’API administrateur. Chaque boutique utilise son propre dossier de stockage.
+
+Sur le détail d’une commande, **Imprimer** ouvre le choix **A4**, **Ticket 58 mm** ou **Ticket 80 mm**, puis **Imprimer** ou **Télécharger PDF**. Les documents affichent le logo actuel de la boutique, les produits, remises, motifs et montants à payer, sans les coûts d’achat. Les tickets sont en noir et blanc et leur hauteur PDF s’adapte au contenu ; les longues commandes A4 sont paginées.
+
+L’impression utilise les imprimantes disponibles dans le système. Sur mobile, le PDF peut être enregistré et ouvert dans une application compatible avec l’imprimante. La connexion directe Bluetooth/USB à toutes les imprimantes n’est pas intégrée.
+
+### Mise en service des remises et du logo
+
+Appliquer **avant le déploiement applicatif** la migration `supabase/migrations/20261020181247_order_discounts_and_branding.sql`, qui ajoute les champs, fonctions transactionnelles, contrôles de dépôt et le bucket `organization-logos`. Utiliser le SQL Editor Supabase avec le contenu complet du fichier, ou le workflow de migration de l’environnement. Aucune conversion des anciennes commandes en remises n’est effectuée.
+
+Les dépendances `pdf-lib`, `@pdf-lib/fontkit` et `sharp` sont requises côté serveur. La police Noto Sans et sa licence sont incluses dans `assets/fonts/` et dans la trace de déploiement du générateur PDF. Les tests PostgreSQL utilisent PGlite localement et ne se connectent pas à la base de production.
 
 ### Organisation du code
 

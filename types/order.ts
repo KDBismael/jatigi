@@ -16,6 +16,13 @@ export interface OrderLine {
   offer_price: number | null
   line_total: number
   total_cost: number
+  line_subtotal?: number
+  discount_type?: 'none' | 'amount' | 'percent'
+  discount_value?: number
+  discount_amount?: number
+  discount_reason?: string | null
+  discount_applied_by?: string | null
+  discount_applied_at?: string | null
   product?: {
     name: string
     purchase_cost?: number
@@ -37,6 +44,7 @@ export interface Order {
   seller_id: string
   live_session_id: string | null
   delivered_at: string | null
+  discounts_locked_at?: string | null
   created_at: string
   updated_at: string
   delivery_driver_id: string | null

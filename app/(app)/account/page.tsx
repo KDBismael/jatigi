@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { translateAuthError } from '@/lib/auth-errors'
+import { OrganizationLogo } from '@/components/account/organization-logo'
 import { ThemeSelect } from '@/components/layout/theme-select'
 
 export default function AccountPage() {
@@ -104,6 +105,8 @@ export default function AccountPage() {
         <h1 className="text-2xl font-bold text-gray-900">Mon compte</h1>
         <p className="text-gray-500 text-sm mt-1">{profile?.full_name}{currentEmail ? ` · ${currentEmail}` : ''}</p>
       </div>
+
+      {profile?.role === 'admin' && <OrganizationLogo />}
 
       <Card>
         <CardHeader>
