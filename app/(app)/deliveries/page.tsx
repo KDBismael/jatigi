@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ParcelExport } from '@/components/orders/parcel-export'
 import { formatCurrency } from '@/lib/utils'
 
 export default function DeliveriesPage() {
@@ -77,6 +78,8 @@ export default function DeliveriesPage() {
         </div>
         {isAdmin && <Button onClick={() => setShowDriverForm((visible) => !visible)}>+ Ajouter un livreur</Button>}
       </div>
+
+      {isAdmin && <ParcelExport />}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card><CardContent className="pt-5"><p className="text-xs text-gray-500">Colis en circulation</p><p className="text-2xl font-bold text-orange-600 mt-1">{totals.active}</p></CardContent></Card>

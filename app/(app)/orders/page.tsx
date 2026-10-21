@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useOrders } from '@/hooks/use-orders'
 import { OrderTable } from '@/components/orders/order-table'
 import { OrderFilters } from '@/components/orders/order-filters'
+import { ParcelExport } from '@/components/orders/parcel-export'
 import { CustomerExport } from '@/components/orders/customer-export'
 import { PeriodSelector } from '@/components/dashboard/period-selector'
 import { Button } from '@/components/ui/button'
@@ -68,6 +69,7 @@ export default function OrdersPage() {
       <OrderFilters filters={filters} onChange={setFilters} />
 
       {isAdmin && <CustomerExport />}
+      {isAdmin && <ParcelExport />}
 
       <Card>
         <CardHeader>

@@ -2,7 +2,6 @@ import { PDFDocument, rgb, type PDFFont } from 'pdf-lib'
 import fontkit from '@pdf-lib/fontkit'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import sharp from 'sharp'
 import { formatDocumentMoney, type DocumentFormat, type OrderDocument } from '@/lib/order-document'
 
 let fontBytes: Promise<Buffer> | undefined
@@ -42,6 +41,7 @@ export async function generateOrderPdf(model: OrderDocument, format: DocumentFor
   let logo: Awaited<ReturnType<typeof pdf.embedPng>> | undefined
   if (logoBytes) {
     try {
+      const { default: sharp } = await import('sharp')
       const grayscale = await sharp(Buffer.from(logoBytes), { limitInputPixels: 16000000 }).grayscale().png().toBuffer()
       logo = await pdf.embedPng(grayscale)
     } catch { /* The document remains printable when a stored logo is damaged. */ }
