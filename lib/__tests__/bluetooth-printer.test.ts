@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
-import { BLE_PRINTERS, BLE_PRINTER_SERVICES, SPP_UUID, bluetoothErrorMessage, bluetoothRoutes, chunkBytes, openBluetoothPrinter } from '@/lib/bluetooth-printer'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { BLE_PRINTERS, BLE_PRINTER_SERVICES, SPP_UUID, bluetoothErrorMessage, bluetoothRoutes, chunkBytes, clearBluetoothSession, connectBluetoothPrinter, openBluetoothPrinter, savedBluetoothPrinter } from '@/lib/bluetooth-printer'
 
 function serialPort(id: string | number = SPP_UUID) {
   const written: Uint8Array[] = []
@@ -28,9 +28,17 @@ function bleDevice(id: string, properties = { write: true, writeWithoutResponse:
 }
 const nav = (apis: object) => apis as unknown as Navigator
 
+let stored: Map<string, string>
+beforeEach(() => {
+  clearBluetoothSession()
+  stored = new Map()
+  vi.stubGlobal('localStorage', { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => stored.set(key, value) })
+})
+afterEach(() => { vi.unstubAllGlobals() })
+
 describe('imprimante Bluetooth sans application tierce', () => {
-  it('préfère le Bluetooth classique (SPP) et ne propose rien hors Chrome', () => {
-    expect(bluetoothRoutes(nav({ serial: {}, bluetooth: {} }))).toEqual(['serial', 'ble'])
+  it('préfère la recherche BLE, sans association Android, et ne propose rien hors Chrome', () => {
+    expect(bluetoothRoutes(nav({ serial: {}, bluetooth: {} }))).toEqual(['ble', 'serial'])
     expect(bluetoothRoutes(nav({ bluetooth: {} }))).toEqual(['ble'])
     expect(bluetoothRoutes(nav({}))).toEqual([])
   })
@@ -50,12 +58,12 @@ describe('imprimante Bluetooth sans application tierce', () => {
     expect(progress).toHaveBeenLastCalledWith(1)
     expect(port.close).toHaveBeenCalled()
   })
-  it('ouvre le sélecteur SPP la première fois puis oublie les anciennes imprimantes', async () => {
+  it('ouvre la liste des imprimantes associées sur demande puis oublie les anciennes imprimantes', async () => {
     const chosen = serialPort().port, old = serialPort().port
     const oldBle = bleDevice('old').device
-    const serial = { getPorts: vi.fn().mockResolvedValueOnce([]).mockResolvedValue([old, chosen]), requestPort: vi.fn().mockResolvedValue(chosen) }
-    const bluetooth = { getDevices: vi.fn().mockResolvedValueOnce([]).mockResolvedValue([oldBle]), requestDevice: vi.fn() }
-    await openBluetoothPrinter(undefined, nav({ serial, bluetooth }))
+    const serial = { getPorts: vi.fn().mockResolvedValue([old, chosen]), requestPort: vi.fn().mockResolvedValue(chosen) }
+    const bluetooth = { getDevices: vi.fn().mockResolvedValue([oldBle]), requestDevice: vi.fn() }
+    await openBluetoothPrinter('serial', nav({ serial, bluetooth }))
     expect(serial.requestPort).toHaveBeenCalledWith(expect.objectContaining({ filters: [{ bluetoothServiceClassId: SPP_UUID }] }))
     expect(bluetooth.requestDevice).not.toHaveBeenCalled()
     expect(old.forget).toHaveBeenCalled()
@@ -81,17 +89,26 @@ describe('imprimante Bluetooth sans application tierce', () => {
     await printer.send(new Uint8Array(45))
     expect(characteristic.writeValueWithoutResponse.mock.calls.map(([chunk]) => chunk.length)).toEqual([20, 20, 5])
   })
-  it('rouvre le sélecteur qui a fonctionné quand le navigateur ne mémorise pas l’imprimante BLE', async () => {
-    const stored = new Map<string, string>()
-    vi.stubGlobal('localStorage', { getItem: (key: string) => stored.get(key) ?? null, setItem: (key: string, value: string) => stored.set(key, value) })
+  it('connecte sans imprimer puis réutilise l’imprimante pendant la session sans rouvrir la liste', async () => {
+    const { device, gatt, characteristic } = bleDevice('printer')
+    const bluetooth = { requestDevice: vi.fn().mockResolvedValue(device) }
+    expect(await connectBluetoothPrinter('ble', nav({ bluetooth }))).toEqual({ route: 'ble', name: 'YHD-8390_BLE' })
+    expect(characteristic.writeValueWithResponse).not.toHaveBeenCalled()
+    expect(gatt.disconnect).toHaveBeenCalledTimes(1)
+    await openBluetoothPrinter(undefined, nav({ bluetooth }))
+    expect(bluetooth.requestDevice).toHaveBeenCalledTimes(1)
+    expect(gatt.connect).toHaveBeenCalledTimes(2)
+  })
+  it('après un rechargement, rouvre la liste BLE de l’imprimante mémorisée plutôt que la liste des associées', async () => {
     const { device } = bleDevice('printer')
     const serial = { getPorts: vi.fn().mockResolvedValue([]), requestPort: vi.fn() }
     const bluetooth = { requestDevice: vi.fn().mockResolvedValue(device) }
     await openBluetoothPrinter('ble', nav({ serial, bluetooth }))
+    clearBluetoothSession()
+    expect(savedBluetoothPrinter()).toEqual({ route: 'ble', name: 'YHD-8390_BLE' })
     await openBluetoothPrinter(undefined, nav({ serial, bluetooth }))
     expect(serial.requestPort).not.toHaveBeenCalled()
     expect(bluetooth.requestDevice).toHaveBeenCalledTimes(2)
-    vi.unstubAllGlobals()
   })
   it('refuse une imprimante BLE sans service compatible et libère la connexion', async () => {
     const { device, gatt } = bleDevice('other', undefined, { service: 'unknown-service', characteristic: 'x' })

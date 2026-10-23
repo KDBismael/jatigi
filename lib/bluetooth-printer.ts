@@ -36,36 +36,44 @@ const BLE_CHUNK = 100
 const BLE_UNACKED_CHUNK = 20
 const SERIAL_CHUNK = 4096
 const DEFAULT_NAME = 'Imprimante Bluetooth'
-const ROUTE_KEY = 'warko:bluetooth-route'
+const SAVED_KEY = 'warko:bluetooth-printer'
 
 export type BluetoothRoute = 'serial' | 'ble'
+export interface SavedBluetoothPrinter { route: BluetoothRoute; name: string }
 export interface BluetoothPrinter {
   name: string
   send(bytes: Uint8Array, onProgress?: (ratio: number) => void): Promise<void>
   close(): Promise<void>
 }
 
+// The chosen device stays usable for the whole app session (client navigations included), so later
+// prints reconnect without a chooser even where Chrome cannot persist BLE grants (getDevices).
+let session: { port: SerialPortLike } | { device: DeviceLike } | null = null
+export function clearBluetoothSession() { session = null }
+
 function apis(nav: Navigator) {
   const { serial, bluetooth } = nav as Navigator & { serial?: SerialLike; bluetooth?: BluetoothLike }
   return { serial, bluetooth }
 }
-/** Supported routes, preferred first: SPP covers most receipt printers, BLE needs no Android pairing. */
+/** Supported routes, preferred first: BLE lists nearby printers without Android pairing; SPP needs pairing first. */
 export function bluetoothRoutes(nav: Navigator = navigator): BluetoothRoute[] {
   const { serial, bluetooth } = apis(nav)
-  return [...(serial ? ['serial' as const] : []), ...(bluetooth ? ['ble' as const] : [])]
+  return [...(bluetooth ? ['ble' as const] : []), ...(serial ? ['serial' as const] : [])]
 }
 export function chunkBytes(bytes: Uint8Array, size: number): Uint8Array[] {
   const chunks: Uint8Array[] = []
   for (let i = 0; i < bytes.length; i += size) chunks.push(bytes.subarray(i, i + size))
   return chunks
 }
-// Browsers without persistent BLE grants (getDevices) still need to reopen the chooser that worked last time.
-function lastRoute(): BluetoothRoute | null {
-  try { const value = globalThis.localStorage?.getItem(ROUTE_KEY); return value === 'serial' || value === 'ble' ? value : null }
-  catch { return null }
+/** Last printer connected on this device, for display and to reopen the right chooser. */
+export function savedBluetoothPrinter(): SavedBluetoothPrinter | null {
+  try {
+    const value = JSON.parse(globalThis.localStorage?.getItem(SAVED_KEY) ?? 'null')
+    return (value?.route === 'serial' || value?.route === 'ble') && typeof value.name === 'string' ? { route: value.route, name: value.name } : null
+  } catch { return null }
 }
-function rememberRoute(route: BluetoothRoute) {
-  try { globalThis.localStorage?.setItem(ROUTE_KEY, route) } catch { /* Device storage may be disabled. */ }
+function savePrinter(printer: SavedBluetoothPrinter) {
+  try { globalThis.localStorage?.setItem(SAVED_KEY, JSON.stringify(printer)) } catch { /* Device storage may be disabled. */ }
 }
 function isSppPort(port: SerialPortLike) {
   const id = port.getInfo().bluetoothServiceClassId
@@ -74,7 +82,7 @@ function isSppPort(port: SerialPortLike) {
 
 export function bluetoothErrorMessage(caught: unknown): string {
   const name = caught instanceof Error || caught instanceof DOMException ? caught.name : ''
-  if (name === 'NotFoundError') return 'Aucune imprimante choisie. Allumez-la et réessayez. Si elle n’apparaît pas, appuyez sur « Imprimante absente de la liste ? ».'
+  if (name === 'NotFoundError') return 'Aucune imprimante choisie. Allumez-la, rapprochez-la et réessayez. Si elle n’apparaît pas, ouvrez « Votre imprimante n’apparaît pas ? ».'
   if (name === 'SecurityError' || name === 'NotAllowedError') return 'Chrome n’a pas accès au Bluetooth. Autorisez « Appareils à proximité » pour Chrome, puis réessayez.'
   if (name === 'NetworkError' || name === 'InvalidStateError') return 'Imprimante injoignable. Vérifiez qu’elle est allumée, proche et non connectée à un autre téléphone.'
   if (caught instanceof Error && !(caught instanceof DOMException) && caught.message) return caught.message
@@ -83,34 +91,43 @@ export function bluetoothErrorMessage(caught: unknown): string {
 
 /**
  * Must be the first await after the user's tap: choosers require transient user activation.
- * Without `route`, reuses the printer already granted to this site; with it, always shows the chooser.
+ * Without `route`, reuses the printer of this session or granted to this site; with it, always shows the chooser.
  */
 export async function openBluetoothPrinter(route?: BluetoothRoute, nav: Navigator = navigator): Promise<BluetoothPrinter> {
   const { serial, bluetooth } = apis(nav)
   if (!route) {
-    const port = serial && (await serial.getPorts()).find(isSppPort)
-    if (port) return openSerial(port)
+    if (session) return 'port' in session ? openSerial(session.port) : openBle(session.device)
+    const saved = savedBluetoothPrinter()
     const device = bluetooth?.getDevices && (await bluetooth.getDevices())[0]
-    if (device) return openBle(device)
+    const port = serial && (await serial.getPorts()).find(isSppPort)
+    if (device && (saved?.route !== 'serial' || !port)) return remember(await openBle(device), { device })
+    if (port) return remember(await openSerial(port), { port }, saved?.name)
     const routes = bluetoothRoutes(nav)
-    const last = lastRoute()
-    route = last && routes.includes(last) ? last : routes[0]
+    route = saved && routes.includes(saved.route) ? saved.route : routes[0]
   }
   if (route === 'serial' && serial) {
     const port = await serial.requestPort({ filters: [{ bluetoothServiceClassId: SPP_UUID }], allowedBluetoothServiceClassIds: [SPP_UUID] })
     await forgetOthers(serial, bluetooth, { port })
-    const printer = await openSerial(port)
-    rememberRoute('serial')
-    return printer
+    return remember(await openSerial(port), { port })
   }
   if (route === 'ble' && bluetooth) {
     const device = await bluetooth.requestDevice({ filters: BLE_PRINTER_SERVICES.map(service => ({ services: [service] })), optionalServices: BLE_PRINTER_SERVICES })
     await forgetOthers(serial, bluetooth, { device })
-    const printer = await openBle(device)
-    rememberRoute('ble')
-    return printer
+    return remember(await openBle(device), { device })
   }
   throw new Error('Le Bluetooth direct nécessite Chrome sur Android. Sur iPhone/iPad, utilisez l’impression système.')
+}
+function remember(printer: BluetoothPrinter, target: { port: SerialPortLike } | { device: DeviceLike }, name = printer.name) {
+  session = target
+  savePrinter({ route: 'port' in target ? 'serial' : 'ble', name })
+  return printer
+}
+
+/** Chooses and checks a printer without printing, so connecting and printing stay two distinct steps. */
+export async function connectBluetoothPrinter(route: BluetoothRoute, nav: Navigator = navigator): Promise<SavedBluetoothPrinter> {
+  const printer = await openBluetoothPrinter(route, nav)
+  await printer.close()
+  return savedBluetoothPrinter() ?? { route, name: printer.name }
 }
 
 /** Keeps a single granted printer so the next tap prints without a chooser. */
