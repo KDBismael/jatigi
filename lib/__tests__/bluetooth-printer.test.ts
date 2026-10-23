@@ -93,6 +93,17 @@ describe('imprimante Bluetooth sans application tierce', () => {
     await printer.send(new Uint8Array(45))
     expect(characteristic.writeValueWithoutResponse.mock.calls.map(([chunk]) => chunk.length)).toEqual([20, 20, 5])
   })
+  it('sur Android, envoie des paquets de 20 octets que le module de l’imprimante reçoit sans perte', async () => {
+    const android = (bluetooth: object) => nav({ userAgent: 'Mozilla/5.0 (Linux; Android 14)', bluetooth })
+    const fast = bleDevice('fast', { write: true, writeWithoutResponse: true })
+    await (await openBluetoothPrinter('ble', android({ requestDevice: vi.fn().mockResolvedValue(fast.device) }))).send(new Uint8Array(45))
+    expect(fast.characteristic.writeValueWithoutResponse.mock.calls.map(([chunk]) => chunk.length)).toEqual([20, 20, 5])
+    expect(fast.characteristic.writeValueWithResponse).not.toHaveBeenCalled()
+    clearBluetoothSession()
+    const ackedOnly = bleDevice('acked', { write: true, writeWithoutResponse: false })
+    await (await openBluetoothPrinter('ble', android({ requestDevice: vi.fn().mockResolvedValue(ackedOnly.device) }))).send(new Uint8Array(45))
+    expect(ackedOnly.characteristic.writeValueWithResponse.mock.calls.map(([chunk]) => chunk.length)).toEqual([20, 20, 5])
+  })
   it('connecte sans imprimer puis réutilise l’imprimante pendant la session sans rouvrir la liste', async () => {
     const { device, gatt, characteristic } = bleDevice('printer')
     const bluetooth = { requestDevice: vi.fn().mockResolvedValue(device) }

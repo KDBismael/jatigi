@@ -17,23 +17,35 @@ export function rasterToEscPos(image: { width: number; height: number; data: Uin
   }
   if (data.length !== width * height * 4) throw new Error('Image du ticket invalide.')
   const rowBytes = Math.ceil(width / 8)
-  const bytes = new Uint8Array(2 + rowBytes * height + Math.ceil(height / 128) * 8 + 6)
-  let cursor = 0
-  bytes.set([27, 64], cursor); cursor += 2
-  for (let y = 0; y < height; y += 128) {
-    const rows = Math.min(128, height - y)
-    bytes.set([29, 118, 48, 0, rowBytes & 255, rowBytes >> 8, rows, 0], cursor); cursor += 8
-    for (let row = y; row < y + rows; row++) {
-      for (let x = 0; x < width; x++) {
-        const i = (row * width + x) * 4
-        const alpha = data[i + 3] / 255
-        const brightness = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) * alpha + 255 * (1 - alpha)
-        if (brightness < 180) bytes[cursor + (x >> 3)] |= 128 >> (x % 8)
-      }
-      cursor += rowBytes
+  const packed = new Uint8Array(rowBytes * height)
+  const inked = new Array<boolean>(height).fill(false)
+  for (let row = 0; row < height; row++) {
+    for (let x = 0; x < width; x++) {
+      const i = (row * width + x) * 4
+      const alpha = data[i + 3] / 255
+      const brightness = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) * alpha + 255 * (1 - alpha)
+      if (brightness < 180) { packed[row * rowBytes + (x >> 3)] |= 128 >> (x % 8); inked[row] = true }
     }
   }
-  bytes.set([10, 10, 10, 29, 86, 0], cursor)
+  // A receipt is mostly white: feeding blank rows (ESC J, 3 bytes) instead of sending them as raster
+  // shrinks the job several times, which matters over slow 20-byte Bluetooth packets.
+  const parts: number[][] = [[27, 64]]
+  let size = 2
+  for (let y = 0; y < height;) {
+    const start = y
+    if (!inked[y]) {
+      while (y < height && !inked[y] && y - start < 255) y++
+      parts.push([27, 74, y - start]); size += 3
+      continue
+    }
+    while (y < height && inked[y] && y - start < 128) y++
+    const header = [29, 118, 48, 0, rowBytes & 255, rowBytes >> 8, y - start, 0]
+    parts.push(header, Array.from(packed.subarray(start * rowBytes, y * rowBytes))); size += header.length + (y - start) * rowBytes
+  }
+  parts.push([10, 10, 10, 29, 86, 0]); size += 6
+  const bytes = new Uint8Array(size)
+  let cursor = 0
+  for (const part of parts) { bytes.set(part, cursor); cursor += part.length }
   return bytes
 }
 
