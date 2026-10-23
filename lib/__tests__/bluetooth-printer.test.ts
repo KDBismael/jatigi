@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BLE_PRINTERS, BLE_PRINTER_SERVICES, SPP_UUID, bluetoothErrorMessage, bluetoothRoutes, chunkBytes, clearBluetoothSession, connectBluetoothPrinter, openBluetoothPrinter, savedBluetoothPrinter } from '@/lib/bluetooth-printer'
+import { BLE_PRINTERS, BLE_PRINTER_SERVICES, SPP_UUID, BLE_RELEASE_MS, bluetoothErrorMessage, bluetoothRoutes, chunkBytes, clearBluetoothSession, connectBluetoothPrinter, openBluetoothPrinter, savedBluetoothPrinter } from '@/lib/bluetooth-printer'
 
 function serialPort(id: string | number = SPP_UUID) {
   const written: Uint8Array[] = []
@@ -73,9 +73,13 @@ describe('imprimante Bluetooth sans application tierce', () => {
   it('envoie en BLE par écritures acquittées de 100 octets sur le canal d’impression connu', async () => {
     const { device, gatt, characteristic, decoy } = bleDevice('printer', { write: true, writeWithoutResponse: true }, BLE_PRINTERS[1])
     const bluetooth = { getDevices: vi.fn().mockResolvedValue([]), requestDevice: vi.fn().mockResolvedValue(device) }
+    vi.useFakeTimers()
     const printer = await openBluetoothPrinter('ble', nav({ bluetooth }))
     await printer.send(new Uint8Array(250))
     await printer.close()
+    expect(gatt.disconnect).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(BLE_RELEASE_MS)
+    vi.useRealTimers()
     expect(bluetooth.requestDevice).toHaveBeenCalledWith(expect.objectContaining({ optionalServices: BLE_PRINTER_SERVICES }))
     expect(printer.name).toBe('YHD-8390_BLE')
     expect(characteristic.writeValueWithResponse.mock.calls.map(([chunk]) => chunk.length)).toEqual([100, 100, 50])
@@ -94,10 +98,25 @@ describe('imprimante Bluetooth sans application tierce', () => {
     const bluetooth = { requestDevice: vi.fn().mockResolvedValue(device) }
     expect(await connectBluetoothPrinter('ble', nav({ bluetooth }))).toEqual({ route: 'ble', name: 'YHD-8390_BLE' })
     expect(characteristic.writeValueWithResponse).not.toHaveBeenCalled()
-    expect(gatt.disconnect).toHaveBeenCalledTimes(1)
     await openBluetoothPrinter(undefined, nav({ bluetooth }))
     expect(bluetooth.requestDevice).toHaveBeenCalledTimes(1)
     expect(gatt.connect).toHaveBeenCalledTimes(2)
+  })
+  it('garde la liaison BLE quelques secondes pour que l’imprimante reçoive la fin du ticket et la coupe', async () => {
+    vi.useFakeTimers()
+    const { device, gatt } = bleDevice('printer')
+    const bluetooth = { requestDevice: vi.fn().mockResolvedValue(device) }
+    const first = await openBluetoothPrinter('ble', nav({ bluetooth }))
+    await first.close()
+    vi.advanceTimersByTime(BLE_RELEASE_MS - 1)
+    // A new print within the delay reuses the link instead of having it cut mid-ticket.
+    const second = await openBluetoothPrinter(undefined, nav({ bluetooth }))
+    vi.advanceTimersByTime(BLE_RELEASE_MS)
+    expect(gatt.disconnect).not.toHaveBeenCalled()
+    await second.close()
+    vi.advanceTimersByTime(BLE_RELEASE_MS)
+    expect(gatt.disconnect).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
   })
   it('après un rechargement, rouvre la liste BLE de l’imprimante mémorisée plutôt que la liste des associées', async () => {
     const { device } = bleDevice('printer')

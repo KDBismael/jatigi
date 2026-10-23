@@ -37,6 +37,10 @@ const BLE_UNACKED_CHUNK = 20
 const SERIAL_CHUNK = 4096
 const DEFAULT_NAME = 'Imprimante Bluetooth'
 const SAVED_KEY = 'warko:bluetooth-printer'
+// An acknowledged write only means the printer's BLE module received it. Disconnecting right away lets
+// Android drop the module's unflushed tail (last raster rows + cut), leaving the printer stuck mid-image.
+// The link is released later, so other phones can still use a printer that accepts one connection.
+export const BLE_RELEASE_MS = 5000
 
 export type BluetoothRoute = 'serial' | 'ble'
 export interface SavedBluetoothPrinter { route: BluetoothRoute; name: string }
@@ -157,9 +161,13 @@ async function openSerial(port: SerialPortLike): Promise<BluetoothPrinter> {
   }
 }
 
+let pendingRelease: { gatt: GattLike; timer: ReturnType<typeof setTimeout> } | null = null
+
 async function openBle(device: DeviceLike): Promise<BluetoothPrinter> {
   if (!device.gatt) throw new Error('Cette imprimante n’accepte pas le Bluetooth direct. Essayez « Changer d’imprimante ».')
-  const gatt = await device.gatt.connect()
+  const link = device.gatt
+  if (pendingRelease?.gatt === link) { clearTimeout(pendingRelease.timer); pendingRelease = null }
+  const gatt = await link.connect()
   let target: CharacteristicLike | undefined
   for (const known of BLE_PRINTERS) {
     const characteristics: CharacteristicLike[] = await gatt.getPrimaryService(known.service).then(service => service.getCharacteristics()).catch(() => [])
@@ -184,6 +192,9 @@ async function openBle(device: DeviceLike): Promise<BluetoothPrinter> {
       const chunks = chunkBytes(bytes, acked ? BLE_CHUNK : BLE_UNACKED_CHUNK)
       for (let i = 0; i < chunks.length; i++) { await write(chunks[i]); onProgress?.((i + 1) / chunks.length) }
     },
-    async close() { gatt.disconnect() },
+    async close() {
+      if (pendingRelease) { clearTimeout(pendingRelease.timer); if (pendingRelease.gatt !== link) pendingRelease.gatt.disconnect() }
+      pendingRelease = { gatt: link, timer: setTimeout(() => { pendingRelease = null; gatt.disconnect() }, BLE_RELEASE_MS) }
+    },
   }
 }
