@@ -25,6 +25,7 @@ export async function GET() {
         packages_cancelled: 0,
         success_rate: 0,
         amount_collected: 0,
+        amount_delivery_fees: 0,
         amount_remitted: 0,
         amount_due: 0,
       })))

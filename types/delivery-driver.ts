@@ -15,6 +15,8 @@ export interface DeliveryDriverSummary extends DeliveryDriver {
   packages_cancelled: number
   success_rate: number
   amount_collected: number
+  /** Delivery fees kept by the driver: the shop's revenue never includes them. */
+  amount_delivery_fees: number
   amount_remitted: number
   amount_due: number
 }
