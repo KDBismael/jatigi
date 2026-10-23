@@ -5,7 +5,7 @@ import { Select } from '@/components/ui/select'
 import type { PrinterSettings } from '@/lib/printer-settings'
 import type { DocumentFormat } from '@/lib/order-document'
 import { findDesktopPrinters, prepareAndroidReceipt, printBluetoothReceipt, printDesktopPdf } from '@/lib/printer-transport'
-import { bluetoothErrorMessage, bluetoothRoutes, type BluetoothRoute } from '@/lib/bluetooth-printer'
+import { bluetoothErrorMessage, bluetoothRoutes, connectBluetoothPrinter, savedBluetoothPrinter, type BluetoothRoute } from '@/lib/bluetooth-printer'
 
 const methods = [
   ['bluetooth', 'Bluetooth · imprimante ticket', '58 / 80 mm · directement depuis Chrome, sans application à installer'],
@@ -32,6 +32,8 @@ export function PrinterPicker({ orderId, settings, onSettingsChange, onSystemPri
   const [androidJob, setAndroidJob] = useState<{ key: string; uri: string } | null>(null)
   const android = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
   const routes = typeof navigator !== 'undefined' ? bluetoothRoutes(navigator) : []
+  const [bluetoothPrinter, setBluetoothPrinter] = useState(() => typeof window !== 'undefined' ? savedBluetoothPrinter() : null)
+  const needsConnection = settings.method === 'bluetooth' && routes.length > 0 && !bluetoothPrinter
   const ticketOnly = settings.method === 'rawbt' || settings.method === 'bluetooth'
   const jobKey = `${settings.method}:${settings.format}`
   const androidUri = androidJob?.key === jobKey ? androidJob.uri : null
@@ -58,13 +60,23 @@ export function PrinterPicker({ orderId, settings, onSettingsChange, onSystemPri
     } catch { setError('QZ Tray est indisponible. Installez et ouvrez QZ Tray, autorisez Warko, puis réessayez.') }
     finally { setBusy(false) }
   }
-  async function print(route?: BluetoothRoute) {
+  async function connect(route: BluetoothRoute) {
+    setBusy(true); setError(''); setMessage('')
+    try {
+      const printer = await connectBluetoothPrinter(route)
+      setBluetoothPrinter(printer)
+      setMessage(`${printer.name} est connectée. Appuyez sur « Imprimer maintenant ».`)
+    } catch (caught) { setError(bluetoothErrorMessage(caught)) }
+    finally { setBusy(false) }
+  }
+  async function print() {
     setBusy(true); setError(''); setMessage(''); setAndroidJob(null); setProgress(null)
     try {
       if (settings.method === 'bluetooth') {
         if (settings.format === 'a4') throw new Error('Choisissez un ticket 58 mm ou 80 mm pour le Bluetooth.')
-        const name = await printBluetoothReceipt(getElement, settings.format, { route, onProgress: setProgress })
+        const name = await printBluetoothReceipt(getElement, settings.format, { onProgress: setProgress })
           .catch(caught => { throw new Error(bluetoothErrorMessage(caught)) })
+        setBluetoothPrinter(savedBluetoothPrinter())
         setMessage(`Ticket envoyé à ${name}. Vérifiez le reçu avant de quitter.`)
       } else if (settings.method === 'system') {
         await onSystemPrint()
@@ -106,15 +118,23 @@ export function PrinterPicker({ orderId, settings, onSettingsChange, onSystemPri
       </details>
       <Select id="picker-document-format" label="Format d’impression" value={settings.format} onChange={event => change({ format: event.target.value as DocumentFormat })}
         options={[...(ticketOnly ? [] : [{ value: 'a4', label: 'A4' }]), { value: '58mm', label: 'Ticket 58 mm' }, { value: '80mm', label: 'Ticket 80 mm' }]} />
-      {settings.method === 'bluetooth' && <div className="space-y-3 text-sm text-gray-600">
-        {routes.length ? <>
-          <p>Première fois : allumez l’imprimante{routes[0] === 'serial' ? ' et associez-la dans les réglages Bluetooth d’Android (code 0000 ou 1234)' : ''}, puis appuyez sur Imprimer et choisissez-la. Elle sera mémorisée pour les prochains tickets.</p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" type="button" onClick={() => print(routes[0])}>Changer d’imprimante</Button>
-            {routes.length > 1 && <Button variant="ghost" type="button" onClick={() => print('ble')}>Imprimante absente de la liste ?</Button>}
+      {settings.method === 'bluetooth' && (routes.length ? <div className="space-y-3 rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-gray-500">Imprimante</p>
+            <p className="truncate font-medium text-gray-900">{bluetoothPrinter ? bluetoothPrinter.name : 'Aucune imprimante connectée'}</p>
           </div>
-        </> : <p>Le Bluetooth direct nécessite Chrome sur Android. Sur iPhone/iPad, utilisez l’impression système avec une imprimante AirPrint.</p>}
-      </div>}
+          {bluetoothPrinter && <Button variant="secondary" type="button" className="min-h-11 shrink-0" onClick={() => connect(routes[0])}>Changer</Button>}
+        </div>
+        {!bluetoothPrinter && <p>Allumez l’imprimante, appuyez sur « Connecter l’imprimante » et choisissez-la dans la liste. Aucun réglage Android n’est nécessaire.</p>}
+        {routes.length > 1 && <details>
+          <summary className="cursor-pointer py-1 text-indigo-700">Votre imprimante n’apparaît pas ?</summary>
+          <div className="mt-2 space-y-2">
+            <p>Vérifiez qu’elle est allumée et proche du téléphone. Sinon, associez-la dans les réglages Bluetooth d’Android (code 0000 ou 1234), puis :</p>
+            <Button variant="secondary" type="button" className="min-h-11" onClick={() => connect('serial')}>Choisir une imprimante associée</Button>
+          </div>
+        </details>}
+      </div> : <p className="text-sm text-gray-600">Le Bluetooth direct nécessite Chrome sur Android. Sur iPhone/iPad, utilisez l’impression système avec une imprimante AirPrint.</p>)}
       {settings.method === 'qz' && <div className="space-y-3">
         <Button variant="secondary" type="button" onClick={discover}>Rechercher les imprimantes</Button>
         <Select id="desktop-printer" label="Imprimante" placeholder="Choisir une imprimante" value={settings.printer}
@@ -132,8 +152,9 @@ export function PrinterPicker({ orderId, settings, onSettingsChange, onSystemPri
     {message && <p role="status" className="mt-4 text-sm text-green-700">{message}</p>}
     <div className="mt-5 flex flex-wrap gap-3">
       {androidUri ? <a className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white" href={androidUri}>Envoyer à RawBT</a>
-        : <Button className="min-h-11 flex-1 sm:flex-none" disabled={busy || (settings.method === 'rawbt' && !android) || (settings.method === 'bluetooth' && !routes.length) || (settings.method === 'qz' && !settings.printer)} onClick={() => print()}>
-          {busy ? (progress === null ? 'Préparation…' : `Envoi… ${Math.round(progress * 100)} %`) : settings.method === 'rawbt' ? 'Préparer le ticket Bluetooth' : 'Imprimer maintenant'}
+        : <Button className="min-h-11 flex-1 sm:flex-none" disabled={busy || (settings.method === 'rawbt' && !android) || (settings.method === 'bluetooth' && !routes.length) || (settings.method === 'qz' && !settings.printer)} onClick={() => needsConnection ? connect(routes[0]) : print()}>
+          {busy ? (progress === null ? 'Préparation…' : `Envoi… ${Math.round(progress * 100)} %`)
+            : needsConnection ? 'Connecter l’imprimante' : settings.method === 'rawbt' ? 'Préparer le ticket Bluetooth' : 'Imprimer maintenant'}
         </Button>}
       <Button className="min-h-11" variant="secondary" disabled={busy} onClick={onClose}>Fermer</Button>
     </div>
