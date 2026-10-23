@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { parsePrinterSettings, rasterToEscPos, rawBtIntent } from '@/lib/printer-settings'
-import { findDesktopPrinters, printDesktopPdf, prepareAndroidReceipt } from '@/lib/printer-transport'
+import { findDesktopPrinters, printBluetoothReceipt, printDesktopPdf, prepareAndroidReceipt } from '@/lib/printer-transport'
 const renderImage = vi.hoisted(() => ({ toCanvas: vi.fn() }))
 vi.mock('html-to-image', () => renderImage)
 const qz = vi.hoisted(() => ({
@@ -8,6 +8,26 @@ const qz = vi.hoisted(() => ({
   configs: { create: vi.fn() }, print: vi.fn(),
 }))
 vi.mock('qz-tray', () => ({ default: qz }))
+const bluetooth = vi.hoisted(() => ({ openBluetoothPrinter: vi.fn() }))
+vi.mock('@/lib/bluetooth-printer', () => bluetooth)
+describe('impression Bluetooth directe', () => {
+  it('se connecte avant le rendu pour garder le geste utilisateur, puis ferme la connexion même en cas d’échec', async () => {
+    const order: string[] = []
+    const printer = { name: 'YHD-8390', send: vi.fn(async () => { order.push('send') }), close: vi.fn(async () => { order.push('close') }) }
+    bluetooth.openBluetoothPrinter.mockImplementation(async () => { order.push('open'); return printer })
+    vi.stubGlobal('document', { fonts: { ready: Promise.resolve() } })
+    const image = { width: 8, height: 1, data: new Uint8ClampedArray(32).fill(255) }
+    renderImage.toCanvas.mockImplementation(async () => { order.push('render'); return { width: 8, height: 1, getContext: () => ({ getImageData: () => image }) } })
+    const element = { getBoundingClientRect: () => ({ width: 219, height: 400 }), querySelectorAll: () => [] } as unknown as HTMLElement
+    expect(await printBluetoothReceipt(() => element, '58mm', { route: 'serial' })).toBe('YHD-8390')
+    expect(order).toEqual(['open', 'render', 'send', 'close'])
+    expect(bluetooth.openBluetoothPrinter).toHaveBeenCalledWith('serial')
+    printer.send.mockRejectedValueOnce(new Error('coupure'))
+    await expect(printBluetoothReceipt(() => element, '58mm')).rejects.toThrow('coupure')
+    expect(printer.close).toHaveBeenCalledTimes(2)
+    vi.unstubAllGlobals()
+  })
+})
 describe('préférences et ticket Android', () => {
   it('valide les préférences stockées et revient au système pour les données invalides', () => {
     expect(parsePrinterSettings('{broken')).toEqual({ method: 'system', format: 'a4', printer: '' })

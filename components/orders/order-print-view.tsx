@@ -40,7 +40,7 @@ export function OrderPrintView({ document: doc, orderId, initialFormat, preferen
       <a className="inline-flex rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900" href={`/api/orders/${orderId}/document?format=${format}`}>Télécharger PDF</a>
       <Link className="px-2 py-2 text-sm text-indigo-700 underline" href="/orders/new">Nouvelle commande</Link>
       <Link className="px-2 py-2 text-sm text-gray-600 underline" href="/orders">Retour aux commandes</Link>
-      <p className="w-full text-center text-xs text-gray-600">Impression système / AirPrint, Bluetooth sur Android avec RawBT, ou ordinateur avec QZ Tray.</p>
+      <p className="w-full text-center text-xs text-gray-600">Impression système / AirPrint, Bluetooth direct sur Android (Chrome), ou ordinateur avec QZ Tray.</p>
       {pickerOpen && <PrinterPicker orderId={orderId} settings={{ ...preferences.settings, format }} onSettingsChange={preferences.save}
         onSystemPrint={print} getElement={() => sheet.current} onClose={() => setPickerOpen(false)} />}
     </div>

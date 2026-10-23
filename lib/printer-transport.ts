@@ -1,5 +1,6 @@
 import type { DocumentFormat } from '@/lib/order-document'
 import { bytesToBase64, rasterToEscPos, rawBtIntent } from '@/lib/printer-settings'
+import { openBluetoothPrinter, type BluetoothRoute } from '@/lib/bluetooth-printer'
 
 async function desktop() {
   const { default: qz } = await import('qz-tray')
@@ -23,6 +24,22 @@ export async function printDesktopPdf(orderId: string, format: DocumentFormat, p
 }
 
 export async function prepareAndroidReceipt(element: HTMLElement, format: '58mm' | '80mm') {
+  return rawBtIntent(await renderReceiptBytes(element, format))
+}
+
+/** Connects first (the chooser needs the tap's user activation), then renders and streams the ticket. */
+export async function printBluetoothReceipt(getElement: () => HTMLElement | null, format: '58mm' | '80mm',
+  { route, onProgress }: { route?: BluetoothRoute; onProgress?: (ratio: number) => void } = {}) {
+  const printer = await openBluetoothPrinter(route)
+  try {
+    const element = getElement()
+    if (!element) throw new Error('Le reçu n’est pas encore prêt. Réessayez.')
+    await printer.send(await renderReceiptBytes(element, format), onProgress)
+    return printer.name
+  } finally { await printer.close() }
+}
+
+async function renderReceiptBytes(element: HTMLElement, format: '58mm' | '80mm') {
   await document.fonts.ready
   await Promise.all(Array.from(element.querySelectorAll('img')).map(img => img.decode()))
   const width = format === '58mm' ? 384 : 576
@@ -34,5 +51,5 @@ export async function prepareAndroidReceipt(element: HTMLElement, format: '58mm'
     style: { margin: '0', boxShadow: 'none', transform: 'none' } })
   const context = canvas.getContext('2d')
   if (!context) throw new Error('Votre navigateur ne peut pas préparer le ticket. Utilisez l’impression système.')
-  return rawBtIntent(rasterToEscPos(context.getImageData(0, 0, canvas.width, canvas.height)))
+  return rasterToEscPos(context.getImageData(0, 0, canvas.width, canvas.height))
 }

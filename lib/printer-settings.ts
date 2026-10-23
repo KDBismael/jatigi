@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { documentFormatSchema } from '@/lib/order-document'
 
-const schema = z.object({ method: z.enum(['system', 'rawbt', 'qz']), format: documentFormatSchema, printer: z.string().max(256) })
+const schema = z.object({ method: z.enum(['system', 'bluetooth', 'rawbt', 'qz']), format: documentFormatSchema, printer: z.string().max(256) })
 export type PrinterSettings = z.infer<typeof schema>
 export const defaultPrinterSettings: PrinterSettings = { method: 'system', format: 'a4', printer: '' }
 export function parsePrinterSettings(raw: string | null): PrinterSettings {
