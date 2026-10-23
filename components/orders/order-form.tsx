@@ -21,6 +21,7 @@ import type { SellerOption, LiveOption } from '@/hooks/use-order-options'
 
 interface OrderFormProps {
   onSubmit: (data: OrderInput) => Promise<void>
+  onSaveAndPrint?: (data: OrderInput) => Promise<void>
   products: Product[]
   drivers: DeliveryDriverSummary[]
   sellers: SellerOption[]
@@ -31,7 +32,7 @@ interface OrderFormProps {
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
 
-export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoading }: OrderFormProps) {
+export function OrderForm({ onSubmit, onSaveAndPrint, products, drivers, sellers, lives, isLoading }: OrderFormProps) {
   const isAdmin = useAuthStore((s) => s.isAdmin())
   const profile = useAuthStore((s) => s.profile)
   const activeProducts = useMemo(() => selectableOrderProducts(products), [products])
@@ -175,9 +176,14 @@ export function OrderForm({ onSubmit, products, drivers, sellers, lives, isLoadi
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={isLoading} size="lg">
-        {isLoading ? 'Enregistrement...' : 'Créer la commande'}
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit" disabled={isLoading} size="lg" variant={onSaveAndPrint ? 'secondary' : 'primary'}>
+          {isLoading ? 'Enregistrement...' : 'Créer la commande'}
+        </Button>
+        {onSaveAndPrint && <Button type="button" disabled={isLoading} size="lg" onClick={handleSubmit(onSaveAndPrint)}>
+          Enregistrer et imprimer
+        </Button>}
+      </div>
     </form>
   )
 }

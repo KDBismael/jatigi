@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { OrderForm } from '@/components/orders/order-form'
 import { useOrders } from '@/hooks/use-orders'
@@ -18,16 +18,20 @@ export default function NewOrderPage() {
   const { sellers, lives } = useOrderOptions()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const saving = useRef(false)
 
-  async function handleSubmit(data: OrderInput) {
+  async function handleSubmit(data: OrderInput, print = false) {
+    if (saving.current) return
+    saving.current = true
     setError(null)
     setIsLoading(true)
     try {
-      await create(data)
-      router.push('/orders')
+      const order = await create(data)
+      router.push(print ? `/orders/${order.id}/print?print=1` : '/orders')
     } catch (err) {
       setError(String(err))
       setIsLoading(false)
+      saving.current = false
     }
   }
 
@@ -42,7 +46,7 @@ export default function NewOrderPage() {
           {error}
         </div>
       )}
-      <OrderForm onSubmit={handleSubmit} products={products as Product[]} drivers={drivers} sellers={sellers} lives={lives} isLoading={isLoading} />
+      <OrderForm onSubmit={data => handleSubmit(data)} onSaveAndPrint={data => handleSubmit(data, true)} products={products as Product[]} drivers={drivers} sellers={sellers} lives={lives} isLoading={isLoading} />
     </div>
   )
 }

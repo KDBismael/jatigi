@@ -153,3 +153,24 @@ describe('transactions SQL des remises', () => {
   })
 
 })
+
+describe('archivage des livreurs en base', () => {
+  it('préserve les commandes et versements, autorise le solde final, mais refuse une nouvelle affectation', async () => {
+    const driver = (await db.query<{ id: string }>(`INSERT INTO delivery_drivers(organization_id,name) VALUES($1,'Ancien') RETURNING id`, [org])).rows[0].id
+    const id = await create([{ product_id: product, quantity: 1 }])
+    await db.query('UPDATE orders SET delivery_driver_id=$1 WHERE id=$2', [driver, id])
+    await db.query(`INSERT INTO delivery_settlements(delivery_driver_id,organization_id,amount) VALUES($1,$2,1000)`, [driver, org])
+    await db.query('UPDATE delivery_drivers SET is_active=false WHERE id=$1', [driver])
+    await db.query(`UPDATE orders SET client_name='Nouveau nom',delivery_driver_id=$1 WHERE id=$2`, [driver, id])
+    await db.query(`INSERT INTO delivery_settlements(delivery_driver_id,organization_id,amount) VALUES($1,$2,500)`, [driver, org])
+    expect((await db.query('SELECT delivery_driver_id FROM orders WHERE id=$1', [id])).rows[0]).toEqual({ delivery_driver_id: driver })
+    expect((await db.query('SELECT sum(amount)::text AS total FROM delivery_settlements WHERE delivery_driver_id=$1', [driver])).rows[0]).toEqual({ total: '1500.00' })
+    await expect(db.query(`SELECT create_order_with_fifo('Awa',NULL,'facebook',CURRENT_DATE,$1,NULL,0,0,NULL,$2::jsonb)`, [driver, JSON.stringify([{ product_id: product, quantity: 1 }])])).rejects.toThrow('INVALID_DELIVERY_DRIVER')
+    const another = await create([{ product_id: product, quantity: 1 }])
+    await expect(db.query('UPDATE orders SET delivery_driver_id=$1 WHERE id=$2', [driver, another])).rejects.toThrow('INVALID_DELIVERY_DRIVER')
+    await db.query('UPDATE delivery_drivers SET is_active=true WHERE id=$1', [driver])
+    await db.query('UPDATE orders SET delivery_driver_id=$1 WHERE id=$2', [driver, another])
+    const foreign = (await db.query<{ id: string }>(`INSERT INTO delivery_drivers(organization_id,name) VALUES($1,'Autre') RETURNING id`, [otherOrg])).rows[0].id
+    await expect(db.query('UPDATE orders SET delivery_driver_id=$1 WHERE id=$2', [foreign, another])).rejects.toThrow('INVALID_DELIVERY_DRIVER')
+  })
+})

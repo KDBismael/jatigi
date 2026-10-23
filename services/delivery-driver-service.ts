@@ -43,6 +43,14 @@ export async function createDeliveryDriver(input: DeliveryDriverInput, organizat
   return data as DeliveryDriver
 }
 
+export async function setDeliveryDriverActive(id: string, isActive: boolean, organizationId: string): Promise<DeliveryDriver | null> {
+  const db = await createAdminClient()
+  const { data, error } = await db.from('delivery_drivers').update({ is_active: isActive })
+    .eq('id', id).eq('organization_id', organizationId).select().maybeSingle()
+  if (error) throw new Error('Impossible de modifier le livreur.')
+  return data as DeliveryDriver | null
+}
+
 export async function addDeliverySettlement(
   driverId: string,
   input: DeliverySettlementInput,

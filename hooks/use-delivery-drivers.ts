@@ -45,5 +45,13 @@ export function useDeliveryDrivers() {
     await refresh()
   }
 
-  return { drivers, isLoading, error, create, settle, refresh }
+  async function setActive(driverId: string, isActive: boolean) {
+    const response = await fetch(`/api/delivery-drivers/${driverId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: isActive }),
+    })
+    if (!response.ok) throw new Error((await response.json()).error ?? 'Modification impossible')
+    await refresh()
+  }
+
+  return { drivers, isLoading, error, create, settle, setActive, refresh }
 }

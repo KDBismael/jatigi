@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 const errors: Record<string, [string, number]> = {
+  INVALID_DELIVERY_DRIVER: ['Ce livreur est introuvable ou archivé. Choisissez un livreur actif.', 400],
   DISCOUNT_REASON_REQUIRED: ['Le motif de la remise est obligatoire.', 400],
   DISCOUNT_EXCEEDS_LINE: ['La remise dépasse le montant de la ligne.', 400],
   INVALID_DISCOUNT: ['Remise invalide : vérifiez le type et le montant.', 400],

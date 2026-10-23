@@ -11,9 +11,10 @@ import { ParcelExport } from '@/components/orders/parcel-export'
 import { formatCurrency } from '@/lib/utils'
 
 export default function DeliveriesPage() {
-  const { drivers, isLoading, error, create, settle } = useDeliveryDrivers()
+  const { drivers, isLoading, error, create, settle, setActive } = useDeliveryDrivers()
   const { isAdmin } = useRole()
   const [showDriverForm, setShowDriverForm] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [settlingId, setSettlingId] = useState<string | null>(null)
@@ -63,6 +64,24 @@ export default function DeliveriesPage() {
     }
   }
 
+  async function handleActive(driverId: string, isActive: boolean) {
+    setSubmitting(true)
+    setFormError(null)
+    setSuccessMessage(null)
+    try {
+      await setActive(driverId, isActive)
+      setSuccessMessage(isActive ? 'Livreur restauré.' : 'Livreur archivé. Son historique et ses soldes sont conservés.')
+    } catch (caught) {
+      setFormError(caught instanceof Error ? caught.message : 'Modification impossible')
+    } finally { setSubmitting(false) }
+  }
+
+  const visibleDrivers = drivers.filter(driver => showArchived ? !driver.is_active : driver.is_active)
+  function archiveAction(driver: { id: string; is_active: boolean }) {
+    return isAdmin && <Button type="button" variant="ghost" size="sm" disabled={submitting}
+      onClick={() => handleActive(driver.id, !driver.is_active)}>{driver.is_active ? 'Archiver' : 'Restaurer'}</Button>
+  }
+
   const totals = drivers.reduce((sum, driver) => ({
     active: sum.active + driver.packages_in_progress,
     delivered: sum.delivered + driver.packages_delivered,
@@ -104,17 +123,24 @@ export default function DeliveriesPage() {
       {successMessage && <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3">{successMessage}</p>}
 
       <Card>
-        <CardHeader><h2 className="font-semibold text-gray-900">Situation par livreur</h2></CardHeader>
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900">Situation par livreur</h2>
+          <p className="mt-1 text-xs text-gray-500">Les totaux incluent les livreurs archivés. Archiver conserve les colis, les versements et le solde dû.</p>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" variant={showArchived ? 'secondary' : 'primary'} onClick={() => setShowArchived(false)}>Actifs ({drivers.filter(driver => driver.is_active).length})</Button>
+            <Button size="sm" variant={showArchived ? 'primary' : 'secondary'} onClick={() => setShowArchived(true)}>Archivés ({drivers.filter(driver => !driver.is_active).length})</Button>
+          </div>
+        </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="space-y-3">{[0, 1, 2].map((item) => <Skeleton key={item} className="h-14 w-full" />)}</div>
-          ) : drivers.length === 0 ? (
-            <p className="text-center text-gray-500 py-10">Ajoutez votre premier livreur pour commencer le suivi.</p>
+          ) : visibleDrivers.length === 0 ? (
+            <p className="text-center text-gray-500 py-10">{showArchived ? 'Aucun livreur archivé.' : 'Aucun livreur actif. Ajoutez un livreur pour commencer.'}</p>
           ) : (
             <>
               {/* Mobile: card per driver */}
               <ul className="space-y-4 sm:hidden">
-                {drivers.map((driver) => (
+                {visibleDrivers.map((driver) => (
                   <li key={driver.id} className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                     {/* Driver identity */}
                     <div className="flex items-center justify-between gap-3">
@@ -126,6 +152,8 @@ export default function DeliveriesPage() {
                         {driver.success_rate}% réussite
                       </span>
                     </div>
+
+                    {archiveAction(driver)}
 
                     {/* Package stats */}
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -185,9 +213,10 @@ export default function DeliveriesPage() {
                     <th className="pb-3 pr-4 font-medium text-gray-600">Encaissé</th>
                     <th className="pb-3 pr-4 font-medium text-gray-600">Déjà reversé</th>
                     <th className="pb-3 font-medium text-gray-600">À reverser</th>
+                    {isAdmin && <th className="pb-3 font-medium text-gray-600">Actions</th>}
                   </tr></thead>
                   <tbody className="divide-y divide-gray-100">
-                    {drivers.map((driver) => (
+                    {visibleDrivers.map((driver) => (
                       <tr key={driver.id}>
                         <td className="py-4 pr-4"><p className="font-medium text-gray-900">{driver.name}</p>{driver.phone && <p className="text-xs text-gray-400">{driver.phone}</p>}</td>
                         <td className="py-4 pr-4 text-orange-600 font-medium">{driver.packages_in_progress}</td>
@@ -205,6 +234,7 @@ export default function DeliveriesPage() {
                             </div>
                           ) : <button type="button" className="text-xs text-indigo-600 hover:underline mt-1" onClick={() => setSettlingId(driver.id)}>Enregistrer un versement</button>)}
                         </td>
+                        {isAdmin && <td className="py-4">{archiveAction(driver)}</td>}
                       </tr>
                     ))}
                   </tbody>

@@ -1,11 +1,18 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
+import { PrinterPicker } from '@/components/orders/printer-picker'
+import { usePrinterSettings } from '@/hooks/use-printer-settings'
 import { formatDocumentMoney as money, type DocumentFormat, type OrderDocument } from '@/lib/order-document'
 
-export function OrderPrintView({ document: doc, orderId, initialFormat }: { document: OrderDocument; orderId: string; initialFormat: DocumentFormat }) {
-  const [format, setFormat] = useState<DocumentFormat>(initialFormat)
+export function OrderPrintView({ document: doc, orderId, initialFormat, preferenceKey, initialOpen = false }: {
+  document: OrderDocument; orderId: string; initialFormat: DocumentFormat; preferenceKey: string; initialOpen?: boolean
+}) {
+  const preferences = usePrinterSettings(preferenceKey)
+  const format = preferences.hasPreferences ? preferences.settings.format : initialFormat
+  const [pickerOpen, setPickerOpen] = useState(initialOpen)
   const [height, setHeight] = useState(297)
   const [printing, setPrinting] = useState(false)
   const sheet = useRef<HTMLElement>(null)
@@ -28,10 +35,14 @@ export function OrderPrintView({ document: doc, orderId, initialFormat }: { docu
   return <main className="order-print print-page min-h-screen bg-gray-100 px-3 py-6 text-black">
     <style media="print">{`@page { size: ${thermal ? `${format === '58mm' ? 58 : 80}mm ${height}mm` : 'A4'}; margin: ${thermal ? '0' : '16mm'}; }`}</style>
     <div className="print-actions mx-auto mb-4 flex max-w-4xl flex-wrap items-end justify-center gap-3">
-      <Select id="document-format" label="Format d’impression" value={format} onChange={event => setFormat(event.target.value as DocumentFormat)} options={[{ value: 'a4', label: 'A4' }, { value: '58mm', label: 'Ticket 58 mm' }, { value: '80mm', label: 'Ticket 80 mm' }]} />
-      <Button onClick={print} disabled={printing}>{printing ? 'Préparation…' : 'Imprimer'}</Button>
+      <Select id="document-format" label="Format d’impression" value={format} onChange={event => preferences.save({ ...preferences.settings, format: event.target.value as DocumentFormat })} options={[{ value: 'a4', label: 'A4' }, { value: '58mm', label: 'Ticket 58 mm' }, { value: '80mm', label: 'Ticket 80 mm' }]} />
+      <Button onClick={() => setPickerOpen(true)} disabled={printing}>{printing ? 'Préparation…' : 'Imprimer'}</Button>
       <a className="inline-flex rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900" href={`/api/orders/${orderId}/document?format=${format}`}>Télécharger PDF</a>
-      <p className="w-full text-center text-xs text-gray-600">Sur mobile, utilisez l’impression système ou téléchargez le PDF pour l’application de votre imprimante.</p>
+      <Link className="px-2 py-2 text-sm text-indigo-700 underline" href="/orders/new">Nouvelle commande</Link>
+      <Link className="px-2 py-2 text-sm text-gray-600 underline" href="/orders">Retour aux commandes</Link>
+      <p className="w-full text-center text-xs text-gray-600">Impression système / AirPrint, Bluetooth sur Android avec RawBT, ou ordinateur avec QZ Tray.</p>
+      {pickerOpen && <PrinterPicker orderId={orderId} settings={{ ...preferences.settings, format }} onSettingsChange={preferences.save}
+        onSystemPrint={print} getElement={() => sheet.current} onClose={() => setPickerOpen(false)} />}
     </div>
     <div className="overflow-x-auto print:overflow-visible">
       <article ref={sheet} data-format={format} className={`order-document mx-auto bg-white text-black shadow-lg ${thermal ? 'order-document-thermal' : 'order-document-a4'}`} style={{ width: thermal ? (format === '58mm' ? '58mm' : '80mm') : '210mm' }}>

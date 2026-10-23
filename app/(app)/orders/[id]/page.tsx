@@ -191,7 +191,7 @@ export default function OrderDetailPage() {
             </div>
             <Select
               label="Livreur assigné"
-              options={drivers.map((driver) => ({ value: driver.id, label: driver.name }))}
+              options={drivers.filter(driver => driver.is_active || driver.id === order.delivery_driver_id).map((driver) => ({ value: driver.id, label: `${driver.name}${driver.is_active ? '' : ' (archivé)'}` }))}
               placeholder="Aucun livreur"
               value={editDriverId}
               onChange={(event) => setEditDriverId(event.target.value)}
