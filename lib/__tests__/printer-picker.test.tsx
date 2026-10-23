@@ -3,9 +3,9 @@ import React, { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { PrinterPicker } from '@/components/orders/printer-picker'
-import { findDesktopPrinters, printDesktopPdf, prepareAndroidReceipt } from '@/lib/printer-transport'
+import { findDesktopPrinters, printBluetoothReceipt, printDesktopPdf, prepareAndroidReceipt } from '@/lib/printer-transport'
 import type { PrinterSettings } from '@/lib/printer-settings'
-vi.mock('@/lib/printer-transport', () => ({ findDesktopPrinters: vi.fn(), printDesktopPdf: vi.fn(), prepareAndroidReceipt: vi.fn() }))
+vi.mock('@/lib/printer-transport', () => ({ findDesktopPrinters: vi.fn(), printDesktopPdf: vi.fn(), prepareAndroidReceipt: vi.fn(), printBluetoothReceipt: vi.fn() }))
 const systemPrint = vi.fn()
 function Example() {
   const [settings, setSettings] = useState<PrinterSettings>({ method: 'system', format: 'a4', printer: '' })
@@ -33,6 +33,35 @@ describe('sélecteur d’imprimante pour tous les utilisateurs des commandes', (
     await screen.findByText(/Envoyé à l’imprimante/)
     expect(printDesktopPdf).toHaveBeenCalledTimes(2)
     expect(printDesktopPdf).toHaveBeenCalledWith('saved-order', 'a4', 'YHD-8390')
+  })
+  it('imprime en Bluetooth direct en un seul appui et permet de changer d’imprimante', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Android', serial: {}, bluetooth: {} })
+    vi.mocked(printBluetoothReceipt).mockResolvedValue('YHD-8390')
+    render(<Example />)
+    fireEvent.click(screen.getByLabelText(/Bluetooth · imprimante ticket/))
+    expect((screen.getByLabelText('Format d’impression') as HTMLSelectElement).value).toBe('58mm')
+    expect(screen.queryByRole('option', { name: 'A4' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimer maintenant' }))
+    await screen.findByText(/Ticket envoyé à YHD-8390/)
+    expect(printBluetoothReceipt).toHaveBeenLastCalledWith(expect.any(Function), '58mm', expect.objectContaining({ route: undefined }))
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimante absente de la liste ?' }))
+    await waitFor(() => expect(printBluetoothReceipt).toHaveBeenLastCalledWith(expect.any(Function), '58mm', expect.objectContaining({ route: 'ble' })))
+    expect(prepareAndroidReceipt).not.toHaveBeenCalled()
+  })
+  it('affiche un message clair si l’utilisateur ferme le sélecteur Bluetooth', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Android', serial: {} })
+    vi.mocked(printBluetoothReceipt).mockRejectedValue(new DOMException('cancel', 'NotFoundError'))
+    render(<Example />)
+    fireEvent.click(screen.getByLabelText(/Bluetooth · imprimante ticket/))
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimer maintenant' }))
+    expect((await screen.findByRole('alert')).textContent).toMatch(/Aucune imprimante choisie/)
+  })
+  it('désactive le Bluetooth direct hors Chrome Android et oriente vers AirPrint', () => {
+    vi.stubGlobal('navigator', { userAgent: 'iPhone' })
+    render(<Example />)
+    fireEvent.click(screen.getByLabelText(/Bluetooth · imprimante ticket/))
+    expect(screen.getByText(/nécessite Chrome sur Android/)).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Imprimer maintenant' }) as HTMLButtonElement).disabled).toBe(true)
   })
   it('prépare un ticket Android puis demande un clic explicite pour ouvrir le helper', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Android' })
