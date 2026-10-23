@@ -8,6 +8,7 @@ interface SerialPortLike {
 }
 interface SerialLike { getPorts(): Promise<SerialPortLike[]>; requestPort(options: object): Promise<SerialPortLike> }
 interface CharacteristicLike {
+  uuid: string
   properties: { write: boolean; writeWithoutResponse: boolean }
   writeValueWithResponse(value: BufferSource): Promise<void>
   writeValueWithoutResponse(value: BufferSource): Promise<void>
@@ -21,17 +22,21 @@ interface DeviceLike { id: string; name?: string; gatt?: GattLike; forget?(): Pr
 interface BluetoothLike { requestDevice(options: object): Promise<DeviceLike>; getDevices?(): Promise<DeviceLike[]> }
 
 export const SPP_UUID = '00001101-0000-1000-8000-00805f9b34fb'
-/** GATT services exposed by common BLE/dual-mode ESC/POS printers (Xprinter, MTP, Goojprt, Epson TM-P…). */
-export const BLE_PRINTER_SERVICES = [
-  '000018f0-0000-1000-8000-00805f9b34fb',
-  '49535343-fe7d-4ae5-8fa9-9fafd205e455',
-  'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
-  '0000ff00-0000-1000-8000-00805f9b34fb',
+/** GATT print channels of common BLE/dual-mode ESC/POS printers (Xprinter, MTP, Goojprt, Epson TM-P…). */
+export const BLE_PRINTERS = [
+  { service: '000018f0-0000-1000-8000-00805f9b34fb', characteristic: '00002af1-0000-1000-8000-00805f9b34fb' },
+  { service: '49535343-fe7d-4ae5-8fa9-9fafd205e455', characteristic: '49535343-8841-43f4-a8d4-ecbe34729bb3' },
+  { service: 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', characteristic: 'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f' },
+  { service: '0000ff00-0000-1000-8000-00805f9b34fb', characteristic: '0000ff02-0000-1000-8000-00805f9b34fb' },
 ]
-// BLE payloads above ~100 bytes fail on printers that keep the default MTU; SPP streams freely.
+export const BLE_PRINTER_SERVICES = BLE_PRINTERS.map(printer => printer.service)
+// Acknowledged writes pace the printer and may span 100 bytes; unacknowledged ones are silently
+// truncated above the default MTU payload (20 bytes) on macOS, which leaves a raster command unfinished.
 const BLE_CHUNK = 100
+const BLE_UNACKED_CHUNK = 20
 const SERIAL_CHUNK = 4096
 const DEFAULT_NAME = 'Imprimante Bluetooth'
+const ROUTE_KEY = 'warko:bluetooth-route'
 
 export type BluetoothRoute = 'serial' | 'ble'
 export interface BluetoothPrinter {
@@ -54,6 +59,14 @@ export function chunkBytes(bytes: Uint8Array, size: number): Uint8Array[] {
   for (let i = 0; i < bytes.length; i += size) chunks.push(bytes.subarray(i, i + size))
   return chunks
 }
+// Browsers without persistent BLE grants (getDevices) still need to reopen the chooser that worked last time.
+function lastRoute(): BluetoothRoute | null {
+  try { const value = globalThis.localStorage?.getItem(ROUTE_KEY); return value === 'serial' || value === 'ble' ? value : null }
+  catch { return null }
+}
+function rememberRoute(route: BluetoothRoute) {
+  try { globalThis.localStorage?.setItem(ROUTE_KEY, route) } catch { /* Device storage may be disabled. */ }
+}
 function isSppPort(port: SerialPortLike) {
   const id = port.getInfo().bluetoothServiceClassId
   return id === SPP_UUID || id === 0x1101
@@ -61,7 +74,7 @@ function isSppPort(port: SerialPortLike) {
 
 export function bluetoothErrorMessage(caught: unknown): string {
   const name = caught instanceof Error || caught instanceof DOMException ? caught.name : ''
-  if (name === 'NotFoundError') return 'Aucune imprimante choisie. Allumez-la, puis appuyez de nouveau sur Imprimer.'
+  if (name === 'NotFoundError') return 'Aucune imprimante choisie. Allumez-la et réessayez. Si elle n’apparaît pas, appuyez sur « Imprimante absente de la liste ? ».'
   if (name === 'SecurityError' || name === 'NotAllowedError') return 'Chrome n’a pas accès au Bluetooth. Autorisez « Appareils à proximité » pour Chrome, puis réessayez.'
   if (name === 'NetworkError' || name === 'InvalidStateError') return 'Imprimante injoignable. Vérifiez qu’elle est allumée, proche et non connectée à un autre téléphone.'
   if (caught instanceof Error && !(caught instanceof DOMException) && caught.message) return caught.message
@@ -79,17 +92,23 @@ export async function openBluetoothPrinter(route?: BluetoothRoute, nav: Navigato
     if (port) return openSerial(port)
     const device = bluetooth?.getDevices && (await bluetooth.getDevices())[0]
     if (device) return openBle(device)
-    route = bluetoothRoutes(nav)[0]
+    const routes = bluetoothRoutes(nav)
+    const last = lastRoute()
+    route = last && routes.includes(last) ? last : routes[0]
   }
   if (route === 'serial' && serial) {
     const port = await serial.requestPort({ filters: [{ bluetoothServiceClassId: SPP_UUID }], allowedBluetoothServiceClassIds: [SPP_UUID] })
     await forgetOthers(serial, bluetooth, { port })
-    return openSerial(port)
+    const printer = await openSerial(port)
+    rememberRoute('serial')
+    return printer
   }
   if (route === 'ble' && bluetooth) {
     const device = await bluetooth.requestDevice({ filters: BLE_PRINTER_SERVICES.map(service => ({ services: [service] })), optionalServices: BLE_PRINTER_SERVICES })
     await forgetOthers(serial, bluetooth, { device })
-    return openBle(device)
+    const printer = await openBle(device)
+    rememberRoute('ble')
+    return printer
   }
   throw new Error('Le Bluetooth direct nécessite Chrome sur Android. Sur iPhone/iPad, utilisez l’impression système.')
 }
@@ -125,9 +144,11 @@ async function openBle(device: DeviceLike): Promise<BluetoothPrinter> {
   if (!device.gatt) throw new Error('Cette imprimante n’accepte pas le Bluetooth direct. Essayez « Changer d’imprimante ».')
   const gatt = await device.gatt.connect()
   let target: CharacteristicLike | undefined
-  for (const uuid of BLE_PRINTER_SERVICES) {
-    const characteristics = await gatt.getPrimaryService(uuid).then(service => service.getCharacteristics()).catch(() => [])
-    target = characteristics.find(c => c.properties.writeWithoutResponse || c.properties.write)
+  for (const known of BLE_PRINTERS) {
+    const characteristics: CharacteristicLike[] = await gatt.getPrimaryService(known.service).then(service => service.getCharacteristics()).catch(() => [])
+    const writable = characteristics.filter(c => c.properties.write || c.properties.writeWithoutResponse)
+    // Some modules expose several writable channels (control, notify); only the print channel feeds the printer.
+    target = writable.find(c => c.uuid === known.characteristic) ?? writable[0]
     if (target) break
   }
   if (!target) {
@@ -135,13 +156,15 @@ async function openBle(device: DeviceLike): Promise<BluetoothPrinter> {
     throw new Error('Cette imprimante Bluetooth n’est pas compatible. Associez-la dans Android puis choisissez « Changer d’imprimante ».')
   }
   const characteristic = target
-  const write = characteristic.properties.writeWithoutResponse
-    ? (chunk: Uint8Array) => characteristic.writeValueWithoutResponse(chunk as Uint8Array<ArrayBuffer>)
-    : (chunk: Uint8Array) => characteristic.writeValueWithResponse(chunk as Uint8Array<ArrayBuffer>)
+  const acked = characteristic.properties.write
+  const write = acked
+    ? (chunk: Uint8Array) => characteristic.writeValueWithResponse(chunk as Uint8Array<ArrayBuffer>)
+    : (chunk: Uint8Array) => characteristic.writeValueWithoutResponse(chunk as Uint8Array<ArrayBuffer>)
+  console.info('[Warko] Imprimante BLE', { name: device.name, characteristic: characteristic.uuid, acked })
   return {
     name: device.name || DEFAULT_NAME,
     async send(bytes, onProgress) {
-      const chunks = chunkBytes(bytes, BLE_CHUNK)
+      const chunks = chunkBytes(bytes, acked ? BLE_CHUNK : BLE_UNACKED_CHUNK)
       for (let i = 0; i < chunks.length; i++) { await write(chunks[i]); onProgress?.((i + 1) / chunks.length) }
     },
     async close() { gatt.disconnect() },
