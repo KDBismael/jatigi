@@ -41,9 +41,18 @@ describe('préférences et ticket Android', () => {
     expect(bytes[10]).toBe(0b10100000)
   })
   it('découpe les tickets longs et refuse les dimensions trop grandes au lieu de tronquer', () => {
-    const bytes = rasterToEscPos({ width: 8, height: 129, data: new Uint8ClampedArray(8 * 129 * 4).fill(255) })
+    const black = new Uint8ClampedArray(8 * 129 * 4).map((_, i) => i % 4 === 3 ? 255 : 0)
+    const bytes = rasterToEscPos({ width: 8, height: 129, data: black })
+    expect([...bytes.slice(2, 10)]).toEqual([29,118,48,0,1,0,128,0])
     expect([...bytes.slice(138, 146)]).toEqual([29,118,48,0,1,0,1,0])
     expect(() => rasterToEscPos({ width: 576, height: 20000, data: new Uint8ClampedArray() })).toThrow(/long/)
+  })
+  it('remplace les lignes blanches par une avance papier et garde la coupe finale', () => {
+    // 1 ligne noire, 300 lignes blanches, 1 ligne noire (largeur 8 = 1 octet par ligne).
+    const data = new Uint8ClampedArray(8 * 302 * 4).fill(255)
+    for (const row of [0, 301]) for (let x = 0; x < 8; x++) data.fill(0, (row * 8 + x) * 4, (row * 8 + x) * 4 + 3)
+    const bytes = [...rasterToEscPos({ width: 8, height: 302, data })]
+    expect(bytes).toEqual([27,64, 29,118,48,0,1,0,1,0,255, 27,74,255, 27,74,45, 29,118,48,0,1,0,1,0,255, 10,10,10,29,86,0])
   })
   it('construit une intention Android limitée au paquet RawBT et aux octets du ticket', () => {
     const uri = rawBtIntent(new Uint8Array([27,64,10]))

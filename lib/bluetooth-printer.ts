@@ -30,10 +30,12 @@ export const BLE_PRINTERS = [
   { service: '0000ff00-0000-1000-8000-00805f9b34fb', characteristic: '0000ff02-0000-1000-8000-00805f9b34fb' },
 ]
 export const BLE_PRINTER_SERVICES = BLE_PRINTERS.map(printer => printer.service)
-// Acknowledged writes pace the printer and may span 100 bytes; unacknowledged ones are silently
-// truncated above the default MTU payload (20 bytes) on macOS, which leaves a raster command unfinished.
+// A BLE write carries at most MTU − 3 bytes; the default MTU leaves 20. macOS negotiates a larger MTU,
+// so acknowledged 100-byte writes fit in one packet there. Chrome on Android never negotiates it: longer
+// acknowledged writes become "long writes" that cheap printer modules mishandle, and longer unacknowledged
+// ones are truncated. Either way bytes vanish, the printer prints raster data as text and misses the cut.
 const BLE_CHUNK = 100
-const BLE_UNACKED_CHUNK = 20
+const BLE_SAFE_CHUNK = 20
 const SERIAL_CHUNK = 4096
 const DEFAULT_NAME = 'Imprimante Bluetooth'
 const SAVED_KEY = 'warko:bluetooth-printer'
@@ -100,11 +102,11 @@ export function bluetoothErrorMessage(caught: unknown): string {
 export async function openBluetoothPrinter(route?: BluetoothRoute, nav: Navigator = navigator): Promise<BluetoothPrinter> {
   const { serial, bluetooth } = apis(nav)
   if (!route) {
-    if (session) return 'port' in session ? openSerial(session.port) : openBle(session.device)
+    if (session) return 'port' in session ? openSerial(session.port) : openBle(session.device, nav)
     const saved = savedBluetoothPrinter()
     const device = bluetooth?.getDevices && (await bluetooth.getDevices())[0]
     const port = serial && (await serial.getPorts()).find(isSppPort)
-    if (device && (saved?.route !== 'serial' || !port)) return remember(await openBle(device), { device })
+    if (device && (saved?.route !== 'serial' || !port)) return remember(await openBle(device, nav), { device })
     if (port) return remember(await openSerial(port), { port }, saved?.name)
     const routes = bluetoothRoutes(nav)
     route = saved && routes.includes(saved.route) ? saved.route : routes[0]
@@ -117,7 +119,7 @@ export async function openBluetoothPrinter(route?: BluetoothRoute, nav: Navigato
   if (route === 'ble' && bluetooth) {
     const device = await bluetooth.requestDevice({ filters: BLE_PRINTER_SERVICES.map(service => ({ services: [service] })), optionalServices: BLE_PRINTER_SERVICES })
     await forgetOthers(serial, bluetooth, { device })
-    return remember(await openBle(device), { device })
+    return remember(await openBle(device, nav), { device })
   }
   throw new Error('Le Bluetooth direct nécessite Chrome sur Android. Sur iPhone/iPad, utilisez l’impression système.')
 }
@@ -163,7 +165,7 @@ async function openSerial(port: SerialPortLike): Promise<BluetoothPrinter> {
 
 let pendingRelease: { gatt: GattLike; timer: ReturnType<typeof setTimeout> } | null = null
 
-async function openBle(device: DeviceLike): Promise<BluetoothPrinter> {
+async function openBle(device: DeviceLike, nav: Navigator): Promise<BluetoothPrinter> {
   if (!device.gatt) throw new Error('Cette imprimante n’accepte pas le Bluetooth direct. Essayez « Changer d’imprimante ».')
   const link = device.gatt
   if (pendingRelease?.gatt === link) { clearTimeout(pendingRelease.timer); pendingRelease = null }
@@ -181,15 +183,18 @@ async function openBle(device: DeviceLike): Promise<BluetoothPrinter> {
     throw new Error('Cette imprimante Bluetooth n’est pas compatible. Associez-la dans Android puis choisissez « Changer d’imprimante ».')
   }
   const characteristic = target
-  const acked = characteristic.properties.write
+  const defaultMtu = /Android/i.test(nav.userAgent ?? '')
+  // With 20-byte packets, unacknowledged writes are safe and far faster (Android flow-controls them).
+  const acked = defaultMtu ? !characteristic.properties.writeWithoutResponse : characteristic.properties.write
+  const chunkSize = defaultMtu || !acked ? BLE_SAFE_CHUNK : BLE_CHUNK
   const write = acked
     ? (chunk: Uint8Array) => characteristic.writeValueWithResponse(chunk as Uint8Array<ArrayBuffer>)
     : (chunk: Uint8Array) => characteristic.writeValueWithoutResponse(chunk as Uint8Array<ArrayBuffer>)
-  console.info('[Warko] Imprimante BLE', { name: device.name, characteristic: characteristic.uuid, acked })
+  console.info('[Warko] Imprimante BLE', { name: device.name, characteristic: characteristic.uuid, acked, chunkSize })
   return {
     name: device.name || DEFAULT_NAME,
     async send(bytes, onProgress) {
-      const chunks = chunkBytes(bytes, acked ? BLE_CHUNK : BLE_UNACKED_CHUNK)
+      const chunks = chunkBytes(bytes, chunkSize)
       for (let i = 0; i < chunks.length; i++) { await write(chunks[i]); onProgress?.((i + 1) / chunks.length) }
     },
     async close() {
