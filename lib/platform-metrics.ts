@@ -1,5 +1,5 @@
 import { resolveUnitCost } from '@/lib/utils'
-import { orderCollectibleAmount } from '@/lib/order-amounts'
+import { orderCollectibleAmount, orderRemittableAmount } from '@/lib/order-amounts'
 import { STATUSES, type OrderStatus } from '@/lib/constants'
 
 // Pure, cross-org aggregation reducers for the platform (super-admin) dashboard.
@@ -39,8 +39,12 @@ export function summarizeDeliveries(orders: DeliveryOrder[], settlements: { amou
   const collected = orders
     .filter((o) => o.status === 'delivered')
     .reduce((sum, o) => sum + orderCollectibleAmount(o.order_lines ?? [], Number(o.confirmation_amount ?? 0), Number(o.delivery_fee ?? 0)), 0)
+  // Drivers keep delivery fees: only parcels minus deposits are owed to the shop.
+  const remittable = orders
+    .filter((o) => o.status === 'delivered')
+    .reduce((sum, o) => sum + orderRemittableAmount(o.order_lines ?? [], Number(o.confirmation_amount ?? 0)), 0)
   const remitted = settlements.reduce((sum, s) => sum + Number(s.amount), 0)
-  return { collected, remitted, due: Math.max(0, collected - remitted) }
+  return { collected, remitted, due: Math.max(0, remittable - remitted) }
 }
 
 interface RevenueLine {

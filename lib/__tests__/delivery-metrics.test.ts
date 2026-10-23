@@ -35,4 +35,14 @@ describe('calculateDeliveryMetrics', () => {
     const result = calculateDeliveryMetrics([{ status: 'delivered', amount: 10_000 }], 20_000)
     expect(result.amount_due).toBe(0)
   })
+
+  it('laisse les frais de livraison au livreur : encaissé complet, à reverser sans les frais', () => {
+    const result = calculateDeliveryMetrics([
+      { status: 'delivered', amount: 6_000, remittable: 5_000 },
+      { status: 'in_progress', amount: 9_000, remittable: 8_000 },
+    ], 2_000)
+    expect(result.amount_collected).toBe(6_000)
+    expect(result.amount_delivery_fees).toBe(1_000)
+    expect(result.amount_due).toBe(3_000)
+  })
 })

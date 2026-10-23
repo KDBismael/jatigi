@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { orderTotal, orderCollectibleAmount, orderAmounts, nextStatusForConfirmation } from '@/lib/order-amounts'
+import { orderTotal, orderCollectibleAmount, orderAmounts, orderRemittableAmount, nextStatusForConfirmation } from '@/lib/order-amounts'
 
 describe('orderTotal', () => {
   it('additionne prix unitaire × quantité de chaque ligne', () => {
@@ -24,6 +24,18 @@ describe('orderAmounts', () => {
   })
   it('normalise les valeurs négatives et ne produit pas un reste négatif', () => {
     expect(orderAmounts([], -100, 500)).toEqual({parcelAmount:0,deliveryFee:0,totalAmount:0,confirmationAmount:500,remainingAmount:0})
+  })
+})
+
+describe('orderRemittableAmount', () => {
+  it('le livreur garde les frais de livraison : seul le colis moins l’acompte revient à la boutique', () => {
+    const lines = [{ unit_price: 5_000, quantity: 1 }]
+    expect(orderCollectibleAmount(lines, 0, 1_000)).toBe(6_000)
+    expect(orderRemittableAmount(lines, 0)).toBe(5_000)
+    expect(orderRemittableAmount(lines, 2_000)).toBe(3_000)
+  })
+  it('ne descend jamais en dessous de 0 quand l’acompte couvre déjà le colis', () => {
+    expect(orderRemittableAmount([{ unit_price: 5_000, quantity: 1 }], 5_500)).toBe(0)
   })
 })
 

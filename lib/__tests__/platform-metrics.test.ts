@@ -53,6 +53,13 @@ describe('summarizeDeliveries', () => {
     expect(result.due).toBe(12_000)
   })
 
+  it('collecté inclut les frais de livraison mais le dû les laisse au livreur', () => {
+    const result = summarizeDeliveries(
+      [{ status: 'delivered', confirmation_amount: 0, delivery_fee: 1_000, order_lines: [{ unit_price: 5_000, quantity: 1 }] }], [])
+    expect(result.collected).toBe(6_000)
+    expect(result.due).toBe(5_000)
+  })
+
   it('ne produit jamais un solde dû négatif', () => {
     const result = summarizeDeliveries(
       [{ status: 'delivered', confirmation_amount: 0, order_lines: [{ unit_price: 1_000, quantity: 1 }] }],

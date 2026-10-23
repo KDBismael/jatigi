@@ -21,6 +21,14 @@ export function orderCollectibleAmount(lines: AmountLine[], confirmationAmount: 
   return orderAmounts(lines, deliveryFee, confirmationAmount).remainingAmount
 }
 
+/**
+ * Amount the driver owes the shop once delivered: the delivery fee is the driver's
+ * pay (never shop revenue), so only the parcel minus the shop-held deposit is remitted.
+ */
+export function orderRemittableAmount(lines: AmountLine[], confirmationAmount: number): number {
+  return Math.max(0, orderTotal(lines) - Math.max(0, Number(confirmationAmount || 0)))
+}
+
 export function orderAmounts(lines: AmountLine[], deliveryFee = 0, confirmationAmount = 0) {
   const parcelAmount = orderTotal(lines)
   const safeDeliveryFee = Math.max(0, Number(deliveryFee || 0))

@@ -177,6 +177,10 @@ export default function DeliveriesPage() {
                         <dt className="text-gray-500">Encaissé</dt>
                         <dd className="text-gray-700 font-medium">{formatCurrency(driver.amount_collected)}</dd>
                       </div>
+                      {driver.amount_delivery_fees > 0 && <div className="flex justify-between">
+                        <dt className="text-gray-500">Frais de livraison (livreur)</dt>
+                        <dd className="text-gray-700 font-medium">− {formatCurrency(driver.amount_delivery_fees)}</dd>
+                      </div>}
                       <div className="flex justify-between">
                         <dt className="text-gray-500">Déjà reversé</dt>
                         <dd className="text-gray-700 font-medium">{formatCurrency(driver.amount_remitted)}</dd>
@@ -223,7 +227,10 @@ export default function DeliveriesPage() {
                         <td className="py-4 pr-4 text-green-600 font-medium">{driver.packages_delivered}</td>
                         <td className="py-4 pr-4 text-gray-500">{driver.packages_cancelled}</td>
                         <td className="py-4 pr-4 text-gray-700">{driver.success_rate}%</td>
-                        <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_collected)}</td>
+                        <td className="py-4 pr-4 text-gray-700">
+                          {formatCurrency(driver.amount_collected)}
+                          {driver.amount_delivery_fees > 0 && <p className="text-xs text-gray-500">dont livraison (livreur) {formatCurrency(driver.amount_delivery_fees)}</p>}
+                        </td>
                         <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_remitted)}</td>
                         <td className="py-4">
                           <p className="font-semibold text-indigo-700">{formatCurrency(driver.amount_due)}</p>

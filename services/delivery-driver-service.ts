@@ -2,7 +2,7 @@ import { createAdminClient } from '@/services/supabase/server'
 import type { DeliveryDriverInput, DeliverySettlementInput } from '@/lib/schemas/delivery-driver.schema'
 import type { DeliveryDriver, DeliveryDriverSummary } from '@/types/delivery-driver'
 import { calculateDeliveryMetrics } from '@/lib/delivery-metrics'
-import { orderCollectibleAmount } from '@/lib/order-amounts'
+import { orderCollectibleAmount, orderRemittableAmount } from '@/lib/order-amounts'
 
 export async function getDeliveryDrivers(organizationId: string): Promise<DeliveryDriverSummary[]> {
   const supabase = await createAdminClient()
@@ -19,7 +19,8 @@ export async function getDeliveryDrivers(organizationId: string): Promise<Delive
     const assigned = orders?.filter((order) => order.delivery_driver_id === driver.id) ?? []
     const metricOrders = assigned.map((order) => {
       const lines = (order.order_lines as unknown as { line_total?: number; unit_price?: number | null; quantity: number }[]) ?? []
-      return { status: order.status, amount: orderCollectibleAmount(lines, Number(order.confirmation_amount ?? 0), Number(order.delivery_fee ?? 0)) }
+      const deposit = Number(order.confirmation_amount ?? 0)
+      return { status: order.status, amount: orderCollectibleAmount(lines, deposit, Number(order.delivery_fee ?? 0)), remittable: orderRemittableAmount(lines, deposit) }
     })
     const amountRemitted = settlements
       ?.filter((settlement) => settlement.delivery_driver_id === driver.id)
@@ -64,7 +65,7 @@ export async function addDeliverySettlement(
 
   const [{ data: deliveredOrders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
     supabase.from('orders')
-      .select('confirmation_amount, delivery_fee, order_lines(line_total, unit_price, quantity)')
+      .select('confirmation_amount, order_lines(line_total, unit_price, quantity)')
       .eq('organization_id', organizationId)
       .eq('delivery_driver_id', driverId)
       .eq('status', 'delivered'),
@@ -76,12 +77,13 @@ export async function addDeliverySettlement(
   if (ordersError) throw new Error(ordersError.message)
   if (settlementsError) throw new Error(settlementsError.message)
 
-  const collected = deliveredOrders?.reduce((total, order) => {
+  // The driver keeps delivery fees, so only parcels (minus deposits) are owed to the shop.
+  const remittable = deliveredOrders?.reduce((total, order) => {
     const lines = (order.order_lines as unknown as { line_total?: number; unit_price?: number | null; quantity: number }[]) ?? []
-    return total + orderCollectibleAmount(lines, Number(order.confirmation_amount ?? 0), Number(order.delivery_fee ?? 0))
+    return total + orderRemittableAmount(lines, Number(order.confirmation_amount ?? 0))
   }, 0) ?? 0
   const alreadyRemitted = settlements?.reduce((total, settlement) => total + Number(settlement.amount), 0) ?? 0
-  const amountDue = Math.max(0, collected - alreadyRemitted)
+  const amountDue = Math.max(0, remittable - alreadyRemitted)
 
   if (amountDue === 0) {
     throw new Error('Aucun montant à reverser. Une commande doit d’abord être marquée comme livrée.')
