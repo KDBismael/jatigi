@@ -2,7 +2,7 @@ import { canManageDeliveries } from '@/lib/delivery-access'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { deliverySettlementSchema } from '@/lib/schemas/delivery-driver.schema'
-import { addDeliverySettlement } from '@/services/delivery-driver-service'
+import { addDeliverySettlement, getDeliverySettlementHistory } from '@/services/delivery-driver-service'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -26,4 +26,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.error('[/api/delivery-drivers/:id/settlements] creation failed:', error)
     return NextResponse.json({ error: message }, { status: 500 })
   }
+}
+
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+ const db=await createClient()
+ const {data:{user}}=await db.auth.getUser()
+ if(!user)return NextResponse.json({error:'Non autorisé'},{status:401})
+ const {data:profile}=await db.from('profiles').select('role,organization_id').eq('id',user.id).single()
+ if(!canManageDeliveries(profile?.role)||!profile?.organization_id)return NextResponse.json({error:'Accès refusé'},{status:403})
+ try {const {id}=await params;return NextResponse.json(await getDeliverySettlementHistory(id,profile.organization_id))}
+ catch{return NextResponse.json({error:'Historique indisponible'},{status:500})}
 }

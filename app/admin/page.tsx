@@ -1,4 +1,4 @@
-import { getPlatformOverview } from '@/services/platform-service'
+import { getPlatformOverview, getPlatformSaasMetrics } from '@/services/platform-service'
 import { RevenueChart } from '@/components/dashboard/revenue-chart'
 import { Card } from '@/components/ui/card'
 import { formatAmount, formatCurrency } from '@/lib/utils'
@@ -7,7 +7,8 @@ import { STATUS_LABELS, STATUS_COLORS, STATUSES } from '@/lib/constants'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminOverviewPage() {
-  const o = await getPlatformOverview()
+  const [o,saas] = await Promise.all([getPlatformOverview(),getPlatformSaasMetrics()])
+  const rate=(n:number,d:number)=>d?`${Math.round(n/d*100)} %`:'Pas encore de cohorte éligible'
 
   return (
     <div className="space-y-6">
@@ -16,6 +17,27 @@ export default async function AdminOverviewPage() {
         <p className="text-gray-500 text-sm mt-1">Synthèse de toute l’activité Warko, toutes organisations confondues.</p>
       </div>
 
+      <Card className="p-5 space-y-4">
+        <h2 className="font-semibold">Croissance SaaS {saas.mode==='test'?'— paiements de test':''}</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <CountCard label="Commandes sur 7 jours" value={saas.ordersLast7Days}/>
+          <CountCard label="Boutiques inscrites" value={saas.signups}/>
+          <MoneyCard label="MRR abonnements" value={saas.mrr} tone="indigo" hint="Annuel ramené au mois, périodes payées actives"/>
+          <CountCard label="Boutiques payantes" value={saas.paidOrganizations}/>
+        </div>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div><dt>Onboarding réel terminé</dt><dd>{rate(saas.onboardingComplete,saas.signups)}</dd></div>
+          <div><dt>Activation J+1</dt><dd>{rate(saas.day1Activated,saas.day1Eligible)}</dd></div>
+          <div><dt>Activation J+7 (5 commandes)</dt><dd>{rate(saas.day7Activated,saas.day7Eligible)}</dd></div>
+          <div><dt>Conversion payante actuelle</dt><dd>{rate(saas.paidOrganizations,saas.signups)}</dd></div>
+          <div><dt>Rétention au mois 2</dt><dd>{rate(saas.retentionM1Active,saas.retentionM1Eligible)}</dd></div>
+          <div><dt>Rétention au mois 4</dt><dd>{rate(saas.retentionM3Active,saas.retentionM3Eligible)}</dd></div>
+          <div><dt>Churn payé du mois en cours</dt><dd>{rate(saas.paidLostThisMonth,saas.paidAtMonthStart)}</dd></div>
+          <div><dt>ARPU mensuel payant</dt><dd>{formatCurrency(saas.paidOrganizations?saas.mrr/saas.paidOrganizations:0)}</dd></div>
+          <div><dt>Commandes par boutique active ce mois</dt><dd>{saas.activeOrganizationsThisMonth?Math.round(saas.ordersThisMonth/saas.activeOrganizationsThisMonth):0}</dd></div>
+        </dl>
+        <p className="text-xs text-gray-500">Activation calculée sur les cohortes arrivées à échéance ; rétention par mois calendaire suivant l’inscription. Visiteurs et coût publicitaire nécessitent une source analytics et un budget renseignés.</p>
+      </Card>
       {/* Primary financials */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MoneyCard label="Chiffre d’affaires" value={o.total_revenue} tone="indigo" hint="Commandes livrées" />

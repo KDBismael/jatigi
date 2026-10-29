@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { href: '/pilotage', label: 'Objectifs & lives', short: 'Objectifs', adminOnly: true, icon: 'target' },
   { href: '/reports', label: 'Bilans mensuels', short: 'Bilans', adminOnly: true, icon: 'report' },
   { href: '/team', label: 'Équipe', short: 'Équipe', adminOnly: true, icon: 'users' },
+  { href: '/subscription', label: 'Abonnement', short: 'Abonnement', adminOnly: true, icon: 'receipt' },
   { href: '/support', label: 'Support', short: 'Support', adminOnly: false, icon: 'support' },
 ] as const
 

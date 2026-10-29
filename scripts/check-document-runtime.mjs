@@ -1,7 +1,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 
-const routes = ['api/organization/branding/route', 'api/orders/[id]/document/route']
+const routes = ['api/organization/branding/route', 'api/orders/[id]/document/route', 'api/products/[id]/images/route']
 let failed = false
 for (const route of routes) {
   const filename = path.resolve('.next/server/app', `${route}.js.nft.json`)
@@ -18,3 +18,6 @@ for (const route of routes) {
   }
 }
 process.exitCode = failed ? 1 : 0
+
+const receiptTrace = JSON.parse(readFileSync('.next/server/app/api/billing/receipts/[id]/route.js.nft.json','utf8'))
+if(!receiptTrace.files.some(file=>file.endsWith('assets/fonts/NotoSans-Regular.ttf'))) {console.error('Billing receipt Unicode font missing');process.exitCode=1}

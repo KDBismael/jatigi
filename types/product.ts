@@ -28,6 +28,8 @@ export interface Product {
   is_active: boolean
   created_at: string
   updated_at: string
+  images?: {id: string; created_at: string}[]
+  variants?: ProductVariant[]
   offers?: ProductOffer[]
 }
 
@@ -39,5 +41,8 @@ export interface ProductPublic {
   stock_quantity: number
   is_active: boolean
   created_at: string
+  variants?: ProductVariant[]
   offers?: ProductOffer[]
 }
+
+export interface ProductVariant { id: string; product_id: string; organization_id: string; name: string; stock_quantity: number; is_active: boolean; created_at: string }

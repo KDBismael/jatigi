@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AddStockModal } from '@/components/products/add-stock-modal'
+import { StockMovementsCard } from '@/components/products/stock-movements-card'
+import { ProductImagesCard } from '@/components/products/product-images-card'
+import { ProductVariantsCard } from '@/components/products/product-variants-card'
 import { ProductOffersCard } from '@/components/products/product-offers-card'
 import { CustomerExport } from '@/components/orders/customer-export'
 import { Select } from '@/components/ui/select'
@@ -285,6 +288,9 @@ export default function ProductDetailPage() {
         </Card>
       )}
 
+      {isAdmin && <StockMovementsCard productId={product.id} refresh={`${product.stock_quantity}-${lots.length}`}/>}
+      {isAdmin && <ProductImagesCard productId={product.id} images={product.images??[]} onChange={fetchData}/>}
+      {isAdmin && <ProductVariantsCard productId={product.id} variants={product.variants??[]} onChange={fetchData} />}
       {isAdmin && product.pricing_mode !== 'unit' && <ProductOffersCard productId={product.id}
         offers={product.offers ?? []} unitCost={product.purchase_cost + product.import_cost + product.packaging_cost}
         onChange={fetchData} />}
@@ -352,7 +358,7 @@ export default function ProductDetailPage() {
 
       {showAddStock && (
         <AddStockModal
-          productName={product.name}
+          variants={product.variants} productName={product.name}
           productId={product.id}
           onSuccess={(qty) => {
             setProduct((p) => p ? { ...p, stock_quantity: p.stock_quantity + qty } : p)

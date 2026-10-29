@@ -115,3 +115,11 @@ export async function addDeliverySettlement(
   })
   if (error) throw new Error(error.message)
 }
+
+export async function getDeliverySettlementHistory(driverId: string, organizationId: string): Promise<import('@/types/delivery-driver').DeliverySettlement[]> {
+ const db=await createAdminClient()
+ return readAllPages((from,to)=>db.from('delivery_settlements')
+   .select('id,amount,settled_at,note,created_by,recorder:profiles!delivery_settlements_created_by_fkey(full_name)')
+   .eq('organization_id',organizationId).eq('delivery_driver_id',driverId)
+   .order('settled_at',{ascending:false}).order('id',{ascending:false}).range(from,to)) as unknown as Promise<import('@/types/delivery-driver').DeliverySettlement[]>
+}

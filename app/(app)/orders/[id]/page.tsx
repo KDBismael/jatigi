@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
 import { orderAmounts, orderRemittableAmount } from '@/lib/order-amounts'
 import { canManageDeliveries } from '@/lib/delivery-access'
+import { DELIVERY_STATUSES } from '@/lib/order-access'
 import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type OrderStatus } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
@@ -25,6 +26,8 @@ const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYM
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
+  const isManager = useAuthStore(s=>s.profile?.role==='manager')
+  const availableStatuses = isManager ? DELIVERY_STATUSES : STATUSES
   const isAdmin = useAuthStore((s) => s.isAdmin())
   const canSettle = canManageDeliveries(useAuthStore(s => s.profile?.role))
   const { drivers } = useDeliveryDrivers()
@@ -179,7 +182,7 @@ export default function OrderDetailPage() {
         <div className="flex items-center gap-2">
           <OrderStatusBadge status={order.status} />
           <Link href={`/orders/${order.id}/print`}><Button variant="secondary" size="sm">Imprimer</Button></Link>
-          {!isEditing && (
+          {!isEditing && !isManager && (
             <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
           )}
         </div>
@@ -318,7 +321,7 @@ export default function OrderDetailPage() {
         <CardContent>
           {statusError && <p role="alert" className="mb-3 text-sm text-red-600">{statusError}</p>}
           <div className="flex flex-wrap gap-2">
-            {STATUSES.map((s) => (
+            {availableStatuses.map((s) => (
               <Button
                 key={s}
                 size="sm"
@@ -334,7 +337,7 @@ export default function OrderDetailPage() {
         </CardContent>
       </Card>
 
-      <DiscountEditor order={order} onSaved={setOrder} />
+      {!isManager && <DiscountEditor order={order} onSaved={setOrder} />}
 
       {/* Order lines */}
       <Card>

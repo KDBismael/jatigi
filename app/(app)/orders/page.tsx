@@ -17,6 +17,7 @@ import { getPeriodDates, type DatePreset } from '@/lib/date-periods'
 export default function OrdersPage() {
   const { orders, filters, isLoading, updateStatus, setFilters } = useOrders()
   const { organization } = useAuthStore()
+  const isManager = useAuthStore(s=>s.profile?.role==='manager')
   const isAdmin = useAuthStore((state) => state.isAdmin())
 
   const [preset, setPreset] = useState<DatePreset>('today')
@@ -52,9 +53,9 @@ export default function OrdersPage() {
             {orders.length} commande(s)
           </p>
         </div>
-        <Link href="/orders/new">
+        {!isManager && <Link href="/orders/new">
           <Button>+ Nouvelle commande</Button>
-        </Link>
+        </Link>}
       </div>
 
       <div className="mb-4">

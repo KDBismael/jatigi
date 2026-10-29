@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDeliveryDayReport, deliveryDaySchema, type DeliveryAssignmentRow } from '@/lib/delivery-balance'
+import { applyDeliveryDayPayments, buildDeliveryDayReport, deliveryDaySchema, type DeliveryAssignmentRow } from '@/lib/delivery-balance'
 const base: DeliveryAssignmentRow = { id: 'a', order_id: 'old-order', driver_id: 'driver', status: 'delivered', remittable_amount: 13000,
   driver: { name: 'Ali', is_active: true }, order: { client_name: 'Awa', client_phone: '0701020304', order_lines: [{ quantity: 3, product: { name: 'Parfum' } }] } }
 describe('bilan des colis confiés pour une journée', () => {
@@ -16,4 +16,14 @@ describe('bilan des colis confiés pour une journée', () => {
   it('refuse une date impossible', () => {
     expect(deliveryDaySchema.safeParse({ date: '2026-02-30' }).success).toBe(false)
   })
+})
+
+it('keeps daily receipts separate from global debt and dated payments',()=>{
+ const report=buildDeliveryDayReport('2026-10-29',[{...base,collected_amount:13500}],0)
+ expect(report.drivers[0]).toMatchObject({amountCollected:13500,deliveryFees:500,expectedRemittance:13000})
+})
+it('reports dated remittances without subtracting them from tour expectations',()=>{
+ const report=buildDeliveryDayReport('2026-10-29',[base],0)
+ const enriched=applyDeliveryDayPayments(report,[{delivery_driver_id:'driver',amount:9000}], [{id:'driver',amount_due:25000}] as never)
+ expect(enriched.drivers[0]).toMatchObject({expectedRemittance:13000,remittedOnDate:9000,globalAmountDue:25000})
 })

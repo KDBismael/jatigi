@@ -8,7 +8,7 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('products')
-    .select('*, offers:product_offers(*)')
+    .select('*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -25,19 +25,21 @@ async function productHistoryCount(id: string, organizationId: string): Promise<
     .eq('order.organization_id', organizationId)
   if (linesError) throw new Error(linesError.message)
   const lineIds = (lines ?? []).map((line) => line.id as string)
-  if (lineIds.length === 0) return 0
+  const {count:movementCount,error:movementError}=await supabase.from('stock_movements').select('id',{count:'exact',head:true}).eq('product_id',id).eq('organization_id',organizationId)
+  if(movementError)throw new Error(movementError.message)
+  if (lineIds.length === 0) return movementCount??0
 
   const { count, error: allocationsError } = await supabase
     .from('order_line_lots')
     .select('id', { count: 'exact', head: true })
     .in('order_line_id', lineIds)
   if (allocationsError) throw new Error(allocationsError.message)
-  return lineIds.length + (count ?? 0)
+  return lineIds.length + (count ?? 0) + (movementCount??0)
 }
 
 export async function getProductById(id: string, organizationId: string): Promise<Product | null> {
   const supabase = await createAdminClient()
-  const { data, error } = await supabase.from('products').select('*, offers:product_offers(*)').eq('id', id).eq('organization_id', organizationId).single()
+  const { data, error } = await supabase.from('products').select('*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)').eq('id', id).eq('organization_id', organizationId).single()
   if (error) return null
   return data as Product
 }
@@ -67,7 +69,7 @@ export async function updateProduct(id: string, input: ProductUpdate, organizati
     .update(input)
     .eq('id', id)
     .eq('organization_id', organizationId)
-    .select('*, offers:product_offers(*)')
+    .select('*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)')
     .single()
   if (error) throw new Error(error.message)
   return data as Product

@@ -29,12 +29,13 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 
   const { id } = await params
   if (!profile?.organization_id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if(profile?.role==='manager')return NextResponse.json({error:'Accès refusé'},{status:403})
   const product = await getProductById(id, profile.organization_id)
   if (!product) return NextResponse.json({ error: 'Produit introuvable' }, { status: 404 })
 
   if (profile?.role !== 'admin') {
     return NextResponse.json({ id: product.id, name: product.name, sale_price: product.sale_price,
-      pricing_mode: product.pricing_mode, stock_quantity: product.stock_quantity, offers: product.offers })
+      pricing_mode: product.pricing_mode, stock_quantity: product.stock_quantity, variants: product.variants, offers: product.offers })
   }
   return NextResponse.json(product)
 }

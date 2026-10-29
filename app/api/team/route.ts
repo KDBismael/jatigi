@@ -1,3 +1,4 @@
+import { billingErrorResponse } from '@/lib/billing/access'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { inviteEmployeeSchema } from '@/lib/schemas/team.schema'
@@ -30,6 +31,7 @@ export async function GET() {
     const members = await getTeamMembers(auth.profile.organization_id)
     return NextResponse.json(members)
   } catch (err) {
+    if (String(err).includes('PLAN_')) return billingErrorResponse(err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
@@ -51,6 +53,7 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json(member, { status: 201 })
   } catch (err) {
+    if (String(err).includes('PLAN_')) return billingErrorResponse(err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
@@ -68,6 +71,7 @@ export async function DELETE(request: NextRequest) {
     await deleteTeamMember(id, auth.profile.organization_id)
     return NextResponse.json({ success: true })
   } catch (err) {
+    if (String(err).includes('PLAN_')) return billingErrorResponse(err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
@@ -85,6 +89,7 @@ export async function PATCH(request: NextRequest) {
     await updateMemberRole(id, role, auth.profile.organization_id)
     return NextResponse.json({ success: true })
   } catch (err) {
+    if (String(err).includes('PLAN_')) return billingErrorResponse(err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }

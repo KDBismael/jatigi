@@ -13,6 +13,10 @@ export interface DeliveryDayDriver {
   driverName: string
   isActive: boolean
   counts: Record<DeliveryDayStatus, number>
+  amountCollected?: number | null
+  deliveryFees?: number | null
+  remittedOnDate?: number
+  globalAmountDue?: number
   expectedRemittance: number
   orders: DeliveryDayOrder[]
 }

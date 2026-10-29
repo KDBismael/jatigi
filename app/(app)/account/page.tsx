@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { translateAuthError } from '@/lib/auth-errors'
 import { OrganizationLogo } from '@/components/account/organization-logo'
+import { ShopSettings } from '@/components/account/shop-settings'
 import { ThemeSelect } from '@/components/layout/theme-select'
 
 export default function AccountPage() {
@@ -106,7 +107,7 @@ export default function AccountPage() {
         <p className="text-gray-500 text-sm mt-1">{profile?.full_name}{currentEmail ? ` · ${currentEmail}` : ''}</p>
       </div>
 
-      {profile?.role === 'admin' && <OrganizationLogo />}
+      {profile?.role === 'admin' && <><ShopSettings /><OrganizationLogo /></>}
 
       <Card>
         <CardHeader>

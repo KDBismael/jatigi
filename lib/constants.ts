@@ -10,7 +10,7 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   other: 'Autre',
 }
 
-export const STATUSES = ['received', 'confirmed', 'in_progress', 'delivered', 'cancelled', 'postponed'] as const
+export const STATUSES = ['received', 'confirmed', 'in_progress', 'delivered', 'cancelled', 'postponed', 'returned'] as const
 export type OrderStatus = (typeof STATUSES)[number]
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -20,6 +20,7 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   delivered: 'Livrée',
   cancelled: 'Annulée',
   postponed: 'Reportée',
+  returned: 'Retournée',
 }
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
@@ -29,6 +30,7 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
   postponed: 'bg-orange-100 text-orange-800',
+  returned: 'bg-rose-100 text-rose-800',
 }
 
 export const PAYMENT_METHODS = ['wave', 'orange_money', 'mtn_momo', 'moov_money', 'cash'] as const

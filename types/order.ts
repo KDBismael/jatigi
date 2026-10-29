@@ -4,6 +4,8 @@ import type { DeliveryDriver } from '@/types/delivery-driver'
 export interface OrderLine {
   id: string
   order_id: string
+  variant_id?: string | null
+  variant_name?: string | null
   product_id: string
   quantity: number
   unit_price: number | null

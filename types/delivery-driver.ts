@@ -20,3 +20,12 @@ export interface DeliveryDriverSummary extends DeliveryDriver {
   amount_remitted: number
   amount_due: number
 }
+
+export interface DeliverySettlement {
+ id: string
+ amount: number
+ settled_at: string
+ note: string | null
+ created_by: string | null
+ recorder?: { full_name: string } | null
+}

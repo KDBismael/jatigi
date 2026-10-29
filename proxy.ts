@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 const PUBLIC_PATHS = ['/', '/auth/login', '/auth/callback', '/auth/signup', '/auth/forgot-password', '/auth/reset-password']
 
 // Admin-only paths — authenticated non-admins get redirected to /orders
-const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/deliveries', '/analytics', '/team', '/expenses', '/pilotage', '/reports']
+const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/deliveries', '/analytics', '/team', '/expenses', '/pilotage', '/reports', '/subscription']
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + '/'))

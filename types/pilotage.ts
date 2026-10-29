@@ -3,7 +3,7 @@ export type ExpenseCategory = 'salary' | 'rent' | 'stock' | 'packaging' | 'inter
 
 export interface LiveSession {
   id: string; organization_id: string; name: string | null; session_date: string
-  slot: LiveSlot; target_amount: number; status: 'planned' | 'completed' | 'cancelled'; created_at: string
+  slot: LiveSlot; target_amount: number; status: 'planned' | 'active' | 'completed' | 'cancelled'; created_at: string; started_at?: string | null; closed_at?: string | null
 }
 
 export interface Expense {

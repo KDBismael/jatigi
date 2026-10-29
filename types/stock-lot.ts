@@ -2,6 +2,7 @@ import type { ImportCostType } from './product'
 
 export interface StockLot {
   id: string
+  variant_id?: string | null
   product_id: string
   organization_id: string
   quantity_received: number

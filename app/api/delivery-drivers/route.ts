@@ -1,3 +1,4 @@
+import { billingErrorResponse } from '@/lib/billing/access'
 import { canManageDeliveries } from '@/lib/delivery-access'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
@@ -33,6 +34,7 @@ export async function GET() {
     }
     return NextResponse.json(drivers)
   } catch (error) {
+    if (String(error).includes('PLAN_')) return billingErrorResponse(error)
     console.error('[/api/delivery-drivers] loading failed:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }
@@ -47,6 +49,7 @@ export async function POST(request: NextRequest) {
   try {
     return NextResponse.json(await createDeliveryDriver(parsed.data, auth.profile.organization_id), { status: 201 })
   } catch (error) {
+    if (String(error).includes('PLAN_')) return billingErrorResponse(error)
     console.error('[/api/delivery-drivers] creation failed:', error)
     return NextResponse.json({ error: String(error) }, { status: 500 })
   }

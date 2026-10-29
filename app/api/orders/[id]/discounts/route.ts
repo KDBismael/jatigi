@@ -9,6 +9,7 @@ import { createClient } from '@/services/supabase/server'
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getOrderContext()
   if (!ctx) return NextResponse.json({ error: 'Authentification requise' }, { status: 401 })
+  if(ctx.profile.role==='manager') return NextResponse.json({error:'Accès réservé aux livraisons'},{status:403})
   const parsed = discountUpdateSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Remise invalide : montant, motif et lignes requis.' }, { status: 400 })
   const { id } = await params

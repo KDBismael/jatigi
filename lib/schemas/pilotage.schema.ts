@@ -15,5 +15,5 @@ export const goalSchema = z.object({
 export const liveSchema = z.object({
   name: z.string().trim().max(120).optional().nullable(), session_date: z.string().date(),
   slot: z.enum(['morning','afternoon','evening']), target_amount: z.coerce.number().min(0).default(0),
-  status: z.enum(['planned','completed','cancelled']).default('planned'),
+  status: z.enum(['planned','active','completed','cancelled']).default('planned'),
 })

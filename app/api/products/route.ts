@@ -23,6 +23,7 @@ export async function GET() {
     const ctx = await getAuthContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+    if(ctx.profile.role==='manager')return NextResponse.json({error:'Accès refusé'},{status:403})
     const products = await getProducts(ctx.profile.organization_id)
 
     if (ctx.profile.role !== 'admin') {
@@ -35,6 +36,7 @@ export async function GET() {
         is_active: product.is_active,
         created_at: product.created_at,
         updated_at: product.updated_at,
+        variants: product.variants,
         offers: product.offers,
       }))
       return NextResponse.json(safe)

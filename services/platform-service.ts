@@ -204,3 +204,15 @@ export async function getOrganizationsOverview(): Promise<PlatformOrganization[]
       }
     })
 }
+
+export interface PlatformSaasMetrics {
+ mode:'test'|'live';signups:number;onboardingComplete:number;day1Eligible:number;day1Activated:number;day7Eligible:number;day7Activated:number;
+ retentionM1Eligible:number;retentionM1Active:number;retentionM3Eligible:number;retentionM3Active:number;paidOrganizations:number;mrr:number;
+ paidAtMonthStart:number;paidLostThisMonth:number;ordersLast7Days:number;ordersThisMonth:number;activeOrganizationsThisMonth:number
+}
+export async function getPlatformSaasMetrics():Promise<PlatformSaasMetrics> {
+ const db=await createAdminClient(),{excludedOrgIds}=await resolveExclusions(db)
+ const {data,error}=await db.rpc('platform_saas_metrics',{p_excluded:[...excludedOrgIds]})
+ if(error)throw new Error(error.message)
+ return data as PlatformSaasMetrics
+}

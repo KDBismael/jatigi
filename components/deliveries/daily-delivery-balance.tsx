@@ -2,6 +2,9 @@
 
 import { useEffect, useId, useState } from 'react'
 import Link from 'next/link'
+import { Paywall } from '@/components/billing/billing-usage-banner'
+import { useAuthStore } from '@/stores/auth-store'
+import { deliveryBalanceCsv } from '@/lib/delivery-balance-export'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
@@ -26,8 +29,9 @@ function validDate(value: string) {
 }
 
 export function DailyDeliveryBalance() {
+  const canManageBilling=useAuthStore(s=>s.organization?.owner_id===s.profile?.id)
   const [date, setDate] = useState(() => day())
-  const [result, setResult] = useState<{ date: string; report?: DeliveryDayReport; error?: string } | null>(null)
+  const [result, setResult] = useState<{ date: string; report?: DeliveryDayReport; error?: string; upgrade?:boolean } | null>(null)
   const [expanded, setExpanded] = useState<string[]>([])
   const [attempt, setAttempt] = useState(0)
   const inputId = useId()
@@ -42,6 +46,7 @@ export function DailyDeliveryBalance() {
     async function load() {
       try {
         const response = await fetch(`/api/delivery-balance?date=${date}`, { signal: controller.signal, cache: 'no-store' })
+        if (response.status===402) {const data=await response.json();if(active)setResult({date,error:data.error,upgrade:true});return}
         if (!response.ok) throw new Error('Chargement impossible')
         const report: DeliveryDayReport = await response.json()
         if (report.date !== date) throw new Error('Date du bilan incorrecte')
@@ -78,13 +83,15 @@ export function DailyDeliveryBalance() {
         <Button variant={date === day(-1) ? 'primary' : 'secondary'} onClick={() => selectDate(day(-1))} disabled={date === day(-1)}>Hier</Button>
         <Input id={inputId} label="Date de tournée" type="date" value={date} onChange={event => selectDate(event.target.value)} />
       </div>
-      <p className="text-xs text-gray-500">À remettre attendu : produits livrés après remises et acomptes conservés par la boutique, hors frais de livraison. Ce montant ne tient pas compte des versements déjà enregistrés ; le solde global reste dans l’onglet des livreurs.</p>
+      <p className="text-xs text-gray-500">À remettre attendu : produits livrés après remises et acomptes conservés par la boutique, hors frais de livraison. Les versements sont affichés à leur date de paiement, même pour une ancienne tournée. Le reste dû global est le solde actuel, toutes dates confondues.</p>
     </div>
     {!valid && <p className="text-sm text-gray-600">Choisissez une date valide.</p>}
     {valid && !current && <p role="status" className="text-sm text-gray-500">Chargement du bilan…</p>}
-    {current?.error && <div className="space-y-2"><p role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{current.error}</p>
+    {current?.upgrade && <Paywall message={current.error??'Disponible avec Pro'} canManageBilling={canManageBilling} />}
+    {current?.error && !current.upgrade && <div className="space-y-2"><p role="alert" className="rounded-lg bg-red-50 p-4 text-sm text-red-700">{current.error}</p>
       <Button variant="secondary" onClick={() => { setResult(null); setAttempt(value=>value+1) }}>Réessayer</Button></div>}
     {report && <>
+      <Button variant="secondary" onClick={()=>{const url=URL.createObjectURL(new Blob([deliveryBalanceCsv(report)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`warko-bilan-livreurs-${report.date}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}}>Exporter le bilan (Google Sheets)</Button>
       {report.undatedOrders > 0 && <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{report.undatedOrders} commandes sans date de tournée : ces anciennes affectations sont exclues du bilan. Renseignez la date dans le détail de chaque commande.</p>}
       {totals && <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-4">
         <h3 className="font-medium text-gray-900">Total de la journée</h3>
@@ -106,6 +113,12 @@ export function DailyDeliveryBalance() {
               {statuses.map(({ key, label }) => <div key={key} className="flex items-center justify-between text-sm lg:block"><span className="text-gray-500 lg:hidden">{label}</span><span className="font-medium text-gray-900">{driver.counts[key]}</span></div>)}
               <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-sm lg:block lg:border-0 lg:pt-0 lg:text-right"><span className="text-gray-500 lg:hidden">À remettre attendu</span><span className="font-semibold text-indigo-700">{formatCurrency(driver.expectedRemittance)}</span></div>
             </div>
+            <dl className="grid grid-cols-2 gap-4 border-t px-4 py-3 text-sm sm:grid-cols-4">
+              <div><dt className="text-gray-500">Encaissé sur la tournée</dt><dd>{driver.amountCollected==null?'Non documenté':formatCurrency(driver.amountCollected)}</dd></div>
+              <div><dt className="text-gray-500">Frais retenus</dt><dd>{driver.deliveryFees==null?'Non documenté':formatCurrency(driver.deliveryFees)}</dd></div>
+              <div><dt className="text-gray-500">Reversé à cette date</dt><dd>{formatCurrency(driver.remittedOnDate??0)}</dd></div>
+              <div><dt className="text-gray-500">Reste dû global actuel</dt><dd className="font-semibold">{formatCurrency(driver.globalAmountDue??0)}</dd></div>
+            </dl>
             {open && <div id={detailsId} className="border-t border-gray-100 bg-gray-50 p-4">
               <h4 className="mb-3 text-sm font-medium text-gray-700">Commandes de la tournée</h4>
               <ul className="space-y-3">{driver.orders.map(order => <li key={order.assignmentId} className="rounded-lg border border-gray-200 bg-white p-3 text-sm sm:flex sm:items-start sm:justify-between sm:gap-4">

@@ -4,18 +4,21 @@ import { useState } from 'react'
 import { useForm, useWatch, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { stockLotSchema, type StockLotInput } from '@/lib/schemas/stock-lot.schema'
+import { Select } from '@/components/ui/select'
+import type { ProductVariant } from '@/types/product'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 
 interface AddStockModalProps {
+  variants?: ProductVariant[]
   productName: string
   productId: string
   onSuccess: (newQuantity: number) => void
   onClose: () => void
 }
 
-export function AddStockModal({ productName, productId, onSuccess, onClose }: AddStockModalProps) {
+export function AddStockModal({ variants=[], productName, productId, onSuccess, onClose }: AddStockModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -86,6 +89,7 @@ export function AddStockModal({ productName, productId, onSuccess, onClose }: Ad
 
           {/* Étape 2 : coûts */}
           <div className="grid grid-cols-3 gap-3">
+            {variants.length>0&&<Select label="Variante" placeholder="Stock sans variante" options={variants.filter(v=>v.is_active).map(v=>({value:v.id,label:v.name}))} {...register('variant_id')} />}
             <Input
               label="Montant payé au fournisseur (FCFA)"
               type="number"

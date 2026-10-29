@@ -11,7 +11,7 @@ const signupSchema = z.object({
 })
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
+  const body = await request.json().catch(() => null)
   const parsed = signupSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
@@ -82,7 +82,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Mark the signup admin as the organization owner.
-  await supabase.from('organizations').update({ owner_id: userId }).eq('id', org.id)
+  const { error: ownerError } = await supabase.from('organizations').update({ owner_id: userId }).eq('id', org.id)
+  if (ownerError) {
+    await supabase.auth.admin.deleteUser(userId)
+    await supabase.from('organizations').delete().eq('id', org.id)
+    return NextResponse.json({ error: 'Impossible de finaliser la création de la boutique' }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, organization: org }, { status: 201 })
 }

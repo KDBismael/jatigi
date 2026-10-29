@@ -38,8 +38,9 @@ beforeAll(async () => {
     await db.exec((await readFile(`supabase/migrations/${file}`, 'utf8')).replace('CREATE EXTENSION IF NOT EXISTS pg_cron;', ''))
   }
   await db.exec(`INSERT INTO organizations(id,name) VALUES('${org}','Boutique'),('${otherOrg}','Autre');
+    INSERT INTO subscription_grants(organization_id,plan,period_start,period_end) VALUES('${org}','business',now()-interval '1 day',now()+interval '1 year');
     INSERT INTO auth.users(id) VALUES('${manager}'),('${employee}');
-    INSERT INTO profiles(id,full_name,role,organization_id) VALUES('${manager}','Responsable','manager','${org}'),('${employee}','Employé','employee','${org}');
+    INSERT INTO profiles(id,full_name,role,organization_id) VALUES('${manager}','Responsable','admin','${org}'),('${employee}','Employé','employee','${org}');
     INSERT INTO sales_people(id,organization_id,profile_id,full_name) VALUES('${manager}','${org}','${manager}','Responsable');
     SELECT set_config('request.jwt.claim.sub','${manager}',false);`)
   driver = (await db.query<{id:string}>("INSERT INTO delivery_drivers(organization_id,name) VALUES($1,'Ali') RETURNING id",[org])).rows[0].id
@@ -109,6 +110,7 @@ describe('journées de tournée en SQL',()=>{
   })
   it('autorise le responsable à lire sa boutique mais interdit les écritures et les lectures employé',async()=>{
     await assign()
+    await db.query("UPDATE profiles SET role='manager' WHERE id=$1",[manager])
     try {
       await db.exec('SET ROLE authenticated')
       expect((await db.query('SELECT * FROM order_delivery_assignments')).rows.length).toBeGreaterThan(0)
@@ -119,7 +121,60 @@ describe('journées de tournée en SQL',()=>{
       expect((await db.query('SELECT * FROM order_delivery_assignments')).rows).toHaveLength(0)
     } finally {
       await db.exec('RESET ROLE')
+      await db.query("UPDATE profiles SET role='admin' WHERE id=$1",[manager])
       await db.query(`SELECT set_config('request.jwt.claim.sub',$1,false)`,[manager])
     }
   })
+})
+
+describe('retour de marchandise',()=>{
+ it('restaure chaque lot FIFO une seule fois et conserve les allocations et le bilan',async()=>{
+   const before=(await db.query<{stock_quantity:number}>('SELECT stock_quantity FROM products WHERE id=$1',[product])).rows[0].stock_quantity
+   const id=await assign('2026-10-29')
+   await db.query('SELECT update_order_status_safe($1,$2)',[id,'returned'])
+   await db.query('SELECT update_order_status_safe($1,$2)',[id,'returned'])
+   expect((await db.query('SELECT stock_quantity FROM products WHERE id=$1',[product])).rows[0]).toEqual({stock_quantity:before})
+   expect((await attempts(id))[0].status).toBe('cancelled')
+   expect((await db.query('SELECT oll.* FROM order_line_lots oll JOIN order_lines ol ON ol.id=oll.order_line_id WHERE ol.order_id=$1',[id])).rows.length).toBeGreaterThan(0)
+   await expect(db.query('SELECT update_order_status_safe($1,$2)',[id,'delivered'])).rejects.toThrow('CANCELLED_ORDER_IS_FINAL')
+   await expect(db.query('SELECT update_order_status_safe($1,$2)',[id,'cancelled'])).rejects.toThrow('CANCELLED_ORDER_IS_FINAL')
+ })
+})
+
+describe('stock FIFO par variante',()=>{
+ it('ne consomme que les lots de la variante choisie et restaure le même stock au retour',async()=>{
+  const variant=(await db.query<{id:string}>("INSERT INTO product_variants(product_id,organization_id,name) VALUES($1,$2,'Bleu / L') RETURNING id",[product,org])).rows[0].id
+  // Stock entry remains an admin-only operation.
+  await db.query("UPDATE profiles SET role='admin' WHERE id=$1",[manager])
+  await db.query('SELECT add_stock_lot_safe($1,5,5000,0,0,NULL,$2)',[product,variant])
+  const id=(await db.query<{id:string}>(`SELECT create_order_with_fifo('Variante',NULL,'tiktok','2026-10-29',NULL,NULL,0,0,NULL,$1::jsonb,NULL) AS id`,[JSON.stringify([{product_id:product,variant_id:variant,quantity:2}])])).rows[0].id
+  expect((await db.query('SELECT stock_quantity FROM product_variants WHERE id=$1',[variant])).rows[0]).toEqual({stock_quantity:3})
+  expect((await db.query('SELECT variant_name FROM order_lines WHERE order_id=$1',[id])).rows[0]).toEqual({variant_name:'Bleu / L'})
+  await db.query('SELECT update_order_status_safe($1,$2)',[id,'returned'])
+  expect((await db.query('SELECT stock_quantity FROM product_variants WHERE id=$1',[variant])).rows[0]).toEqual({stock_quantity:5})
+  await expect(db.query(`SELECT create_order_with_fifo('Trop',NULL,'tiktok','2026-10-29',NULL,NULL,0,0,NULL,$1::jsonb,NULL)`,[JSON.stringify([{product_id:product,variant_id:variant,quantity:6}])])).rejects.toThrow('INSUFFICIENT_STOCK')
+ })
+})
+
+describe('journal durable du stock',()=>{
+ it('trace une consommation FIFO et son retour avec la commande et la personne',async()=>{
+  const id=await assign('2026-10-29')
+  await db.query('SELECT update_order_status_safe($1,$2)',[id,'returned'])
+  const rows=(await db.query<{quantity_delta:number;reason:string;created_by:string}>('SELECT quantity_delta,reason,created_by FROM stock_movements WHERE order_id=$1 ORDER BY recorded_at,id',[id])).rows
+  expect(rows.map(r=>r.quantity_delta).sort()).toEqual([-3,3])
+  expect(rows.map(r=>r.reason).sort()).toEqual(['return','sale'])
+  expect(rows.every(r=>r.created_by===manager)).toBe(true)
+ })
+})
+
+describe('périmètre SQL responsable livraisons',()=>{
+ it('interdit la création de commande et les statuts hors livraison au responsable',async()=>{
+  const id=await assign()
+  await db.query("UPDATE profiles SET role='manager' WHERE id=$1",[manager])
+  try{
+   await expect(assign()).rejects.toThrow('FORBIDDEN')
+   await expect(db.query('SELECT update_order_status_safe($1,$2)',[id,'received'])).rejects.toThrow('FORBIDDEN')
+   await db.query('SELECT update_order_status_safe($1,$2)',[id,'delivered'])
+  }finally{await db.query("UPDATE profiles SET role='admin' WHERE id=$1",[manager])}
+ })
 })

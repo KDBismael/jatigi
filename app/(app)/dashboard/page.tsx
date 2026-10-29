@@ -1,5 +1,9 @@
 'use client'
 
+import { useSubscription } from '@/hooks/use-subscription'
+import { BillingUsageBanner } from '@/components/billing/billing-usage-banner'
+
+import { OnboardingChecklist } from '@/components/onboarding/checklist'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useAnalytics } from '@/hooks/use-analytics'
@@ -21,6 +25,7 @@ function getLastName(fullName?: string): string {
 }
 
 export default function DashboardPage() {
+  const { summary } = useSubscription()
   const { profile } = useAuthStore()
   const [preset, setPreset] = useState<DatePreset>('today')
   const [customFrom, setCustomFrom] = useState<string | undefined>()
@@ -61,6 +66,8 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
+      <OnboardingChecklist />
+      <BillingUsageBanner summary={summary} />
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-full max-w-2xl" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -74,7 +81,8 @@ export default function DashboardPage() {
     )
   }
 
-  if (error) return <Card className="p-8 text-center"><p className="font-semibold text-red-600">Impossible de charger le tableau de bord</p><p className="text-sm text-gray-500 mt-1">{error}</p></Card>
+  if (error) return <div className="space-y-6"><OnboardingChecklist />
+      <BillingUsageBanner summary={summary} /><Card className="p-8 text-center"><p className="font-semibold text-red-600">Impossible de charger le tableau de bord</p><p className="text-sm text-gray-500 mt-1">{error}</p></Card></div>
   if (!data) return null
 
   const { stats, revenue } = data
@@ -83,6 +91,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <OnboardingChecklist />
+      <BillingUsageBanner summary={summary} />
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">{greeting}</h1>

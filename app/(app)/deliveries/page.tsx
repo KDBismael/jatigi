@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { SettlementHistory } from '@/components/deliveries/settlement-history'
 import { DailyDeliveryBalance } from '@/components/deliveries/daily-delivery-balance'
 import { ParcelExport } from '@/components/orders/parcel-export'
 import { formatCurrency } from '@/lib/utils'
@@ -21,6 +22,9 @@ export default function DeliveriesPage() {
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [settlingId, setSettlingId] = useState<string | null>(null)
+  const [settlementDate,setSettlementDate]=useState(new Date().toISOString().slice(0,10))
+  const [historyId,setHistoryId]=useState<string|null>(null)
+  const [historyRefresh,setHistoryRefresh]=useState(0)
   const [settlementAmount, setSettlementAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -54,9 +58,10 @@ export default function DeliveriesPage() {
       }
       await settle(driverId, {
         amount,
-        settled_at: new Date().toISOString().slice(0, 10),
+        settled_at: settlementDate,
         note: '',
       })
+      setHistoryRefresh(x=>x+1)
       setSettlementAmount('')
       setSettlingId(null)
       setSuccessMessage(`Versement de ${formatCurrency(amount)} enregistré.`)
@@ -133,6 +138,7 @@ export default function DeliveriesPage() {
       {(error || formError) && <p className="text-sm text-red-600 bg-red-50 rounded-lg p-3">{formError ?? error}</p>}
       {successMessage && <p className="text-sm text-green-700 bg-green-50 rounded-lg p-3">{successMessage}</p>}
 
+      <Input label="Date du reversement" type="date" value={settlementDate} onChange={e=>setSettlementDate(e.target.value)} />
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-gray-900">Situation par livreur</h2>
@@ -164,7 +170,7 @@ export default function DeliveriesPage() {
                       </span>
                     </div>
 
-                    {archiveAction(driver)}
+                    {archiveAction(driver)}<Button variant="ghost" size="sm" onClick={()=>setHistoryId(driver.id)}>Historique des reversements</Button>
 
                     {/* Package stats */}
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
@@ -252,7 +258,7 @@ export default function DeliveriesPage() {
                             </div>
                           ) : <button type="button" className="text-xs text-indigo-600 hover:underline mt-1" onClick={() => setSettlingId(driver.id)}>Enregistrer un versement</button>)}
                         </td>
-                        {isAdmin && <td className="py-4">{archiveAction(driver)}</td>}
+                        {isAdmin && <td className="py-4">{archiveAction(driver)}<Button variant="ghost" size="sm" onClick={()=>setHistoryId(driver.id)}>Historique des reversements</Button></td>}
                       </tr>
                     ))}
                   </tbody>
@@ -262,6 +268,7 @@ export default function DeliveriesPage() {
           )}
         </CardContent>
       </Card>
+      {historyId && <Card><CardHeader><h2 className="font-semibold">{drivers.find(d=>d.id===historyId)?.name}</h2></CardHeader><CardContent><SettlementHistory driverId={historyId} refresh={historyRefresh} /></CardContent></Card>}
       </>}
     </div>
   )

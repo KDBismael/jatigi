@@ -43,3 +43,6 @@ yarn-error.log*
 next-env.d.ts
 .playwright-mcp/
 login-page.png
+
+# Supabase CLI temporary metadata
+/supabase/.temp/

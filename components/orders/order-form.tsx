@@ -20,6 +20,7 @@ import type { DeliveryDriverSummary } from '@/types/delivery-driver'
 import type { SellerOption, LiveOption } from '@/hooks/use-order-options'
 
 interface OrderFormProps {
+  initialLiveSessionId?: string
   onSubmit: (data: OrderInput) => Promise<void>
   onSaveAndPrint?: (data: OrderInput) => Promise<void>
   products: Product[]
@@ -32,8 +33,9 @@ interface OrderFormProps {
 const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
 const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
 
-export function OrderForm({ onSubmit, onSaveAndPrint, products, drivers, sellers, lives, isLoading }: OrderFormProps) {
+export function OrderForm({ initialLiveSessionId, onSubmit, onSaveAndPrint, products, drivers, sellers, lives, isLoading }: OrderFormProps) {
   const isAdmin = useAuthStore((s) => s.isAdmin())
+  const organization = useAuthStore(s=>s.organization)
   const profile = useAuthStore((s) => s.profile)
   const activeProducts = useMemo(() => selectableOrderProducts(products), [products])
   const productById = useMemo(() => new Map(activeProducts.map(product => [product.id, product])), [activeProducts])
@@ -54,9 +56,9 @@ export function OrderForm({ onSubmit, onSaveAndPrint, products, drivers, sellers
       order_date: new Date().toISOString().split('T')[0],
       delivery_date: new Date().toISOString().slice(0,10),
       seller_id: profile?.id ?? '',
-      live_session_id: '',
+      live_session_id: initialLiveSessionId ?? '',
       confirmation_amount: 0,
-      delivery_fee: 0,
+      delivery_fee: organization?.default_delivery_fee ?? 0,
       payment_method: '',
       lines: [{ product_id: '', pricing_type: 'unit', quantity: 1, offer_id: '', offer_count: 1 }],
     },
@@ -230,9 +232,11 @@ const OrderLineFields = memo(function OrderLineFields({ index, control, register
           const product = productById.get(event.target.value)
           setValue(`lines.${index}.pricing_type`, product?.pricing_mode === 'offers' ? 'offer' : 'unit')
           setValue(`lines.${index}.offer_id`, '')
+          setValue(`lines.${index}.variant_id`, '')
         }}
       />
     </div>
+    {(selectedProduct?.variants?.length ?? 0)>0 && <div className="min-w-44 flex-1"><Select label="Variante" placeholder="Stock sans variante" options={(selectedProduct?.variants??[]).filter(v=>v.is_active).map(v=>({value:v.id,label:`${v.name} · ${v.stock_quantity} disponibles`}))} {...register(`lines.${index}.variant_id`)} /></div>}
     <div className="min-w-44 flex-1"><Select label={index === 0 ? 'Tarif' : undefined}
       options={pricingOptions} {...register(`lines.${index}.pricing_type`)} /></div>
     {line?.pricing_type === 'offer' ? <>

@@ -1,5 +1,8 @@
 'use client'
 
+import { useSubscription } from '@/hooks/use-subscription'
+import { BillingUsageBanner } from '@/components/billing/billing-usage-banner'
+
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { OrderForm } from '@/components/orders/order-form'
@@ -8,9 +11,12 @@ import { useProducts } from '@/hooks/use-products'
 import type { OrderInput } from '@/lib/schemas/order.schema'
 import type { Product } from '@/types/product'
 import { useDeliveryDrivers } from '@/hooks/use-delivery-drivers'
+import { useAuthStore } from '@/stores/auth-store'
 import { useOrderOptions } from '@/hooks/use-order-options'
 
 export default function NewOrderPage() {
+  const { summary } = useSubscription()
+  const isManager = useAuthStore(s=>s.profile?.role==='manager')
   const router = useRouter()
   const { create } = useOrders()
   const { products } = useProducts()
@@ -35,8 +41,10 @@ export default function NewOrderPage() {
     }
   }
 
+  if(isManager)return <p>Accès réservé aux livraisons.</p>
   return (
     <div>
+      <BillingUsageBanner summary={summary} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Nouvelle commande</h1>
         <p className="text-gray-500 text-sm mt-1">Créez une commande client</p>

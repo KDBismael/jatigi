@@ -6,7 +6,7 @@ export function orderForRole(order: Order, role: string) {
   return {
     ...order,
     order_lines: order.order_lines?.map(line => ({
-      id: line.id, order_id: line.order_id, product_id: line.product_id, quantity: line.quantity,
+      id: line.id, order_id: line.order_id, product_id: line.product_id, variant_id: line.variant_id, variant_name: line.variant_name, quantity: line.quantity,
       unit_price: line.unit_price, pricing_type: line.pricing_type, product_offer_id: line.product_offer_id,
       offer_name: line.offer_name, units_per_offer: line.units_per_offer, offer_count: line.offer_count,
       offer_price: line.offer_price, line_subtotal: line.line_subtotal, line_total: line.line_total,
@@ -15,4 +15,9 @@ export function orderForRole(order: Order, role: string) {
       product: line.product ? { name: line.product.name } : undefined,
     })),
   }
+}
+
+export const DELIVERY_STATUSES = ['in_progress', 'delivered', 'cancelled', 'postponed', 'returned'] as const
+export function isDeliveryOrder(order: Pick<Order, 'status' | 'delivery_driver_id'>) {
+  return Boolean(order.delivery_driver_id) && (DELIVERY_STATUSES as readonly string[]).includes(order.status)
 }

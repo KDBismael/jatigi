@@ -54,37 +54,12 @@ export async function getOrderById(id: string, organizationId: string): Promise<
 
 export async function createOrder(input: OrderInput, userId: string, organizationId: string): Promise<Order> {
   const supabase = await createClient()
-  const admin = await createAdminClient()
-  const { data: seller } = await admin.from('sales_people').select('id').eq('id', input.seller_id).eq('organization_id', organizationId).eq('is_active', true).single()
-  if (!seller) throw new Error('Vendeur introuvable dans votre organisation')
-  if (input.live_session_id) {
-    const { data: live } = await admin.from('live_sessions').select('id').eq('id', input.live_session_id).eq('organization_id', organizationId).single()
-    if (!live) throw new Error('Live introuvable dans votre organisation')
-  }
   void userId
-  void organizationId
-  const { data: orderId, error } = await supabase.rpc('create_order_with_fifo', {
-    p_client_name: input.client_name,
-    p_client_phone: input.client_phone || null,
-    p_channel: input.channel,
-    p_order_date: input.order_date,
-    p_delivery_driver_id: input.delivery_driver_id || null,
-    p_delivery_date: input.delivery_date ?? null,
-    p_delivery_location: input.delivery_location || null,
-    p_delivery_fee: input.delivery_fee ?? 0,
-    p_confirmation_amount: input.confirmation_amount ?? 0,
-    p_payment_method: input.payment_method || null,
-    p_lines: input.lines,
-  })
+  const { data: orderId, error } = await supabase.rpc('create_order_complete', { p_data: input })
   if (error) {
     if (error.message.includes('INSUFFICIENT_STOCK')) throw new Error('INSUFFICIENT_STOCK')
     throw new Error(error.message)
   }
-  const { error: assignmentError } = await admin.from('orders').update({
-    seller_id: input.seller_id,
-    live_session_id: input.live_session_id || null,
-  }).eq('id', orderId as string).eq('organization_id', organizationId)
-  if (assignmentError) throw new Error(assignmentError.message)
   const order = await getOrderById(orderId as string, organizationId)
   if (!order) throw new Error('Commande créée mais introuvable')
   return order

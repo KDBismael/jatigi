@@ -8,6 +8,7 @@ export const paymentMethodEnum = z.enum(PAYMENT_METHODS)
 
 export const orderLineSchema = z.object({
   ...discountFields,
+  variant_id: z.string().uuid().optional().nullable().or(z.literal('')),
   product_id: z.string().uuid('Produit requis'),
   pricing_type: z.enum(['unit', 'offer']).default('unit'),
   quantity: z.coerce.number().int().positive('Quantité requise').optional(),

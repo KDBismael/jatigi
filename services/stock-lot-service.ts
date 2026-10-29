@@ -31,6 +31,7 @@ export async function addStockLot(
 ): Promise<StockLot> {
   const supabase = await createClient()
   const { data: lotId, error } = await supabase.rpc('add_stock_lot_safe', {
+    ...(input.variant_id ? { p_variant_id: input.variant_id } : {}),
     p_product_id: productId,
     p_quantity: input.quantity_received,
     p_total_purchase: input.total_purchase,
