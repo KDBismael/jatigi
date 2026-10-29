@@ -1,5 +1,6 @@
 'use client'
 
+import { ROLE_LABELS, type Role } from '@/lib/constants'
 import { useState } from 'react'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -21,6 +22,7 @@ import type { SalesPerson, SalesPersonEvaluation } from '@/types/sales-person'
 const roleOptions = [
   { value: 'employee', label: 'Employé' },
   { value: 'admin', label: 'Administrateur' },
+  { value: 'manager', label: 'Responsable livraisons' },
 ]
 
 const personTypeOptions = [
@@ -34,7 +36,7 @@ const salaryModeOptions = [
 ]
 
 function roleLabel(role: Profile['role']) {
-  return role === 'admin' ? 'Administrateur' : 'Employé'
+  return ROLE_LABELS[role]
 }
 
 function typeLabel(type: SalesPerson['person_type']) {
@@ -48,6 +50,7 @@ export default function TeamPage() {
   const { people, isLoading: peopleLoading, create, update, remove: removePerson, addEvaluation } = useSalesPeople()
   const [showAccountForm, setShowAccountForm] = useState(false)
   const [showPersonForm, setShowPersonForm] = useState(false)
+  const [roleError, setRoleError] = useState<string | null>(null)
   const [accountError, setAccountError] = useState<string | null>(null)
   const [personError, setPersonError] = useState<string | null>(null)
   const [openHistoryId, setOpenHistoryId] = useState<string | null>(null)
@@ -165,13 +168,20 @@ export default function TeamPage() {
     await remove(member.id)
   }
 
-  async function toggleRole(member: Profile) {
+  async function selectRole(member: Profile, role: Role) {
+    if (role === member.role) return
     if (member.role === 'admin' && !confirm(`Retirer les droits admin à ${member.full_name} ?`)) return
-    await changeRole(member.id, member.role === 'admin' ? 'employee' : 'admin')
+    setRoleError(null)
+    try {
+      await changeRole(member.id, role)
+    } catch {
+      setRoleError('Impossible de modifier le rôle de ce membre.')
+    }
   }
 
   return (
     <div className="space-y-6">
+      {roleError && <p role="alert" className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{roleError}</p>}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Équipe</h1>
@@ -342,9 +352,12 @@ export default function TeamPage() {
                       <td className="py-3 pr-4 text-gray-500">{formatDate(member.created_at)}</td>
                       <td className="py-3">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => toggleRole(member)}>
-                            {member.role === 'admin' ? '→ Employé' : '→ Admin'}
-                          </Button>
+                          <Select
+                            aria-label={`Rôle de ${member.full_name}`}
+                            options={roleOptions}
+                            value={member.role}
+                            onChange={(event) => selectRole(member, event.target.value as Role)}
+                          />
                           <Button size="sm" variant="ghost" className="text-red-600" onClick={() => deleteMember(member)}>
                             Supprimer
                           </Button>

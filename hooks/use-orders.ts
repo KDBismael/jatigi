@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useOrderStore } from '@/stores/order-store'
 import type { OrderInput } from '@/lib/schemas/order.schema'
 import type { OrderStatus } from '@/lib/constants'
+import { matchesOrderSearch } from '@/lib/order-search'
 
 export function useOrders() {
   const { orders, filters, isLoading, setOrders, addOrder, setFilters, updateOrderStatus, setLoading } =
@@ -25,8 +26,7 @@ export function useOrders() {
     if (filters.status && o.status !== filters.status) return false
     if (filters.dateFrom && o.order_date < filters.dateFrom) return false
     if (filters.dateTo && o.order_date > filters.dateTo) return false
-    if (filters.search && !o.client_name.toLowerCase().includes(filters.search.toLowerCase()))
-      return false
+    if (filters.search && !matchesOrderSearch(o, filters.search)) return false
     if (filters.deliverySearch && !o.delivery_driver?.name.toLowerCase().includes(filters.deliverySearch.toLowerCase()))
       return false
     return true

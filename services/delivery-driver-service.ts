@@ -4,16 +4,31 @@ import type { DeliveryDriver, DeliveryDriverSummary } from '@/types/delivery-dri
 import { calculateDeliveryMetrics } from '@/lib/delivery-metrics'
 import { orderCollectibleAmount, orderRemittableAmount } from '@/lib/order-amounts'
 
+async function readAllPages<T>(
+  fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const rows: T[] = []
+  const pageSize = 500
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await fetchPage(offset, offset + pageSize - 1)
+    if (error) throw new Error(error.message)
+    const page = data ?? []
+    rows.push(...page)
+    if (page.length < pageSize) return rows
+  }
+}
+
 export async function getDeliveryDrivers(organizationId: string): Promise<DeliveryDriverSummary[]> {
   const supabase = await createAdminClient()
-  const [{ data: drivers, error: driversError }, { data: orders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
-    supabase.from('delivery_drivers').select('*').eq('organization_id', organizationId).order('name'),
-    supabase.from('orders').select('delivery_driver_id, status, confirmation_amount, delivery_fee, order_lines(line_total, unit_price, quantity)').eq('organization_id', organizationId).not('delivery_driver_id', 'is', null),
-    supabase.from('delivery_settlements').select('delivery_driver_id, amount').eq('organization_id', organizationId),
+  const [drivers, orders, settlements] = await Promise.all([
+    readAllPages((from, to) => supabase.from('delivery_drivers').select('*')
+      .eq('organization_id', organizationId).order('name').order('id').range(from, to)),
+    readAllPages((from, to) => supabase.from('orders')
+      .select('delivery_driver_id, status, confirmation_amount, delivery_fee, order_lines(line_total, unit_price, quantity)')
+      .eq('organization_id', organizationId).not('delivery_driver_id', 'is', null).order('id').range(from, to)),
+    readAllPages((from, to) => supabase.from('delivery_settlements').select('delivery_driver_id, amount')
+      .eq('organization_id', organizationId).order('id').range(from, to)),
   ])
-  if (driversError) throw new Error(driversError.message)
-  if (ordersError) throw new Error(ordersError.message)
-  if (settlementsError) throw new Error(settlementsError.message)
 
   return (drivers as DeliveryDriver[]).map((driver) => {
     const assigned = orders?.filter((order) => order.delivery_driver_id === driver.id) ?? []
@@ -63,19 +78,17 @@ export async function addDeliverySettlement(
     .eq('id', driverId).eq('organization_id', organizationId).single()
   if (!driver) throw new Error('Livreur introuvable')
 
-  const [{ data: deliveredOrders, error: ordersError }, { data: settlements, error: settlementsError }] = await Promise.all([
-    supabase.from('orders')
+  const [deliveredOrders, settlements] = await Promise.all([
+    readAllPages((from, to) => supabase.from('orders')
       .select('confirmation_amount, order_lines(line_total, unit_price, quantity)')
       .eq('organization_id', organizationId)
       .eq('delivery_driver_id', driverId)
-      .eq('status', 'delivered'),
-    supabase.from('delivery_settlements')
+      .eq('status', 'delivered').order('id').range(from, to)),
+    readAllPages((from, to) => supabase.from('delivery_settlements')
       .select('amount')
       .eq('organization_id', organizationId)
-      .eq('delivery_driver_id', driverId),
+      .eq('delivery_driver_id', driverId).order('id').range(from, to)),
   ])
-  if (ordersError) throw new Error(ordersError.message)
-  if (settlementsError) throw new Error(settlementsError.message)
 
   // The driver keeps delivery fees, so only parcels (minus deposits) are owed to the shop.
   const remittable = deliveredOrders?.reduce((total, order) => {

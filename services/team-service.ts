@@ -1,3 +1,4 @@
+import type { Role } from '@/lib/constants'
 import { createAdminClient } from '@/services/supabase/server'
 import type { Profile } from '@/types/user'
 
@@ -17,7 +18,7 @@ export async function createTeamMember(params: {
   email: string
   password: string
   full_name: string
-  role: 'admin' | 'employee'
+  role: Role
   organization_id: string
 }): Promise<Profile> {
   const supabase = await createAdminClient()
@@ -68,7 +69,7 @@ export async function createTeamMember(params: {
   return profile as Profile
 }
 
-export async function updateMemberRole(id: string, role: 'admin' | 'employee', organizationId: string): Promise<void> {
+export async function updateMemberRole(id: string, role: Role, organizationId: string): Promise<void> {
   const supabase = await createAdminClient()
   const { error } = await supabase.from('profiles').update({ role }).eq('id', id).eq('organization_id', organizationId)
   if (error) throw new Error(error.message)

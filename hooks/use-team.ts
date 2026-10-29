@@ -1,5 +1,7 @@
 'use client'
 
+import type { Role } from '@/lib/constants'
+
 import { useEffect, useState } from 'react'
 import type { Profile } from '@/types/user'
 import type { InviteEmployeeInput } from '@/lib/schemas/team.schema'
@@ -37,7 +39,7 @@ export function useTeam() {
     setMembers((prev) => prev.filter((m) => m.id !== id))
   }
 
-  async function changeRole(id: string, role: 'admin' | 'employee') {
+  async function changeRole(id: string, role: Role) {
     const res = await fetch('/api/team', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

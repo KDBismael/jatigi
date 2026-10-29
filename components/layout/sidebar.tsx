@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { useRole } from '@/hooks/use-role'
 import { useAuthStore } from '@/stores/auth-store'
+import { ROLE_LABELS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { ThemeSelect } from './theme-select'
 
@@ -52,12 +53,12 @@ function getInitials(fullName?: string): string {
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
-  const { isAdmin } = useRole()
+  const { isAdmin, canManageDeliveries } = useRole()
   const { profile, organization } = useAuthStore()
 
   const profileLoaded = profile !== null
   const visibleItems = profileLoaded
-    ? NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin)
+    ? NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin || (item.href === '/deliveries' && canManageDeliveries))
     : NAV_ITEMS
 
   return (
@@ -99,7 +100,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
             <>
               <p className="text-sm font-medium text-white truncate">{profile.full_name}</p>
               <p className="text-xs text-gray-400">
-                {profile.role === 'admin' ? 'Administrateur' : 'Employé'}
+                {ROLE_LABELS[profile.role]}
               </p>
             </>
           ) : (
@@ -136,13 +137,13 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { isAdmin } = useRole()
+  const { isAdmin, canManageDeliveries } = useRole()
   const { profile } = useAuthStore()
   const [menuOpen, setMenuOpen] = useState(false)
 
   const profileLoaded = profile !== null
   const bottomItems = profileLoaded
-    ? NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin)
+    ? NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin || (item.href === '/deliveries' && canManageDeliveries))
     : NAV_ITEMS
 
   return (
@@ -167,7 +168,7 @@ export function Sidebar() {
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900 truncate">{profile?.full_name ?? '—'}</p>
                   <p className="text-xs text-gray-500">
-                    {profile?.role === 'admin' ? 'Administrateur' : 'Employé'}
+                    {profile ? ROLE_LABELS[profile.role] : '—'}
                   </p>
                 </div>
                 <Link

@@ -1,0 +1,82 @@
+// @vitest-environment jsdom
+import React from 'react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { DailyDeliveryBalance } from '@/components/deliveries/daily-delivery-balance'
+import type { DeliveryDayReport } from '@/types/delivery-balance'
+
+const today = () => new Date().toISOString().slice(0, 10)
+const report = (date = today(), name = 'Koffi'): DeliveryDayReport => ({ date, undatedOrders: 2, drivers: [{ driverId: 'd1', driverName: name, isActive: false, counts: { delivered: 1, in_progress: 2, cancelled: 3, postponed: 4 }, expectedRemittance: 7500, orders: [{ assignmentId: 'a1', orderId: 'o1', clientName: 'Awa', clientPhone: '0700000000', products: 'Robe × 1', status: 'delivered', remittableAmount: 7500 }] }] })
+const response = (value: DeliveryDayReport) => ({ ok: true, json: async () => value })
+afterEach(() => { cleanup(); vi.unstubAllGlobals() })
+describe('bilan quotidien des tournées', () => {
+  it('permet de réessayer la même journée après une coupure réseau', async () => {
+    const fetcher=vi.fn().mockRejectedValueOnce(new Error('network')).mockResolvedValueOnce(response(report()))
+    vi.stubGlobal('fetch',fetcher)
+    render(<DailyDeliveryBalance />)
+    await screen.findByRole('alert')
+    fireEvent.click(screen.getByRole('button',{name:'Réessayer'}))
+    await screen.findByRole('button',{name:/Koffi/})
+    expect(fetcher).toHaveBeenCalledTimes(2)
+    expect(fetcher.mock.calls[0][0]).toBe(fetcher.mock.calls[1][0])
+  })
+  it('affiche les montants nets fournis, les statuts et les commandes du livreur archivé', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(report())))
+    render(<DailyDeliveryBalance />)
+    expect(await screen.findByRole('button', { name: /Koffi/ })).toBeTruthy()
+    expect(screen.getByText(/Archivé/)).toBeTruthy()
+    expect(screen.getByText(/2 commandes sans date de tournée/)).toBeTruthy()
+    expect(screen.getByText(/hors frais de livraison/)).toBeTruthy()
+    expect(screen.getAllByText(/7.?500/).length).toBe(2)
+    expect(screen.queryByText('Awa')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Koffi/ }))
+    expect(screen.getByRole('link', { name: /Awa/ }).getAttribute('href')).toBe('/orders/o1')
+    expect(screen.getByText('0700000000')).toBeTruthy()
+    expect(screen.getByText('Robe × 1')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /Koffi/ }))
+    expect(screen.queryByText('Awa')).toBeNull()
+  })
+  it('charge hier et une date précise, et masque le rapport si la date est vide', async () => {
+    const fetcher = vi.fn().mockImplementation((url: string) => Promise.resolve(response(report(url.split('=')[1]))))
+    vi.stubGlobal('fetch', fetcher)
+    render(<DailyDeliveryBalance />)
+    await screen.findByRole('button', { name: /Koffi/ })
+    fireEvent.click(screen.getByRole('button', { name: 'Hier' }))
+    const yesterday = new Date(); yesterday.setUTCDate(yesterday.getUTCDate() - 1)
+    await waitFor(() => expect(fetcher.mock.calls.at(-1)?.[0]).toBe(`/api/delivery-balance?date=${yesterday.toISOString().slice(0, 10)}`))
+    fireEvent.change(screen.getByLabelText('Date de tournée'), { target: { value: '2026-01-14' } })
+    await waitFor(() => expect(fetcher.mock.calls.at(-1)?.[0]).toBe('/api/delivery-balance?date=2026-01-14'))
+    await screen.findByRole('button', { name: /Koffi/ })
+    fireEvent.change(screen.getByLabelText('Date de tournée'), { target: { value: '' } })
+    expect(screen.queryByRole('button', { name: /Koffi/ })).toBeNull()
+    expect(screen.getByText('Choisissez une date valide.')).toBeTruthy()
+  })
+  it('ignore une ancienne réponse même si la requête annulée termine après la nouvelle', async () => {
+    let resolveOld!: (value: unknown) => void
+    const fetcher = vi.fn().mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve })).mockResolvedValue(response(report('2026-01-14', 'Nouveau')))
+    vi.stubGlobal('fetch', fetcher)
+    render(<DailyDeliveryBalance />)
+    expect(screen.getByRole('status').textContent).toContain('Chargement')
+    fireEvent.change(screen.getByLabelText('Date de tournée'), { target: { value: '2026-01-14' } })
+    await screen.findByRole('button', { name: /Nouveau/ })
+    expect(fetcher.mock.calls[0][1].signal.aborted).toBe(true)
+    await act(async () => resolveOld(response(report(today(), 'Ancien'))))
+    expect(screen.queryByRole('button', { name: /Ancien/ })).toBeNull()
+  })
+  it('retire le rapport précédent pendant le chargement et présente les erreurs', async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce(response(report())).mockRejectedValueOnce(new Error('network'))
+    vi.stubGlobal('fetch', fetcher)
+    render(<DailyDeliveryBalance />)
+    await screen.findByRole('button', { name: /Koffi/ })
+    fireEvent.click(screen.getByRole('button', { name: 'Hier' }))
+    expect(screen.queryByRole('button', { name: /Koffi/ })).toBeNull()
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent', 'Impossible de charger le bilan. Réessayez.')
+  })
+  it('présente un jour sans colis et traite les réponses HTTP en erreur', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ date: today(), drivers: [], undatedOrders: 0 })).mockResolvedValueOnce({ ok: false }))
+    render(<DailyDeliveryBalance />)
+    expect(await screen.findByText('Aucun colis confié aux livreurs pour cette date.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Hier' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+  })
+})

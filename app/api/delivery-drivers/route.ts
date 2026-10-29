@@ -1,3 +1,4 @@
+import { canManageDeliveries } from '@/lib/delivery-access'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { deliveryDriverSchema } from '@/lib/schemas/delivery-driver.schema'
@@ -16,7 +17,7 @@ export async function GET() {
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   try {
     const drivers = await getDeliveryDrivers(auth.profile.organization_id)
-    if (auth.profile.role !== 'admin') {
+    if (!canManageDeliveries(auth.profile.role)) {
       return NextResponse.json(drivers.map((driver) => ({
         ...driver,
         packages_assigned: 0,

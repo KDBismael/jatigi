@@ -8,11 +8,15 @@ Warko est une application de gestion commerciale en français destinée aux vend
 - Stock par lots et consommation FIFO transactionnelle
 - Gestion des livreurs, colis en circulation, taux de réussite et reversements
 - Analyse du chiffre d’affaires et de la rentabilité par période
-- Comptes administrateur/employé avec masquage des données de coût
+- Comptes administrateur, employé et responsable livraisons avec masquage des données de coût
+- Bilan quotidien des livreurs par date de tournée, avec historique des reports
+- Recherche des commandes par nom ou téléphone, formats locaux et internationaux
 - Export clients par produit, canal, période et statut en Excel ou CSV
 - Remises par ligne avec motif obligatoire, auteur et date
 - Bons de commande A4, tickets 58/80 mm et PDF avec logo de boutique
 - Multi-tenant sécurisé par organisation et RLS Supabase
+
+La description commerciale et l’inventaire détaillé des fonctionnalités sont dans [docs/product-overview.md](docs/product-overview.md). Les abonnements et les fonctionnalités premium ne sont pas encore activés par offre.
 
 ## Stack
 

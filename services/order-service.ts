@@ -12,6 +12,7 @@ export interface OrderUpdate {
   seller_id?: string
   live_session_id?: string | null
   delivery_driver_id?: string | null
+  delivery_date?: string | null
   delivery_location?: string | null
   delivery_fee?: number
   confirmation_amount?: number
@@ -20,14 +21,22 @@ export interface OrderUpdate {
 
 export async function getOrders(organizationId: string): Promise<Order[]> {
   const supabase = await createAdminClient()
-  const { data, error } = await supabase
-    .from('orders')
-    .select('*, seller:sales_people!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name))')
-    .eq('organization_id', organizationId)
-    .order('created_at', { ascending: false })
+  const orders: Order[] = []
+  const pageSize = 500
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*, seller:sales_people!orders_seller_id_fkey(id, full_name), live_session:live_sessions(id, name, session_date, slot), delivery_driver:delivery_drivers(id, name, phone), order_lines(*, product:products(name))')
+      .eq('organization_id', organizationId)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + pageSize - 1)
 
-  if (error) throw new Error(error.message)
-  return data as Order[]
+    if (error) throw new Error(error.message)
+    const page = (data ?? []) as Order[]
+    orders.push(...page)
+    if (page.length < pageSize) return orders
+  }
 }
 
 export async function getOrderById(id: string, organizationId: string): Promise<Order | null> {
@@ -60,6 +69,7 @@ export async function createOrder(input: OrderInput, userId: string, organizatio
     p_channel: input.channel,
     p_order_date: input.order_date,
     p_delivery_driver_id: input.delivery_driver_id || null,
+    p_delivery_date: input.delivery_date ?? null,
     p_delivery_location: input.delivery_location || null,
     p_delivery_fee: input.delivery_fee ?? 0,
     p_confirmation_amount: input.confirmation_amount ?? 0,
@@ -97,6 +107,13 @@ export async function updateOrder(id: string, input: OrderUpdate, organizationId
   }
 
   const update: Record<string, unknown> = { ...input }
+
+  if (input.delivery_driver_id && input.delivery_date === undefined) {
+    const { data: current } = await supabase.from('orders').select('delivery_driver_id')
+      .eq('id', id).eq('organization_id', organizationId).single()
+    if (!current) throw new Error('Commande introuvable')
+    if (current.delivery_driver_id !== input.delivery_driver_id) update.delivery_date = new Date().toISOString().slice(0,10)
+  }
 
   if (input.delivery_location !== undefined) update.delivery_location = input.delivery_location || null
 

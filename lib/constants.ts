@@ -10,7 +10,7 @@ export const CHANNEL_LABELS: Record<Channel, string> = {
   other: 'Autre',
 }
 
-export const STATUSES = ['received', 'confirmed', 'in_progress', 'delivered', 'cancelled'] as const
+export const STATUSES = ['received', 'confirmed', 'in_progress', 'delivered', 'cancelled', 'postponed'] as const
 export type OrderStatus = (typeof STATUSES)[number]
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -19,6 +19,7 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   in_progress: 'En livraison',
   delivered: 'Livrée',
   cancelled: 'Annulée',
+  postponed: 'Reportée',
 }
 
 export const STATUS_COLORS: Record<OrderStatus, string> = {
@@ -27,6 +28,7 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
   in_progress: 'bg-yellow-100 text-yellow-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
+  postponed: 'bg-orange-100 text-orange-800',
 }
 
 export const PAYMENT_METHODS = ['wave', 'orange_money', 'mtn_momo', 'moov_money', 'cash'] as const
@@ -40,7 +42,13 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Espèce',
 }
 
-export const ROLES = ['admin', 'employee'] as const
+export const ROLES = ['admin', 'manager', 'employee'] as const
 export type Role = (typeof ROLES)[number]
+
+export const ROLE_LABELS: Record<Role, string> = {
+  admin: 'Administrateur',
+  manager: 'Responsable livraisons',
+  employee: 'Employé',
+}
 
 export const ADMIN_ROUTES = ['/dashboard', '/products', '/analytics', '/team']

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 const errors: Record<string, [string, number]> = {
+  DELIVERY_ASSIGNMENT_LOCKED: ['La tournée d’une commande livrée ou annulée ne peut plus être déplacée.', 409],
+  DELIVERY_DATE_REQUIRED: ['Renseignez la date de tournée du colis confié au livreur.', 400],
   INVALID_DELIVERY_DRIVER: ['Ce livreur est introuvable ou archivé. Choisissez un livreur actif.', 400],
   DISCOUNT_REASON_REQUIRED: ['Le motif de la remise est obligatoire.', 400],
   DISCOUNT_EXCEEDS_LINE: ['La remise dépasse le montant de la ligne.', 400],

@@ -48,6 +48,7 @@ export interface Order {
   created_at: string
   updated_at: string
   delivery_driver_id: string | null
+  delivery_date?: string | null
   delivery_location: string | null
   delivery_fee: number
   delivery_driver?: Pick<DeliveryDriver, 'id' | 'name' | 'phone'> | null

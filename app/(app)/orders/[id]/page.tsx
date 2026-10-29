@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
-import { orderAmounts } from '@/lib/order-amounts'
+import { orderAmounts, orderRemittableAmount } from '@/lib/order-amounts'
+import { canManageDeliveries } from '@/lib/delivery-access'
 import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type OrderStatus } from '@/lib/constants'
 import { useAuthStore } from '@/stores/auth-store'
 import type { Order } from '@/types/order'
@@ -25,6 +26,7 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const isAdmin = useAuthStore((s) => s.isAdmin())
+  const canSettle = canManageDeliveries(useAuthStore(s => s.profile?.role))
   const { drivers } = useDeliveryDrivers()
   const { sellers, lives } = useOrderOptions()
   const [order, setOrder] = useState<Order | null>(null)
@@ -38,6 +40,7 @@ export default function OrderDetailPage() {
   const [editChannel, setEditChannel] = useState('')
   const [editDate, setEditDate] = useState('')
   const [editDriverId, setEditDriverId] = useState('')
+  const [editDeliveryDate, setEditDeliveryDate] = useState('')
   const [editLocation, setEditLocation] = useState('')
   const [editDeliveryFee, setEditDeliveryFee] = useState('')
   const [editSellerId, setEditSellerId] = useState('')
@@ -46,6 +49,7 @@ export default function OrderDetailPage() {
   const [editPaymentMethod, setEditPaymentMethod] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [statusError, setStatusError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/orders/${id}`)
@@ -61,6 +65,7 @@ export default function OrderDetailPage() {
     setEditChannel(order.channel)
     setEditDate(order.order_date)
     setEditDriverId(order.delivery_driver_id ?? '')
+    setEditDeliveryDate(order.delivery_date ?? '')
     setEditLocation(order.delivery_location ?? '')
     setEditDeliveryFee(String(order.delivery_fee ?? 0))
     setEditSellerId(order.seller_id ?? '')
@@ -72,8 +77,12 @@ export default function OrderDetailPage() {
   }
 
   async function saveEdit() {
-    setIsSaving(true)
     setSaveError(null)
+    if (editDriverId && !editDeliveryDate) {
+      setSaveError('Renseignez la date de tournée du colis confié au livreur.')
+      return
+    }
+    setIsSaving(true)
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: 'PUT',
@@ -84,6 +93,7 @@ export default function OrderDetailPage() {
           channel: editChannel,
           order_date: editDate,
           delivery_driver_id: editDriverId || null,
+          delivery_date: editDriverId ? editDeliveryDate : null,
           delivery_location: editLocation || null,
           delivery_fee: Number(editDeliveryFee) || 0,
           ...(isAdmin ? { seller_id: editSellerId, live_session_id: editLiveId || null } : {}),
@@ -93,7 +103,7 @@ export default function OrderDetailPage() {
       })
       if (!res.ok) {
         const err = await res.json()
-        setSaveError(err.error ?? 'Erreur serveur')
+        setSaveError(typeof err.error === 'string' ? err.error : 'Vérifiez les informations et la date de tournée.')
         return
       }
       const updated = await res.json()
@@ -107,6 +117,7 @@ export default function OrderDetailPage() {
   async function handleStatusChange(status: OrderStatus) {
     if (!order) return
     setUpdating(true)
+    setStatusError(null)
     try {
       const res = await fetch(`/api/orders/${id}`, {
         method: 'PATCH',
@@ -116,7 +127,12 @@ export default function OrderDetailPage() {
       if (res.ok) {
         const updated = await res.json()
         setOrder(updated)
+      } else {
+        const data = await res.json()
+        setStatusError(typeof data.error === 'string' ? data.error : 'Impossible de modifier le statut.')
       }
+    } catch {
+      setStatusError('Connexion impossible. Réessayez.')
     } finally {
       setUpdating(false)
     }
@@ -148,7 +164,7 @@ export default function OrderDetailPage() {
   const totalCost = lines.reduce((s, l) => s + Number(l.total_cost ?? resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity), 0)
   const totalProfit = totalRevenue - totalCost
   const amounts = orderAmounts(lines, order.delivery_fee ?? 0, order.confirmation_amount ?? 0)
-  const toReverse = amounts.remainingAmount
+  const toReverse = orderRemittableAmount(lines, order.confirmation_amount ?? 0)
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -191,11 +207,18 @@ export default function OrderDetailPage() {
             </div>
             <Select
               label="Livreur assigné"
+              disabled={Boolean(order.status === 'delivered' || order.status === 'cancelled' || order.discounts_locked_at)}
               options={drivers.filter(driver => driver.is_active || driver.id === order.delivery_driver_id).map((driver) => ({ value: driver.id, label: `${driver.name}${driver.is_active ? '' : ' (archivé)'}` }))}
               placeholder="Aucun livreur"
               value={editDriverId}
-              onChange={(event) => setEditDriverId(event.target.value)}
+              onChange={(event) => { setEditDriverId(event.target.value); if (event.target.value !== order.delivery_driver_id) setEditDeliveryDate(new Date().toISOString().slice(0,10)) }}
             />
+            {editDriverId && <div>
+              <Input id="edit-order-delivery-date" label="Date de tournée" type="date" required value={editDeliveryDate}
+                disabled={Boolean(order.delivery_date && (order.status === 'delivered' || order.status === 'cancelled' || order.discounts_locked_at))}
+                onChange={event => setEditDeliveryDate(event.target.value)} />
+              <p className="mt-1 text-xs text-gray-500">Jour où le colis est confié au livreur. Pour reprendre un colis reporté, choisissez sa nouvelle journée de tournée.</p>
+            </div>}
             {isAdmin && <div className="grid grid-cols-2 gap-4">
               <Select label="Vendeur" options={sellers.map(s=>({value:s.id,label:s.full_name}))} value={editSellerId} onChange={e=>setEditSellerId(e.target.value)} />
               <Select label="Session live" options={lives.map(l=>({value:l.id,label:`${l.name||'Live'} · ${l.session_date}`}))} placeholder="Aucun live" value={editLiveId} onChange={e=>setEditLiveId(e.target.value)} />
@@ -258,9 +281,10 @@ export default function OrderDetailPage() {
           {order.delivery_driver ? (
             <div><p className="font-medium text-gray-900">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-sm text-gray-500 mt-1">{order.delivery_driver.phone}</p>}</div>
           ) : <p className="text-sm text-gray-500">Aucun livreur assigné.</p>}
-          {isAdmin && (
+          {order.delivery_driver_id && <p className="text-sm text-gray-500">Date de tournée : {order.delivery_date ? formatDate(order.delivery_date) : 'Non renseignée — à compléter pour le bilan quotidien.'}</p>}
+          {canSettle && (
             <div className="flex items-center justify-between rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm">
-              <span className="text-gray-500">À reverser par le livreur</span>
+              <span className="text-gray-500">À reverser par le livreur (hors livraison)</span>
               <span className="font-semibold text-indigo-600">{formatCurrency(toReverse)}</span>
             </div>
           )}
@@ -292,6 +316,7 @@ export default function OrderDetailPage() {
           <h2 className="font-semibold text-gray-900">Statut</h2>
         </CardHeader>
         <CardContent>
+          {statusError && <p role="alert" className="mb-3 text-sm text-red-600">{statusError}</p>}
           <div className="flex flex-wrap gap-2">
             {STATUSES.map((s) => (
               <Button
@@ -305,6 +330,7 @@ export default function OrderDetailPage() {
               </Button>
             ))}
           </div>
+          {order.status === 'postponed' && <p className="mt-3 text-sm text-orange-700">Colis reporté : utilisez « Modifier » pour choisir la nouvelle date de tournée. Le bilan de la journée précédente sera conservé.</p>}
         </CardContent>
       </Card>
 

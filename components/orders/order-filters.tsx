@@ -37,7 +37,8 @@ export function OrderFilters({ filters, onChange }: OrderFiltersProps) {
           </Icon>
           <input
             className={fieldClass}
-            placeholder="Rechercher un client..."
+            aria-label="Rechercher par nom ou téléphone du client"
+            placeholder="Nom ou téléphone du client..."
             value={filters.search ?? ''}
             onChange={(e) => onChange({ ...filters, search: e.target.value })}
           />

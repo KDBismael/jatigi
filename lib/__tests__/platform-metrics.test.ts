@@ -34,6 +34,7 @@ describe('summarizeOrders', () => {
       received: 1,
       confirmed: 1,
       in_progress: 0,
+      postponed: 0,
       delivered: 2,
       cancelled: 1,
     })

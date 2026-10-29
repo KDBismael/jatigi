@@ -7,12 +7,15 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DailyDeliveryBalance } from '@/components/deliveries/daily-delivery-balance'
 import { ParcelExport } from '@/components/orders/parcel-export'
 import { formatCurrency } from '@/lib/utils'
 
 export default function DeliveriesPage() {
   const { drivers, isLoading, error, create, settle, setActive } = useDeliveryDrivers()
-  const { isAdmin } = useRole()
+  const { isAdmin, canManageDeliveries } = useRole()
+  const canSettle = isAdmin || canManageDeliveries
+  const [tab, setTab] = useState<'daily' | 'global'>('daily')
   const [showDriverForm, setShowDriverForm] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const [name, setName] = useState('')
@@ -88,6 +91,8 @@ export default function DeliveriesPage() {
     due: sum.due + driver.amount_due,
   }), { active: 0, delivered: 0, due: 0 })
 
+  if (!canSettle) return <p className="text-sm text-gray-500">Accès réservé aux responsables livraisons.</p>
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -95,9 +100,15 @@ export default function DeliveriesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Livraisons</h1>
           <p className="text-sm text-gray-500 mt-1">Suivez les colis et les reversements de chaque livreur.</p>
         </div>
-        {isAdmin && <Button onClick={() => setShowDriverForm((visible) => !visible)}>+ Ajouter un livreur</Button>}
+        {isAdmin && <Button onClick={() => { setTab('global'); setShowDriverForm((visible) => !visible) }}>+ Ajouter un livreur</Button>}
       </div>
 
+      <div className="flex flex-wrap gap-2" aria-label="Vue des livraisons">
+        <Button variant={tab === 'daily' ? 'primary' : 'secondary'} onClick={() => setTab('daily')}>Bilan du jour</Button>
+        <Button variant={tab === 'global' ? 'primary' : 'secondary'} onClick={() => setTab('global')}>Suivi global et versements</Button>
+      </div>
+      {tab === 'daily' && <DailyDeliveryBalance />}
+      {tab === 'global' && <>
       {isAdmin && <ParcelExport />}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -191,7 +202,7 @@ export default function DeliveriesPage() {
                       </div>
                     </dl>
 
-                    {isAdmin && driver.amount_due > 0 && (settlingId === driver.id ? (
+                    {canSettle && driver.amount_due > 0 && (settlingId === driver.id ? (
                       <div className="flex gap-2 mt-3">
                         <Input type="number" min={1} max={driver.amount_due} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
                         <Button type="button" size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
@@ -234,7 +245,7 @@ export default function DeliveriesPage() {
                         <td className="py-4 pr-4 text-gray-700">{formatCurrency(driver.amount_remitted)}</td>
                         <td className="py-4">
                           <p className="font-semibold text-indigo-700">{formatCurrency(driver.amount_due)}</p>
-                          {isAdmin && driver.amount_due > 0 && (settlingId === driver.id ? (
+                          {canSettle && driver.amount_due > 0 && (settlingId === driver.id ? (
                             <div className="flex gap-2 mt-2 min-w-56">
                               <Input type="number" min={1} max={driver.amount_due} placeholder="Montant reversé" value={settlementAmount} onChange={(event) => setSettlementAmount(event.target.value)} />
                               <Button type="button" size="sm" disabled={submitting} onClick={() => handleSettlement(driver.id)}>Valider</Button>
@@ -251,6 +262,7 @@ export default function DeliveriesPage() {
           )}
         </CardContent>
       </Card>
+      </>}
     </div>
   )
 }

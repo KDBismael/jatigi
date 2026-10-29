@@ -52,6 +52,7 @@ export function OrderForm({ onSubmit, onSaveAndPrint, products, drivers, sellers
     resolver: zodResolver(orderSchema) as unknown as Resolver<OrderInput>,
     defaultValues: {
       order_date: new Date().toISOString().split('T')[0],
+      delivery_date: new Date().toISOString().slice(0,10),
       seller_id: profile?.id ?? '',
       live_session_id: '',
       confirmation_amount: 0,
@@ -103,13 +104,7 @@ export function OrderForm({ onSubmit, onSaveAndPrint, products, drivers, sellers
             <Select label="Session live (optionnel)" options={lives.map(l => ({ value: l.id, label: `${l.name || 'Live'} · ${l.session_date}` }))}
               placeholder="Aucun live" error={errors.live_session_id?.message} {...register('live_session_id')} />
           </div>
-          <Select
-            label="Livreur assigné"
-            options={drivers.filter((driver) => driver.is_active).map((driver) => ({ value: driver.id, label: driver.name }))}
-            placeholder="Aucun livreur pour le moment"
-            error={errors.delivery_driver_id?.message}
-            {...register('delivery_driver_id')}
-          />
+          <DeliveryAssignmentFields control={control} register={register} drivers={drivers} />
           <Input
             label="Lieu de livraison (optionnel)"
             placeholder="Ex : Cocody, Angré 8e tranche"
@@ -186,6 +181,19 @@ export function OrderForm({ onSubmit, onSaveAndPrint, products, drivers, sellers
       </div>
     </form>
   )
+}
+
+function DeliveryAssignmentFields({ control, register, drivers }: { control: Control<OrderInput>; register: UseFormRegister<OrderInput>; drivers: DeliveryDriverSummary[] }) {
+  const driver = useWatch({control,name:'delivery_driver_id'})
+  const {errors} = useFormState({control,name:['delivery_driver_id','delivery_date']})
+  return <>
+    <Select id="new-order-driver" label="Livreur assigné" options={drivers.filter(driver => driver.is_active).map(driver => ({value:driver.id,label:driver.name}))}
+      placeholder="Aucun livreur pour le moment" error={errors.delivery_driver_id?.message} {...register('delivery_driver_id')} />
+    {driver && <div>
+      <Input id="new-order-delivery-date" label="Date de tournée" type="date" required error={errors.delivery_date?.message} {...register('delivery_date')} />
+      <p className="mt-1 text-xs text-gray-500">Journée où le colis est confié au livreur, indépendante de la date de commande.</p>
+    </div>}
+  </>
 }
 
 interface OrderLineFieldsProps {

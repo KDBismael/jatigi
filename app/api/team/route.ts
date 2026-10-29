@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { inviteEmployeeSchema } from '@/lib/schemas/team.schema'
 import { getTeamMembers, createTeamMember, deleteTeamMember, updateMemberRole } from '@/services/team-service'
+import { ROLES } from '@/lib/constants'
 import { z } from 'zod'
 
 const memberMutationSchema = z.object({ id: z.string().uuid() })
-const roleMutationSchema = memberMutationSchema.extend({ role: z.enum(['admin', 'employee']) })
+const roleMutationSchema = memberMutationSchema.extend({ role: z.enum(ROLES) })
 
 async function requireAdmin() {
   const supabase = await createClient()

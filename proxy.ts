@@ -1,3 +1,4 @@
+import { canManageDeliveries } from '@/lib/delivery-access'
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -118,7 +119,8 @@ export async function proxy(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-      if (profile?.role !== 'admin') {
+      const isDeliveryPath = pathname === '/deliveries' || pathname.startsWith('/deliveries/')
+      if (isDeliveryPath ? !canManageDeliveries(profile?.role) : profile?.role !== 'admin') {
         return NextResponse.redirect(new URL('/orders', request.url))
       }
     }
