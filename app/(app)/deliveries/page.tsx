@@ -199,12 +199,13 @@ export default function DeliveriesPage() {
           Suivi global et versements
         </Button>
       </div>
-      {(error || formError) && (
+      {/* An open settlement form shows its own refusal next to the amount. */}
+      {(error || (formError && !(canSettle && settlingDriver))) && (
         <p
           role="alert"
           className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
         >
-          {formError ?? error}
+          {(canSettle && settlingDriver ? null : formError) ?? error}
         </p>
       )}
       {successMessage && (
@@ -229,6 +230,7 @@ export default function DeliveriesPage() {
             setSettlingId(null);
             setFormError(null);
           }}
+          serverError={formError}
         />
       )}
       {tab === "daily" && (

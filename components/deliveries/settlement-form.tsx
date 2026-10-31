@@ -1,5 +1,5 @@
 "use client";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ export function SettlementForm({
   onAmountChange,
   onSubmit,
   onCancel,
+  serverError,
 }: {
   driverName: string;
   maxAmount: number;
@@ -24,10 +25,19 @@ export function SettlementForm({
   onAmountChange: (value: string) => void;
   onSubmit: () => void;
   onCancel: () => void;
+  serverError?: string | null;
 }) {
   const id = useId(),
-    [error, setError] = useState<string | null>(null);
+    [error, setError] = useState<string | null>(null),
+    container = useRef<HTMLDivElement>(null);
+  // Triggers sit far down the page on phones: bring the form into view and start on the amount.
+  useEffect(() => {
+    container.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    document.getElementById(`${id}-amount`)?.focus({ preventScroll: true });
+  }, [id, driverName]);
+  const message = error ?? serverError;
   return (
+    <div ref={container} className="scroll-mt-20">
     <Card>
       <CardHeader>
         <h2 className="break-words font-semibold text-gray-900">
@@ -88,9 +98,9 @@ export function SettlementForm({
             disabled={busy}
             className="min-h-11"
           />
-          {error && (
-            <p role="alert" className="text-sm text-red-700">
-              {error}
+          {message && (
+            <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+              {message}
             </p>
           )}
           <div className="flex flex-wrap gap-2">
@@ -109,5 +119,6 @@ export function SettlementForm({
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

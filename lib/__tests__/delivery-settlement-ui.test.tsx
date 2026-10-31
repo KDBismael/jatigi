@@ -77,3 +77,20 @@ it("opens the right driver from the daily view, uses global balance and refreshe
   await screen.findByText("Actualisation 1");
   expect(screen.queryByRole("form")).toBeNull();
 });
+
+it("brings the form into view, focuses the amount and keeps server refusals inside the form", async () => {
+  const scroll = vi.fn();
+  Element.prototype.scrollIntoView = scroll;
+  mocks.settle.mockRejectedValue(new Error("Le versement ne peut pas dépasser le solde dû de 1800 FCFA."));
+  render(<DeliveriesPage />);
+  fireEvent.click(screen.getByText("Reversement Koffi"));
+  const form = screen.getByRole("form", { name: "Reversement de Koffi" });
+  const amount = screen.getByLabelText("Montant reversé (FCFA)");
+  expect(scroll).toHaveBeenCalled();
+  expect(document.activeElement).toBe(amount);
+  fireEvent.change(amount, { target: { value: "1900" } });
+  fireEvent.submit(form);
+  const alert = await screen.findByText("Le versement ne peut pas dépasser le solde dû de 1800 FCFA.");
+  expect(form.contains(alert)).toBe(true);
+  expect(screen.getAllByText("Le versement ne peut pas dépasser le solde dû de 1800 FCFA.")).toHaveLength(1);
+});
