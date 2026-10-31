@@ -23,7 +23,7 @@ export async function POST(request:NextRequest){
   }
   if(input.recurring){
     const period=`${input.expense_date.slice(0,7)}-01`;const ready=await db.rpc('generate_org_recurring_expenses',{p_organization_id:auth.organizationId,p_month:period});if(ready.error)return NextResponse.json({error:'Les dépenses récurrentes sont indisponibles. Vérifiez la mise à jour de la base.'},{status:503})
-    const {data:rec,error}=await db.from('expense_recurrences').insert({organization_id:auth.organizationId,category:input.category,label:input.label,amount:input.amount,day_of_month:input.day_of_month??Number(input.expense_date.slice(8,10)),starts_on:input.expense_date,sales_person_id:input.sales_person_id||null}).select().single()
+    const {data:rec,error}=await db.from('expense_recurrences').insert({organization_id:auth.organizationId,category:input.category,label:input.label,amount:input.amount,day_of_month:input.day_of_month??Math.min(28,Number(input.expense_date.slice(8,10))),starts_on:input.expense_date,sales_person_id:input.sales_person_id||null}).select().single()
     if(error)return NextResponse.json({error:error.message},{status:500}); await db.rpc('generate_org_recurring_expenses',{p_organization_id:auth.organizationId,p_month:period}); return NextResponse.json(rec,{status:201})
   }
   const {data,error}=await db.from('expenses').insert({organization_id:auth.organizationId,category:input.category,label:input.label,amount:input.amount,expense_date:input.expense_date,receipt_url:input.receipt_url||null,sales_person_id:input.sales_person_id||null,created_by:auth.user.id}).select().single()
