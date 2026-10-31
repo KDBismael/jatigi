@@ -1,5 +1,7 @@
 'use client'
 
+import { notifyBillingUsageChanged } from '@/lib/billing/usage-events'
+
 import { useEffect } from 'react'
 import { useOrderStore } from '@/stores/order-store'
 import type { OrderInput } from '@/lib/schemas/order.schema'
@@ -43,6 +45,7 @@ export function useOrders() {
       throw new Error(typeof data.error === 'string' ? data.error : 'Vérifiez les informations de la commande.')
     }
     const order = await res.json()
+    notifyBillingUsageChanged()
     addOrder(order)
     return order
   }

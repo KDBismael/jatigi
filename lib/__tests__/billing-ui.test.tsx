@@ -13,15 +13,15 @@ const summary: SubscriptionSummary = {
   periodEnd: null,
   cancelAtPeriodEnd: false,
   pendingPlan: null,
-  usage: { orders: 25, drivers: 1, users: 1 },
-  limits: { orders: 30, drivers: 1, users: 1 },
+  usage: { orders: 95, drivers: 1, users: 1 },
+  limits: { orders: 100, drivers: 1, users: 1 },
   canManageBilling: true,
   payments: [],
 }
 afterEach(cleanup)
 it('shows honest COD positioning and signup pricing without fabricated testimonials', () => {
   render(<LandingPage />)
-  expect(screen.getByRole('heading', { level: 1 }).textContent).toContain(
+  expect(screen.getByRole('heading', { level: 1 }).textContent?.replace(/\s/g, " ")).toContain(
     'vos livreurs',
   )
   expect(
@@ -29,15 +29,16 @@ it('shows honest COD positioning and signup pricing without fabricated testimoni
       .getAllByRole('link', { name: /Essayer gratuitement/ })[0]
       .getAttribute('href'),
   ).toBe('/auth/signup')
-  expect(screen.getByText('48 000')).toBeTruthy()
+  fireEvent.click(screen.getByTestId('pricing-toggle-annual'))
+  expect(screen.getByTestId('pricing-price-pro').textContent?.replace(/\s/g, " ")).toBe('48 000')
   expect(screen.queryByText('5K+')).toBeNull()
 })
-it('warns at 25 orders and explains preserved existing orders at cap', () => {
+it('warns at 95 orders and explains preserved existing orders at cap', () => {
   const { rerender } = render(<BillingUsageBanner summary={summary} />)
   expect(screen.getByText(/Plus que 5 commandes/)).toBeTruthy()
   rerender(
     <BillingUsageBanner
-      summary={{ ...summary, usage: { ...summary.usage, orders: 30 } }}
+      summary={{ ...summary, usage: { ...summary.usage, orders: 100 } }}
     />,
   )
   expect(screen.getByText(/commandes existantes restent/)).toBeTruthy()
@@ -64,9 +65,9 @@ it('selects annual cycle with exact price and savings then requests only the sel
       busy={false}
     />,
   )
-  fireEvent.click(screen.getByRole('button', { name: 'Annuel' }))
+  fireEvent.click(screen.getByTestId('subscription-cycle-yearly'))
   expect(screen.getByText(/Économisez 12 000/)).toBeTruthy()
-  fireEvent.click(screen.getByRole('button', { name: 'Choisir Pro' }))
+  fireEvent.click(screen.getByTestId('subscription-choose-pro'))
   expect(checkout).toHaveBeenCalledWith('pro', 'yearly')
 })
 it('lets the owner renew the current paid plan without switching plans', () => {

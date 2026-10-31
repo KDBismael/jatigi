@@ -1,5 +1,7 @@
 'use client'
 
+import { notifyBillingUsageChanged } from '@/lib/billing/usage-events'
+
 import { useCallback, useEffect, useState } from 'react'
 import type { DeliveryDriverInput, DeliverySettlementInput } from '@/lib/schemas/delivery-driver.schema'
 import type { DeliveryDriverSummary } from '@/types/delivery-driver'
@@ -34,6 +36,7 @@ export function useDeliveryDrivers() {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
     })
     if (!response.ok) throw new Error((await response.json()).error ?? 'Création impossible')
+    notifyBillingUsageChanged()
     await refresh()
   }
 
@@ -50,6 +53,7 @@ export function useDeliveryDrivers() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: isActive }),
     })
     if (!response.ok) throw new Error((await response.json()).error ?? 'Modification impossible')
+    notifyBillingUsageChanged()
     await refresh()
   }
 

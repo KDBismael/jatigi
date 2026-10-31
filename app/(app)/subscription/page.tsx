@@ -1,9 +1,13 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { readBillingIntent, type BillingIntent } from '@/lib/billing/intent'
 import { useSubscription } from '@/hooks/use-subscription'
+import styles from '@/components/billing/subscription.module.css'
+import { SubscriptionActionButton } from '@/components/billing/subscription-action-button'
 import { SubscriptionView } from '@/components/billing/subscription-view'
 export default function SubscriptionPage() {
   const billing = useSubscription()
+  const [intent, setIntent] = useState<BillingIntent | null>(null)
   const [invoice, setInvoice] = useState<string | null>(null)
   useEffect(() => {
     const value = new URLSearchParams(window.location.search).get('invoice')
@@ -11,41 +15,51 @@ export default function SubscriptionPage() {
       void Promise.resolve().then(() => setInvoice(value))
     }
   }, [])
+  useEffect(() => {
+    if (!billing.summary?.canManageBilling || billing.summary.plan !== 'discovery' || billing.summary.status !== 'free') return
+    let active = true
+    void fetch('/api/me').then(r => r.ok ? r.json() : null).then(me => {
+      if (active && me?.profile?.id) setIntent(readBillingIntent(sessionStorage, me.profile.id))
+    }).catch(() => {})
+    return () => { active = false }
+  }, [billing.summary?.canManageBilling, billing.summary?.plan, billing.summary?.status])
   return (
-    <main className="mx-auto max-w-6xl p-4 md:p-8 space-y-6">
-      <h1 className="text-2xl font-bold">Abonnement et paiements</h1>
+    <main data-testid="subscription-page" className={styles.page}>
+      <header className={styles.pageHeader}><h1>Abonnement et paiements</h1><p className={styles.muted}>Votre offre, votre consommation et vos paiements, au même endroit.</p></header>
       {billing.error && (
-        <div role="alert" className="rounded-xl border border-red-400/40 p-4">
+        <div role="alert" className={styles.pageError}>
           {billing.error}
-          <button
-            className="underline ml-3"
+          <SubscriptionActionButton
+            className="ml-3"
             onClick={() => void billing.refresh()}
           >
             Actualiser
-          </button>
+          </SubscriptionActionButton>
         </div>
       )}
       {billing.isLoading && <p>Chargement de votre abonnement…</p>}
       {invoice && billing.summary?.canManageBilling && (
         <div
           role="status"
-          className="rounded-xl border border-indigo-400/40 p-4"
+          className={styles.pageReturn}
         >
           <p>
             Retour du paiement. Seule la confirmation du prestataire active
             votre plan. Retrouvez son état dans l’historique ci-dessous.
           </p>
-          <button
+          <SubscriptionActionButton
             disabled={billing.busy}
-            className="mt-2 underline"
+            className="mt-2"
             onClick={() => void billing.reconcile(invoice)}
           >
             Vérifier ce paiement
-          </button>
+          </SubscriptionActionButton>
         </div>
       )}
       {billing.summary && (
         <SubscriptionView
+          key={intent ? `${intent.userId}-${intent.plan}-${intent.cycle}` : 'current'}
+          selectedIntent={intent}
           summary={billing.summary}
           onCheckout={billing.checkout}
           onAction={billing.action}

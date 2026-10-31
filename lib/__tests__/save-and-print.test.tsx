@@ -2,6 +2,7 @@
 import React from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { SubscriptionProvider } from '@/components/billing/subscription-provider'
 import NewOrderPage from '@/app/(app)/orders/new/page'
 const mocks = vi.hoisted(() => ({ create: vi.fn(), push: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }) }))
@@ -18,7 +19,7 @@ describe('enregistrer et imprimer', () => {
   it('enregistre une seule fois puis ouvre le sélecteur sur la commande réellement créée', async () => {
     let resolve!: (value: { id: string }) => void
     mocks.create.mockReturnValue(new Promise(done => { resolve = done }))
-    render(<NewOrderPage />)
+    render(<SubscriptionProvider><NewOrderPage /></SubscriptionProvider>)
     fireEvent.click(screen.getByText('Save and print'))
     fireEvent.click(screen.getByText('Save and print'))
     expect(mocks.create).toHaveBeenCalledTimes(1)
@@ -28,7 +29,7 @@ describe('enregistrer et imprimer', () => {
   })
   it('n’ouvre aucune impression si l’enregistrement échoue et permet de réessayer', async () => {
     mocks.create.mockRejectedValueOnce(new Error('Stock insuffisant')).mockResolvedValueOnce({ id: 'retry-order' })
-    render(<NewOrderPage />)
+    render(<SubscriptionProvider><NewOrderPage /></SubscriptionProvider>)
     fireEvent.click(screen.getByText('Save and print'))
     await screen.findByText(/Stock insuffisant/)
     expect(mocks.push).not.toHaveBeenCalled()
@@ -37,7 +38,7 @@ describe('enregistrer et imprimer', () => {
   })
   it('conserve l’enregistrement simple sans impression', async () => {
     mocks.create.mockResolvedValue({ id: 'order' })
-    render(<NewOrderPage />)
+    render(<SubscriptionProvider><NewOrderPage /></SubscriptionProvider>)
     fireEvent.click(screen.getByText('Save only'))
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/orders'))
   })

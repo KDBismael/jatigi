@@ -1,5 +1,7 @@
 'use client'
 
+import { notifyBillingUsageChanged } from '@/lib/billing/usage-events'
+
 import type { Role } from '@/lib/constants'
 
 import { useEffect, useState } from 'react'
@@ -24,6 +26,7 @@ export function useTeam() {
       body: JSON.stringify(input),
     })
     if (!res.ok) throw new Error(await res.text())
+    notifyBillingUsageChanged()
     const member = await res.json()
     setMembers((prev) => [member, ...prev])
     return member
@@ -36,6 +39,7 @@ export function useTeam() {
       body: JSON.stringify({ id }),
     })
     if (!res.ok) throw new Error(await res.text())
+    notifyBillingUsageChanged()
     setMembers((prev) => prev.filter((m) => m.id !== id))
   }
 

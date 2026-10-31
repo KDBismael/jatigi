@@ -1,0 +1,7 @@
+import { PLANS, type PlanId, type SubscriptionSummary } from '@/lib/billing/plans'
+import { SubscriptionActionButton } from './subscription-action-button'
+import styles from './subscription.module.css'
+export function SubscriptionManagement({summary,busy,onAction}:{summary:SubscriptionSummary;busy:boolean;onAction:(action:'cancel'|'resume'|'downgrade',plan?:PlanId)=>void}) {
+ if(!summary.canManageBilling || summary.plan==='discovery') return null
+ return <section data-testid="subscription-manage" className={styles.panel}><h2>Gérer mon abonnement</h2><div className={styles.management}><div><h3>Arrêter au terme de la période</h3><p className={styles.muted}>Votre plan reste disponible jusqu’à l’échéance, puis vous retrouvez Découverte.</p><SubscriptionActionButton data-testid="subscription-cancel" disabled={busy} onClick={()=>onAction(summary.cancelAtPeriodEnd?'resume':'cancel')}>{summary.cancelAtPeriodEnd?'Conserver le plan au renouvellement':'Arrêter le renouvellement'}</SubscriptionActionButton></div><div><h3>Passer à un plan inférieur</h3><p className={styles.muted}>Le changement s’applique à l’échéance. Aucune donnée n’est supprimée.</p><div className={styles.actions}>{(summary.plan==='business'?['pro','discovery'] as const:['discovery'] as const).map((plan,index)=><SubscriptionActionButton key={plan} data-testid={index===0?'subscription-downgrade':`subscription-downgrade-${plan}`} disabled={busy} onClick={()=>onAction('downgrade',plan)}>Passer à {PLANS[plan].name} à l’échéance</SubscriptionActionButton>)}</div></div></div></section>
+}

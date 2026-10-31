@@ -1,100 +1,27 @@
 'use client'
 import Link from 'next/link'
-import { PLANS, type BillingCycle, type PlanId } from '@/lib/billing/plans'
-export const money = (value: number) =>
-  new Intl.NumberFormat('fr-FR').format(value).replace(/\u202f|\u00a0/g, ' ')
-export function PlanCards({
-  cycle = 'monthly',
-  current,
-  onChoose,
-  busy = false,
-  publicPage = false,
-}: {
-  cycle?: BillingCycle
-  current?: PlanId
-  onChoose?: (plan: 'pro' | 'business', cycle: BillingCycle) => void
-  busy?: boolean
-  publicPage?: boolean
-}) {
-  return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {Object.values(PLANS).map((plan) => (
-        <article
-          key={plan.id}
-          className={`rounded-2xl border p-6 ${plan.id === 'pro' ? 'border-indigo-500 bg-indigo-500/10' : 'border-gray-500/30'}`}
-        >
-          <p className="text-xs uppercase tracking-wider">
-            {plan.id === 'pro' ? 'Pour développer votre boutique' : 'Warko'}
-          </p>
-          <h3 className="mt-2 text-xl font-bold">{plan.name}</h3>
-          <p className="my-4">
-            <strong className="text-3xl">{money(plan[cycle])}</strong> FCFA/
-            {cycle === 'yearly' ? 'an' : 'mois'}
-          </p>
-          {cycle === 'yearly' && plan.monthly > 0 && (
-            <p className="text-sm mb-4">
-              <s>{money(plan.monthly * 12)} FCFA</s> · Économisez{' '}
-              {money(plan.monthly * 12 - plan.yearly)} FCFA
-            </p>
-          )}
-          <ul className="space-y-2 text-sm mb-5">
-            <li>
-              {plan.ordersPerMonth ?? 'Commandes illimitées'}
-              {plan.ordersPerMonth ? ' commandes/mois' : ''}
-            </li>
-            <li>
-              {plan.drivers ?? 'Nombre illimité de'} livreur
-              {plan.drivers === 1 ? '' : 's'}
-            </li>
-            <li>
-              {plan.users ?? 'Nombre illimité d’'} utilisateur
-              {plan.users === 1 ? '' : 's'}
-            </li>
-            <li>
-              {plan.dailyBalance
-                ? 'Bilan détaillé par livreur + export'
-                : 'Solde global des livreurs'}
-            </li>
-            <li>
-              {plan.historyDays === null
-                ? 'Historique complet'
-                : plan.historyDays
-                  ? 'Historique : 30 jours'
-                  : 'Bilan basique'}
-            </li>
-            <li>
-              {plan.liveSessions
-                ? 'Sessions live incluses'
-                : 'Catalogue, stock et dépenses inclus'}
-            </li>
-            <li>
-              {plan.id === 'discovery'
-                ? 'Support FAQ'
-                : plan.id === 'pro'
-                  ? 'Email + WhatsApp sous 48h'
-                  : 'WhatsApp prioritaire sous 24h'}
-            </li>
-          </ul>
-          {publicPage ? (
-            <Link
-              className="inline-block rounded-lg bg-indigo-600 px-4 py-3 text-white"
-              href="/auth/signup"
-            >
-              Essayer gratuitement
-            </Link>
-          ) : plan.id !== 'discovery' && onChoose ? (
-            <button
-              disabled={busy}
-              className="rounded-lg bg-indigo-600 px-4 py-3 text-white disabled:opacity-50"
-              onClick={() => onChoose(plan.id as 'pro' | 'business', cycle)}
-            >
-              {current === plan.id ? 'Renouveler' : 'Choisir'} {plan.name}
-            </button>
-          ) : current === plan.id ? (
-            <p className="font-semibold">Plan actuel</p>
-          ) : null}
-        </article>
-      ))}
+import { PLANS, PLAN_IDS, type BillingCycle, type PlanId } from '@/lib/billing/plans'
+import { formatAmount } from '@/lib/utils'
+import { planFeatures } from '@/lib/billing/plan-presentation'
+import { Card } from '@/components/ui/card'
+import { Icon } from '@/components/ui/icon'
+import { SubscriptionActionButton } from './subscription-action-button'
+import styles from './subscription.module.css'
+export function PlanCards({cycle='monthly', current, onChoose, busy=false, publicPage=false}: {cycle?:BillingCycle;current?:PlanId;onChoose?:(plan:'pro'|'business',cycle:BillingCycle)=>void;busy?:boolean;publicPage?:boolean}) {
+ const paid = !!current && current !== 'discovery'
+ return <div className={styles.stack}><div className={styles.plans}>{PLAN_IDS.map((id) => {
+  const plan=PLANS[id], selected=current===id, lower=!!current && PLAN_IDS.indexOf(id)<PLAN_IDS.indexOf(current)
+  const compare = 'launchCompareAt' in plan ? plan.launchCompareAt[cycle] : null
+  return <section key={id} data-testid={`subscription-plan-${id}`} className={`${styles.plan} ${selected ? paid ? styles.selectedPaid : styles.selectedFree : ''}`}>
+   <Card className={styles.planSurface}>
+    {selected && <div className={`${styles.currentBand} ${paid ? styles.paidBand : ''}`}>Votre plan actuel</div>}
+    <div className={styles.planBody}>
+     <div className={styles.planTitle}><h3>{plan.name}</h3><div className={styles.price}>{compare && <s>{formatAmount(compare)}</s>} <strong>{formatAmount(plan[cycle])}</strong><span>FCFA/{cycle==='yearly'?'an':'mois'}</span></div></div>
+     {cycle==='yearly' && plan.monthly>0 && <p className={styles.savings}>Économisez {formatAmount(plan.monthly*12-plan.yearly)} FCFA par an</p>}
+     <ul className={styles.features}>{planFeatures(id).map(feature=><li key={feature}><Icon name="check"/><span>{feature}</span></li>)}</ul>
+     <div className={styles.planFooter}>{publicPage ? <Link href="/auth/signup" className={styles.publicCta}>Essayer gratuitement</Link> : lower ? <p className={styles.lowerNote}>Disponible à l’échéance, dans la gestion de votre abonnement.</p> : id!=='discovery' && onChoose ? <SubscriptionActionButton data-testid={`subscription-choose-${id}`} disabled={busy} tone={selected?'dark':paid?'gold':'neutral'} onClick={()=>onChoose(id,cycle)}>{selected?'Renouveler':'Passer à'} {plan.name}</SubscriptionActionButton> : null}</div>
     </div>
-  )
+   </Card>
+  </section>
+ })}</div><p className={styles.muted}>Sessions live, catalogue, stock et dépenses inclus dans tous les plans.</p></div>
 }
