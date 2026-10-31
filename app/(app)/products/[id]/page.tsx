@@ -19,6 +19,7 @@ import type { Product } from '@/types/product'
 import type { StockLot } from '@/types/stock-lot'
 import { useAuthStore } from '@/stores/auth-store'
 import { useProductStore } from '@/stores/product-store'
+import { responseError } from '@/lib/response-error'
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -99,7 +100,8 @@ export default function ProductDetailPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_active: isActive }),
     })
-    if (!res.ok) return
+    if (!res.ok) { setSaveError((await responseError(res, isActive ? 'Réactivation impossible. Réessayez.' : 'Archivage impossible. Réessayez.')).message); return }
+    setSaveError(null)
     const updated = await res.json()
     setProduct(updated)
     updateStoreProduct(updated.id, updated)
@@ -191,6 +193,7 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
+      {!isEditing && saveError && <p role="alert" className="text-sm text-red-600">{saveError}</p>}
 
       {/* Inline edit form */}
       {isEditing && isAdmin && (

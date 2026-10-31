@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { SalesPerson, SalesPersonEvaluation } from '@/types/sales-person'
 import type { SalesPersonEvaluationInput, SalesPersonInput, SalesPersonUpdateInput } from '@/lib/schemas/sales-person.schema'
+import { responseError } from '@/lib/response-error'
 
 export function useSalesPeople() {
   const [people, setPeople] = useState<SalesPerson[]>([])
@@ -26,7 +27,7 @@ export function useSalesPeople() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Création impossible. Réessayez.')
     const person = await res.json()
     setPeople((prev) => [person, ...prev].sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.full_name.localeCompare(b.full_name)))
     return person as SalesPerson
@@ -38,7 +39,7 @@ export function useSalesPeople() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Modification impossible. Réessayez.')
     const person = await res.json()
     setPeople((prev) => prev.map((p) => (p.id === person.id ? { ...p, ...person } : p)))
     return person as SalesPerson
@@ -50,7 +51,7 @@ export function useSalesPeople() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Évaluation impossible. Réessayez.')
     const evaluation = await res.json() as SalesPersonEvaluation
     setPeople((prev) => prev.map((p) => (p.id === id ? { ...p, latest_evaluation: evaluation } : p)))
     return evaluation
@@ -62,7 +63,7 @@ export function useSalesPeople() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Suppression impossible. Réessayez.')
     const result = await res.json() as { deleted: boolean; person?: SalesPerson; message: string }
     setPeople((prev) => result.deleted
       ? prev.filter((person) => person.id !== id)

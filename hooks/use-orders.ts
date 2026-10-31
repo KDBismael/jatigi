@@ -7,6 +7,7 @@ import { useOrderStore } from '@/stores/order-store'
 import type { OrderInput } from '@/lib/schemas/order.schema'
 import type { OrderStatus } from '@/lib/constants'
 import { matchesOrderSearch } from '@/lib/order-search'
+import { responseError } from '@/lib/response-error'
 
 export function useOrders() {
   const { orders, filters, isLoading, setOrders, addOrder, setFilters, updateOrderStatus, setLoading } =
@@ -56,7 +57,7 @@ export function useOrders() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Changement de statut impossible. Réessayez.')
     updateOrderStatus(id, status)
   }
 

@@ -7,6 +7,7 @@ import type { Role } from '@/lib/constants'
 import { useEffect, useState } from 'react'
 import type { Profile } from '@/types/user'
 import type { InviteEmployeeInput } from '@/lib/schemas/team.schema'
+import { responseError } from '@/lib/response-error'
 
 export function useTeam() {
   const [members, setMembers] = useState<Profile[]>([])
@@ -25,7 +26,7 @@ export function useTeam() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Invitation impossible. Réessayez.')
     notifyBillingUsageChanged()
     const member = await res.json()
     setMembers((prev) => [member, ...prev])
@@ -38,7 +39,7 @@ export function useTeam() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Suppression impossible. Réessayez.')
     notifyBillingUsageChanged()
     setMembers((prev) => prev.filter((m) => m.id !== id))
   }
@@ -49,7 +50,7 @@ export function useTeam() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, role }),
     })
-    if (!res.ok) throw new Error(await res.text())
+    if (!res.ok) throw await responseError(res, 'Changement de rôle impossible. Réessayez.')
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, role } : m)))
   }
 
