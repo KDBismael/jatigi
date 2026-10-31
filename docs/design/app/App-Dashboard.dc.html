@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Tableau de bord mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@keyframes d-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes d-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.d-fill{transform-origin:left;animation:d-fill 1.1s cubic-bezier(.2,.7,.2,1) .15s both}
+.d-bar{transform-origin:bottom;animation:d-grow .8s cubic-bezier(.2,.7,.2,1) both}
+.d-press{transition:transform .15s ease,background-color .2s ease}
+.d-press:active{transform:scale(.97)}
+@media (prefers-reduced-motion: reduce){.d-fill,.d-bar{animation:none}}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1640px; display: flex; flex-direction: column; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #F9FAFB">
+<dc-import name="AppTopBar" hint-size="390px,62px"></dc-import>
+<main style="flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 16px">
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.01em">Bonjour, Koné</h1>
+<p style="margin: 2px 0 0; font-size: 14px; color: #6B7280">Voici l’ensemble de votre activité.</p>
+</div>
+<button type="button" class="d-press" aria-label="Exporter en Excel" style="flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid #D1D5DB; background: #FFFFFF; color: #374151; display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"></path><path d="M16.5 12 12 16.5 7.5 12"></path><path d="M12 16.5V3"></path></svg></button>
+</div>
+
+<!-- Onboarding checklist: real progress pills instead of ✓ / ○ characters -->
+<section aria-labelledby="onb-title" data-testid="onboarding-checklist" style="background: #FFFFFF; border: 1px solid #C7D2FE; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="onb-title" style="margin: 0; font-size: 16px; font-weight: 600">Configurez votre boutique</h2>
+<span style="font-size: 13px; color: #6B7280">2 étapes sur 3</span>
+</div>
+<div style="height: 6px; border-radius: 999px; background: #EEF2FF; overflow: hidden"><div class="d-fill" style="width: 66.6%; height: 100%; border-radius: 999px; background: #4F46E5"></div></div>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; font-size: 14px">
+<li style="display: flex; align-items: center; gap: 10px; color: #6B7280"><span aria-label="Terminé" style="flex: none; width: 22px; height: 22px; border-radius: 999px; background: #4F46E5; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><s>Ajouter un produit</s></li>
+<li style="display: flex; align-items: center; gap: 10px; color: #6B7280"><span aria-label="Terminé" style="flex: none; width: 22px; height: 22px; border-radius: 999px; background: #4F46E5; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span><s>Ajouter un livreur</s></li>
+<li style="display: flex; align-items: center; gap: 10px; font-weight: 600"><span aria-label="À faire" style="flex: none; width: 22px; height: 22px; border-radius: 999px; border: 2px solid #4F46E5; color: #4F46E5; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; box-sizing: border-box">3</span>Créer une commande</li>
+</ol>
+<a href="#" class="d-press" style="display: flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 10px; background: #4F46E5; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 14px">Créer ma première commande</a>
+</section>
+
+<!-- Period selector: one horizontal scroll row, 44px chips -->
+<div role="group" aria-label="Période" style="display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 0 16px 2px">
+<span style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #111827; color: #FFFFFF; font-size: 13px; font-weight: 600">Aujourd’hui</span>
+<span style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151">Hier</span>
+<span style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151">7 jours</span>
+<span style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151">30 jours</span>
+<span style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151">Ce mois</span>
+<span style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151">Personnalisé</span>
+</div>
+
+<!-- KPIs: one card style, one label style, FCFA always after the number -->
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px"><div style="font-size: 12px; color: #6B7280">Chiffre d’affaires</div><div style="font-size: 20px; font-weight: 700; color: #4F46E5; margin-top: 6px; font-variant-numeric: tabular-nums">195 000</div><div style="font-size: 11px; color: #9CA3AF">FCFA · commandes livrées</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px"><div style="font-size: 12px; color: #6B7280">Bénéfice net</div><div style="font-size: 20px; font-weight: 700; color: #15803D; margin-top: 6px; font-variant-numeric: tabular-nums">71 400</div><div style="font-size: 11px; color: #9CA3AF">FCFA · après coûts</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px"><div style="font-size: 12px; color: #6B7280">Panier moyen</div><div style="font-size: 20px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums">11 500</div><div style="font-size: 11px; color: #9CA3AF">FCFA</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px"><div style="font-size: 12px; color: #6B7280">Total commandes</div><div style="font-size: 20px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums">19</div><div style="font-size: 11px; color: #9CA3AF">Tous statuts confondus</div></div>
+</div>
+
+<!-- Status counts in one card instead of 3 tall cards -->
+<section aria-label="Commandes par statut" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 6px 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px"><span style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #16A34A"></span>Livrées</span><b style="font-variant-numeric: tabular-nums">17</b></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px"><span style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #CA8A04"></span>En cours</span><b style="font-variant-numeric: tabular-nums">1</b></div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; font-size: 14px"><span style="display: flex; align-items: center; gap: 10px"><span style="width: 8px; height: 8px; border-radius: 999px; background: #DC2626"></span>Annulées</span><b style="font-variant-numeric: tabular-nums">1</b></div>
+</section>
+
+<!-- Monthly goal: empty state without a lone "—" -->
+<section aria-labelledby="goal-title" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="goal-title" style="margin: 0; font-size: 14px; font-weight: 600">Objectif d’octobre</h2>
+<span style="font-size: 18px; font-weight: 700; color: #4F46E5; font-variant-numeric: tabular-nums">69,6 %</span>
+</div>
+<div style="height: 10px; border-radius: 999px; background: #F3F4F6; overflow: hidden"><div class="d-fill" style="width: 69.6%; height: 100%; border-radius: 999px; background: #4F46E5"></div></div>
+<div style="font-size: 13px; color: #6B7280; font-variant-numeric: tabular-nums">3 480 000 sur 5 000 000 FCFA</div>
+</section>
+
+<!-- Chart: title with · instead of — -->
+<section aria-labelledby="chart-title" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px">
+<div style="padding: 12px 14px; border-bottom: 1px solid #F3F4F6"><h2 id="chart-title" style="margin: 0; font-size: 14px; font-weight: 600">Évolution des ventes · 7 jours</h2></div>
+<div role="img" aria-label="Ventes des 7 derniers jours, pic vendredi" style="display: flex; align-items: flex-end; gap: 10px; height: 150px; padding: 14px">
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 42%; border-radius: 6px 6px 2px 2px; background: #C7D2FE"></div><span style="font-size: 11px; color: #6B7280">Lun</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 58%; border-radius: 6px 6px 2px 2px; background: #C7D2FE; animation-delay: .05s"></div><span style="font-size: 11px; color: #6B7280">Mar</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 51%; border-radius: 6px 6px 2px 2px; background: #C7D2FE; animation-delay: .1s"></div><span style="font-size: 11px; color: #6B7280">Mer</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 74%; border-radius: 6px 6px 2px 2px; background: #C7D2FE; animation-delay: .15s"></div><span style="font-size: 11px; color: #6B7280">Jeu</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 88%; border-radius: 6px 6px 2px 2px; background: #4F46E5; animation-delay: .2s"></div><span style="font-size: 11px; font-weight: 600; color: #111827">Ven</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 66%; border-radius: 6px 6px 2px 2px; background: #C7D2FE; animation-delay: .25s"></div><span style="font-size: 11px; color: #6B7280">Sam</span></div>
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%"><div class="d-bar" style="width: 100%; height: 39%; border-radius: 6px 6px 2px 2px; background: #C7D2FE; animation-delay: .3s"></div><span style="font-size: 11px; color: #6B7280">Dim</span></div>
+</div>
+</section>
+</main>
+<div style="position: sticky; bottom: 0">
+<dc-import name="AppBottomNav" active="dashboard" hint-size="390px,72px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
