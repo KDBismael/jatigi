@@ -1,8 +1,9 @@
 import { z } from 'zod'
+import { optionalPhoneSchema } from './phone.schema'
 
 export const deliveryDriverSchema = z.object({
   name: z.string().trim().min(1, 'Nom requis').max(120),
-  phone: z.string().trim().max(30).optional().or(z.literal('')),
+  phone: optionalPhoneSchema,
 })
 
 export const deliverySettlementSchema = z.object({

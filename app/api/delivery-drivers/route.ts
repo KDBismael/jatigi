@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   if (auth.profile.role !== 'admin') return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   const parsed = deliveryDriverSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Informations du livreur invalides' }, { status: 400 })
   try {
     return NextResponse.json(await createDeliveryDriver(parsed.data, auth.profile.organization_id), { status: 201 })
   } catch (error) {
