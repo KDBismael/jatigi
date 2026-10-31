@@ -13,3 +13,5 @@ it('annule le compte si la propriété ne peut être finalisée',async()=>{
  vi.mocked(createAdminClient).mockResolvedValue({from,auth:{admin:{createUser:async()=>({data:{user:{id:'user'}},error:null}),deleteUser}}} as unknown as Awaited<ReturnType<typeof createAdminClient>>)
  const res=await POST(request(valid));expect(res.status).toBe(500);expect(deleteUser).toHaveBeenCalledWith('user');expect(deleteEq).toHaveBeenCalledWith('id','own-org')
 })
+
+it.each(['abc123','abcdefgh','12345678'])('refuse le nouveau mot de passe faible %s sans appel Supabase',async(password)=>{expect((await POST(request({...valid,password}))).status).toBe(400);expect(createAdminClient).not.toHaveBeenCalled()})

@@ -1,4 +1,5 @@
 'use client'
+import { Icon } from '@/components/ui/icon'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -6,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/services/supabase/client'
 import { PasswordInput } from '@/components/ui/password-input'
 import { translateAuthError } from '@/lib/auth-errors'
+import { passwordSchema } from '@/lib/schemas/auth.schema'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -19,8 +21,9 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.')
+    const parsed = passwordSchema.safeParse(password)
+    if (!parsed.success) {
+      setError(parsed.error.issues[0].message)
       return
     }
     if (password !== confirm) {
@@ -53,7 +56,7 @@ export default function ResetPasswordPage() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
           {success ? (
             <div className="text-center space-y-4">
-              <div className="text-4xl">✅</div>
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-green-700"><Icon name="check" className="h-8 w-8" /></div>
               <h2 className="text-white font-semibold text-lg">Mot de passe mis à jour !</h2>
               <p className="text-gray-400 text-sm">Redirection vers la connexion...</p>
             </div>
@@ -61,7 +64,7 @@ export default function ResetPasswordPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <h2 className="text-white font-semibold text-lg mb-1">Choisissez un nouveau mot de passe</h2>
-                <p className="text-gray-400 text-sm">Minimum 6 caractères.</p>
+                <p className="text-gray-400 text-sm">Minimum 8 caractères, avec une lettre et un chiffre.</p>
               </div>
 
               <PasswordInput
@@ -69,7 +72,7 @@ export default function ResetPasswordPage() {
                 label="Nouveau mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 6 caractères"
+                placeholder="Minimum 8 caractères"
                 required
                 darkTheme
               />
@@ -84,7 +87,7 @@ export default function ResetPasswordPage() {
               />
 
               {error && (
-                <p className="text-sm text-red-400 bg-red-950 border border-red-900 px-3 py-2 rounded-lg">{error}</p>
+                <p role="alert" className="text-sm text-red-400 bg-red-950 border border-red-900 px-3 py-2 rounded-lg">{error}</p>
               )}
 
               <button

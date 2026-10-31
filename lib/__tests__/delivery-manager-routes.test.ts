@@ -15,7 +15,7 @@ function auth(role: string, organization_id: string | null = 'own-org') {
  vi.mocked(createClient).mockResolvedValue({ auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'current-user' } } }) }, from: vi.fn().mockReturnValue(q) } as unknown as Awaited<ReturnType<typeof createClient>>)
 }
 function req(body: object) { return new NextRequest('http://localhost/api/team', { method: 'POST', body: JSON.stringify(body) }) }
-const input = { email: 'manager@example.com', full_name: 'Livraisons', password: '123456', role: 'manager' }
+const input = { email: 'manager@example.com', full_name: 'Livraisons', password: 'Gestion123', role: 'manager' }
 const memberId = '11111111-1111-4111-8111-111111111111'
 describe('delivery manager authorization', () => {
  beforeEach(() => vi.resetAllMocks())

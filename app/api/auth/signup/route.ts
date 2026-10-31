@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/services/supabase/server'
-import { z } from 'zod'
-
-const signupSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  full_name: z.string().min(1).max(100),
-  phone: z.string().min(6, 'Numéro de téléphone requis').max(30),
-  organization_name: z.string().min(1).max(120),
-})
+import { signupApiSchema } from '@/lib/schemas/auth.schema'
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
-  const parsed = signupSchema.safeParse(body)
+  const parsed = signupApiSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }

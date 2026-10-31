@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Connexion et inscription</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#4F46E5}a:hover{color:#3730A3}
+.u-root{container-type:inline-size;container-name:u}
+.u-root *{box-sizing:border-box}
+.u-split{display:grid;grid-template-columns:minmax(0,1fr);min-height:100%}
+.u-brand{padding:20px 20px 56px}
+.u-brand-desk{display:none}
+.u-brand-title{font-size:24px}
+.u-form-wrap{margin-top:-32px;border-radius:24px 24px 0 0;padding:24px 20px 32px}
+.u-form{width:100%;max-width:440px;margin:0 auto}
+.u-two{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+@container u (min-width:900px){
+.u-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:860px}
+.u-brand{padding:48px 56px;display:flex;flex-direction:column;justify-content:space-between}
+.u-brand-desk{display:flex}
+.u-brand-title{font-size:40px}
+.u-form-wrap{margin-top:0;border-radius:0;padding:56px 48px;display:flex;align-items:center}
+.u-two{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@keyframes u-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes u-shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.u-swap{animation:u-fade .35s cubic-bezier(.2,.7,.2,1) both}
+.u-shake{animation:u-shake .3s ease 2}
+.u-input{transition:border-color .2s ease,box-shadow .2s ease}
+.u-input:focus{outline:none;border-color:#4F46E5 !important;box-shadow:0 0 0 4px rgba(79,70,229,.15)}
+.u-btn{transition:transform .16s ease,background-color .2s ease,box-shadow .2s ease;cursor:pointer}
+.u-btn:hover{transform:translateY(-1px)}
+.u-btn:active{transform:scale(.98)}
+.u-seg{transition:background-color .2s ease,color .2s ease,box-shadow .2s ease;cursor:pointer}
+.u-bar{transition:background-color .3s ease}
+.u-rule{transition:color .2s ease}
+.u-root a:focus-visible,.u-root button:focus-visible{outline:3px solid #818CF8;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.u-root *{animation:none !important;transition:none !important}}
+</style>
+</helmet>
+
+<div class="u-root" data-testid="auth-page" style="font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #12142A; background: #FFFFFF; min-height: 100vh">
+<div class="u-split">
+
+<!-- Brand panel -->
+<section class="u-brand" style="background: #0E1020; color: #FFFFFF">
+<div style="display: flex; flex-direction: column; gap: 20px">
+<a href="/" aria-label="Warko, accueil" style="display: inline-flex; align-items: center; gap: 10px; color: #FFFFFF; text-decoration: none">
+<svg width="32" height="32" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#4F46E5"></rect><path d="M13 19 L23 45 L32 29 L41 45 L51 19" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg>
+<span style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 22px">Warko</span>
+</a>
+<sc-if value="{{isLogin}}" hint-placeholder-val="{{true}}">
+<h1 class="u-brand-title u-swap" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1">Content de vous revoir.</h1>
+</sc-if>
+<sc-if value="{{isSignup}}" hint-placeholder-val="{{false}}">
+<h1 class="u-brand-title u-swap" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1">Votre boutique prête en <span style="color: #FBBF24">60 secondes</span>.</h1>
+</sc-if>
+<p style="margin: 0; font-size: 15px; color: #C7CAE6; line-height: 1.55; max-width: 440px">Commandes, livreurs, reversements et bénéfice au même endroit.</p>
+</div>
+
+<!-- Desktop only: product proof -->
+<div class="u-brand-desk" style="flex-direction: column; gap: 16px; margin-top: 40px">
+<div aria-hidden="true" style="background: #171A33; border: 1px solid #2A2D4F; border-radius: 20px; padding: 20px; max-width: 420px">
+<div style="font-size: 12px; color: #A9ADD0">Reste dû ce soir</div>
+<div style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 34px; color: #FBBF24; font-variant-numeric: tabular-nums">42 500 <span style="font-size: 16px; color: #FFFFFF">FCFA</span></div>
+<div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between"><span style="color: #E0E3FF">Koffi</span><span style="font-weight: 600">28 000</span></div>
+<div style="display: flex; justify-content: space-between"><span style="color: #E0E3FF">Ibrahim</span><span style="font-weight: 600">14 500</span></div>
+<div style="display: flex; justify-content: space-between"><span style="color: #E0E3FF">Serge</span><span style="font-weight: 600; color: #6EE7B7">Soldé</span></div>
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; color: #A9ADD0">Exemple illustratif</p>
+</div>
+</section>
+
+<!-- Form panel -->
+<section class="u-form-wrap" style="background: #FFFFFF; position: relative">
+<div class="u-form" style="display: flex; flex-direction: column; gap: 22px">
+
+<div role="tablist" aria-label="Connexion ou inscription" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #F1F1F6; border-radius: 12px; padding: 4px">
+<button type="button" role="tab" class="u-seg" aria-selected="{{isLogin}}" data-testid="auth-tab-login" onClick="{{toLogin}}" style="{{loginTabStyle}}">Connexion</button>
+<button type="button" role="tab" class="u-seg" aria-selected="{{isSignup}}" data-testid="auth-tab-signup" onClick="{{toSignup}}" style="{{signupTabStyle}}">Créer ma boutique</button>
+</div>
+
+<!-- ============ LOGIN ============ -->
+<sc-if value="{{isLogin}}" hint-placeholder-val="{{true}}">
+<form class="u-swap" data-testid="login-form" style="display: flex; flex-direction: column; gap: 16px">
+<div>
+<h2 style="margin: 0; font-size: 22px; font-weight: 700">Se connecter</h2>
+<p style="margin: 4px 0 0; font-size: 14px; color: #545873">Accédez à votre boutique.</p>
+</div>
+
+<sc-if value="{{showLoginError}}" hint-placeholder-val="{{false}}">
+<div role="alert" class="u-shake" data-testid="login-error" style="background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; border-radius: 12px; padding: 12px 14px; font-size: 14px">Email ou mot de passe incorrect. Vérifiez puis réessayez.</div>
+</sc-if>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="login-email" style="font-size: 14px; font-weight: 600">Email</label>
+<input id="login-email" type="email" class="u-input" data-testid="login-email" autocomplete="email" inputmode="email" placeholder="vous@exemple.com" style="width: 100%; min-height: 50px; padding: 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; color: #12142A; background: #FFFFFF">
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<label for="login-password" style="font-size: 14px; font-weight: 600">Mot de passe</label>
+<a href="/auth/forgot-password" data-testid="forgot-password-link" style="font-size: 13px; font-weight: 600; text-decoration: none">Mot de passe oublié&nbsp;?</a>
+</div>
+<div style="position: relative">
+<input id="login-password" type="{{loginPwType}}" class="u-input" data-testid="login-password" autocomplete="current-password" placeholder="Votre mot de passe" style="width: 100%; min-height: 50px; padding: 0 52px 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; color: #12142A; background: #FFFFFF">
+<button type="button" class="u-seg" aria-label="{{loginEyeLabel}}" aria-pressed="{{loginPwVisible}}" data-testid="login-password-toggle" onClick="{{toggleLoginPw}}" style="position: absolute; right: 3px; top: 3px; width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; color: #545873; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{loginPwVisible}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.98 8.22A10.48 10.48 0 001.93 12c1.29 4.34 5.31 7.5 10.07 7.5.99 0 1.95-.14 2.86-.39M6.23 6.23A10.45 10.45 0 0112 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 01-4.29 5.77M6.23 6.23 3 3m3.23 3.23 3.65 3.65m7.89 7.89L21 21m-3.23-3.23-3.65-3.65m0 0a3 3 0 10-4.24-4.24m4.24 4.24L9.88 9.88"></path></svg></sc-if>
+<sc-if value="{{loginPwHidden}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.04 12.32a1 1 0 010-.64C3.42 7.51 7.36 4.5 12 4.5c4.64 0 8.57 3.01 9.96 7.18.07.21.07.43 0 .64C20.58 16.49 16.64 19.5 12 19.5c-4.64 0-8.57-3.01-9.96-7.18z"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></sc-if>
+</button>
+</div>
+</div>
+
+<button type="button" class="u-btn" data-testid="login-submit" onClick="{{submitLogin}}" style="min-height: 52px; border: 0; border-radius: 12px; background: #4F46E5; color: #FFFFFF; font-family: Inter, sans-serif; font-weight: 700; font-size: 16px">Se connecter</button>
+<p style="margin: 0; text-align: center; font-size: 14px; color: #545873">Pas encore de compte&nbsp;? <a href="#" onClick="{{toSignup}}" style="font-weight: 700; text-decoration: none">Créer ma boutique</a></p>
+</form>
+</sc-if>
+
+<!-- ============ SIGNUP ============ -->
+<sc-if value="{{isSignup}}" hint-placeholder-val="{{false}}">
+<form class="u-swap" data-testid="signup-form" style="display: flex; flex-direction: column; gap: 18px">
+<div>
+<h2 style="margin: 0; font-size: 22px; font-weight: 700">Créer ma boutique</h2>
+<p style="margin: 4px 0 0; font-size: 14px; color: #545873">Gratuit jusqu’à 30 commandes par mois. Aucune carte requise.</p>
+</div>
+
+<sc-if value="{{hasPlan}}" hint-placeholder-val="{{false}}">
+<div data-testid="signup-selected-plan" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #EEF0FF; border: 1px solid #C7D2FE; border-radius: 12px; padding: 10px 14px; font-size: 14px">
+<span>Offre choisie&nbsp;: <b>{{planName}}</b></span>
+<span style="font-size: 12px; color: #3730A3">Paiement après la création</span>
+</div>
+</sc-if>
+
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px">
+<legend style="padding: 0; margin-bottom: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Votre boutique</legend>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="signup-shop" style="font-size: 14px; font-weight: 600">Nom de la boutique</label>
+<input id="signup-shop" type="text" class="u-input" data-testid="signup-shop-name" autocomplete="organization" placeholder="Ex : Boutique Aminata" style="width: 100%; min-height: 50px; padding: 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; background: #FFFFFF">
+</div>
+<div class="u-two">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="signup-name" style="font-size: 14px; font-weight: 600">Votre nom complet</label>
+<input id="signup-name" type="text" class="u-input" data-testid="signup-full-name" autocomplete="name" placeholder="Aminata Diallo" style="width: 100%; min-height: 50px; padding: 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; background: #FFFFFF">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="signup-phone" style="font-size: 14px; font-weight: 600">Téléphone</label>
+<div style="display: flex; gap: 8px">
+<span style="flex: none; min-height: 50px; display: flex; align-items: center; padding: 0 12px; border: 1.5px solid #D6D7E4; border-radius: 12px; background: #F6F6FA; font-size: 15px; font-weight: 600">+225</span>
+<input id="signup-phone" type="tel" class="u-input" data-testid="signup-phone" autocomplete="tel-national" inputmode="tel" placeholder="07 00 00 00 00" style="flex: 1; min-width: 0; min-height: 50px; padding: 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; background: #FFFFFF">
+</div>
+</div>
+</div>
+</fieldset>
+
+<fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px">
+<legend style="padding: 0; margin-bottom: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Votre accès</legend>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="signup-email" style="font-size: 14px; font-weight: 600">Email</label>
+<input id="signup-email" type="email" class="u-input" data-testid="signup-email" autocomplete="email" inputmode="email" placeholder="vous@exemple.com" style="width: 100%; min-height: 50px; padding: 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; background: #FFFFFF">
+</div>
+
+<!-- Password + strength -->
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="signup-password" style="font-size: 14px; font-weight: 600">Mot de passe</label>
+<div style="position: relative">
+<input id="signup-password" type="{{pwType}}" class="u-input" data-testid="signup-password" autocomplete="new-password" aria-describedby="pw-rules" placeholder="Créez un mot de passe" value="{{pw}}" onChange="{{onPw}}" style="width: 100%; min-height: 50px; padding: 0 52px 0 14px; border: 1.5px solid #D6D7E4; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; background: #FFFFFF">
+<button type="button" class="u-seg" aria-label="{{eyeLabel}}" aria-pressed="{{pwVisible}}" data-testid="signup-password-toggle" onClick="{{togglePw}}" style="position: absolute; right: 3px; top: 3px; width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; color: #545873; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{pwVisible}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.98 8.22A10.48 10.48 0 001.93 12c1.29 4.34 5.31 7.5 10.07 7.5.99 0 1.95-.14 2.86-.39M6.23 6.23A10.45 10.45 0 0112 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 01-4.29 5.77M6.23 6.23 3 3m3.23 3.23 3.65 3.65m7.89 7.89L21 21m-3.23-3.23-3.65-3.65m0 0a3 3 0 10-4.24-4.24m4.24 4.24L9.88 9.88"></path></svg></sc-if>
+<sc-if value="{{pwHidden}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.04 12.32a1 1 0 010-.64C3.42 7.51 7.36 4.5 12 4.5c4.64 0 8.57 3.01 9.96 7.18.07.21.07.43 0 .64C20.58 16.49 16.64 19.5 12 19.5c-4.64 0-8.57-3.01-9.96-7.18z"></path><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></sc-if>
+</button>
+</div>
+<div data-testid="signup-password-strength" aria-live="polite" style="display: flex; align-items: center; gap: 10px">
+<div aria-hidden="true" style="flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px">
+<span class="u-bar" style="{{bar1}}"></span><span class="u-bar" style="{{bar2}}"></span><span class="u-bar" style="{{bar3}}"></span>
+</div>
+<span style="min-width: 72px; text-align: right; font-size: 12px; font-weight: 700; color: {{strengthColor}}">{{strengthLabel}}</span>
+</div>
+<ul id="pw-rules" style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px">
+<sc-for list="{{rules}}" as="r" hint-placeholder-count="3">
+<li class="u-rule" style="display: flex; align-items: center; gap: 8px; color: {{r.color}}">
+<sc-if value="{{r.ok}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="flex: none; width: 18px; height: 18px; border-radius: 999px; background: #16A34A; display: flex; align-items: center; justify-content: center"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg></span></sc-if>
+<sc-if value="{{r.todo}}" hint-placeholder-val="{{true}}"><span aria-hidden="true" style="flex: none; width: 18px; height: 18px; border-radius: 999px; border: 1.5px solid #C4C6D6"></span></sc-if>
+<span>{{r.label}}<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">{{r.sr}}</span></span>
+</li>
+</sc-for>
+</ul>
+</div>
+
+<!-- Confirmation -->
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="signup-password-confirm" style="font-size: 14px; font-weight: 600">Confirmer le mot de passe</label>
+<div style="position: relative">
+<input id="signup-password-confirm" type="{{pwType}}" class="u-input" data-testid="signup-password-confirm" autocomplete="new-password" aria-invalid="{{mismatch}}" aria-describedby="pw-match" placeholder="Saisissez-le une deuxième fois" value="{{pw2}}" onChange="{{onPw2}}" style="width: 100%; min-height: 50px; padding: 0 52px 0 14px; border: 1.5px solid {{confirmBorder}}; border-radius: 12px; font-family: Inter, sans-serif; font-size: 16px; background: #FFFFFF">
+<sc-if value="{{match}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" class="u-swap" style="position: absolute; right: 14px; top: 15px; width: 20px; height: 20px; border-radius: 999px; background: #16A34A; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg></span></sc-if>
+</div>
+<p id="pw-match" data-testid="signup-password-match" aria-live="polite" style="margin: 0; min-height: 18px; font-size: 13px; font-weight: 600; color: {{matchColor}}">{{matchText}}</p>
+</div>
+</fieldset>
+
+<button type="button" class="u-btn" data-testid="signup-submit" aria-disabled="{{notReady}}" style="{{submitStyle}}">Créer ma boutique</button>
+<p style="margin: -4px 0 0; text-align: center; font-size: 13px; color: #545873; line-height: 1.5">Vous serez propriétaire de la boutique. Vous pourrez inviter votre équipe ensuite.</p>
+<p style="margin: 0; text-align: center; font-size: 14px; color: #545873">Déjà un compte&nbsp;? <a href="#" onClick="{{toLogin}}" style="font-weight: 700; text-decoration: none">Se connecter</a></p>
+</form>
+</sc-if>
+
+<a href="/" style="align-self: center; font-size: 13px; color: #545873; text-decoration: none; padding: 10px">Retour à l’accueil</a>
+</div>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mode":{"editor":"enum","options":["login","signup"],"default":"signup"},"selectedPlan":{"editor":"enum","options":["aucun","pro","business"],"default":"pro"},"loginError":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mode: null, pw: 'warko2026', pw2: 'warko20', pwVisible: false, loginPwVisible: false, loginTried: false };
+  }
+  renderVals() {
+    var self = this;
+    var s = this.state;
+    var mode = s.mode || this.props.mode || 'signup';
+    var isLogin = mode === 'login';
+    var plan = this.props.selectedPlan || 'pro';
+    var pw = s.pw || '';
+    var pw2 = s.pw2 || '';
+
+    var r1 = pw.length >= 8;
+    var r2 = /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw);
+    var r3 = pw.length >= 12 || /[^a-zA-Z0-9]/.test(pw);
+    var score = pw.length === 0 ? 0 : (r1 ? 1 : 0) + (r1 && r2 ? 1 : 0) + (r1 && r2 && r3 ? 1 : 0);
+    var levels = [
+      { l: pw.length ? 'Trop court' : '', c: '#B91C1C', fill: '#EF4444' },
+      { l: 'Faible', c: '#B45309', fill: '#F59E0B' },
+      { l: 'Correct', c: '#3730A3', fill: '#6366F1' },
+      { l: 'Solide', c: '#166534', fill: '#16A34A' }
+    ];
+    var lv = levels[score];
+    var empty = '#E4E4EE';
+    function bar(i) {
+      var on = pw.length > 0 && (score >= i || (score === 0 && i === 1));
+      return 'display: block; height: 6px; border-radius: 999px; background: ' + (on ? lv.fill : empty);
+    }
+    var ruleDefs = [
+      { label: '8 caractères minimum', ok: r1 },
+      { label: 'Au moins une lettre et un chiffre', ok: r2 },
+      { label: 'Conseillé : un symbole ou 12 caractères', ok: r3, optional: true }
+    ];
+    var rules = ruleDefs.map(function (r) {
+      return { label: r.label, ok: r.ok, todo: !r.ok, sr: r.ok ? ' : respecté' : ' : non respecté', color: r.ok ? '#166534' : (r.optional ? '#6B6F88' : '#545873') };
+    });
+
+    var typed2 = pw2.length > 0;
+    var match = typed2 && pw === pw2;
+    var mismatch = typed2 && pw !== pw2;
+    var ready = r1 && r2 && match;
+
+    var segOn = 'min-height: 44px; border: 0; border-radius: 9px; background: #FFFFFF; color: #12142A; font-family: Inter, sans-serif; font-weight: 700; font-size: 14px; box-shadow: 0 1px 3px rgba(14,16,32,.12)';
+    var segOff = 'min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: #545873; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px';
+
+    return {
+      isLogin: isLogin, isSignup: !isLogin,
+      toLogin: function (e) { if (e && e.preventDefault) e.preventDefault(); self.setState({ mode: 'login' }); },
+      toSignup: function (e) { if (e && e.preventDefault) e.preventDefault(); self.setState({ mode: 'signup' }); },
+      loginTabStyle: isLogin ? segOn : segOff,
+      signupTabStyle: isLogin ? segOff : segOn,
+      showLoginError: !!this.props.loginError || s.loginTried,
+      submitLogin: function () { self.setState({ loginTried: true }); },
+      loginPwVisible: s.loginPwVisible, loginPwHidden: !s.loginPwVisible,
+      loginPwType: s.loginPwVisible ? 'text' : 'password',
+      loginEyeLabel: s.loginPwVisible ? 'Masquer le mot de passe' : 'Afficher le mot de passe',
+      toggleLoginPw: function () { self.setState({ loginPwVisible: !s.loginPwVisible }); },
+      hasPlan: plan !== 'aucun',
+      planName: plan === 'business' ? 'Business' : 'Pro',
+      pw: pw, pw2: pw2,
+      onPw: function (e) { self.setState({ pw: e.target.value }); },
+      onPw2: function (e) { self.setState({ pw2: e.target.value }); },
+      pwVisible: s.pwVisible, pwHidden: !s.pwVisible,
+      pwType: s.pwVisible ? 'text' : 'password',
+      eyeLabel: s.pwVisible ? 'Masquer les mots de passe' : 'Afficher les mots de passe',
+      togglePw: function () { self.setState({ pwVisible: !s.pwVisible }); },
+      bar1: bar(1), bar2: bar(2), bar3: bar(3),
+      strengthLabel: lv.l, strengthColor: lv.c,
+      rules: rules,
+      match: match, mismatch: mismatch,
+      confirmBorder: mismatch ? '#EF4444' : match ? '#16A34A' : '#D6D7E4',
+      matchText: mismatch ? 'Les deux mots de passe ne correspondent pas.' : match ? 'Les mots de passe correspondent.' : '',
+      matchColor: mismatch ? '#B91C1C' : '#166534',
+      notReady: !ready,
+      submitStyle: 'min-height: 52px; border: 0; border-radius: 12px; font-family: Inter, sans-serif; font-weight: 700; font-size: 16px; ' + (ready ? 'background: #4F46E5; color: #FFFFFF' : 'background: #C7C9F4; color: #FFFFFF; cursor: not-allowed')
+    };
+  }
+}
+</script>
+</body>
+</html>

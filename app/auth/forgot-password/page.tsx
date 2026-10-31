@@ -1,4 +1,5 @@
 'use client'
+import { SUPPORT_EMAIL } from '@/lib/site-contact'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -123,7 +124,7 @@ export default function ForgotPasswordPage() {
 
               <p className="text-center">
                 <Link href="/auth/login" className="text-sm text-gray-400 hover:text-gray-200 transition-colors">
-                  ← Retour à la connexion
+                  Retour à la connexion
                 </Link>
               </p>
             </form>
@@ -133,7 +134,7 @@ export default function ForgotPasswordPage() {
         <div className="mt-6 text-center space-y-3">
           <p className="text-sm text-gray-500">
             Besoin d&apos;aide ?{' '}
-            <a href="mailto:support@warko.app" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Contacter le support
             </a>
           </p>
