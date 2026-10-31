@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { splitProductsByStatus } from '@/lib/product-archive'
 
 export default function ProductsPage() {
-  const { products, isLoading, remove, update } = useProducts()
+  const { products, isLoading, error, refresh, remove, update } = useProducts()
   const [tab, setTab] = useState<'active' | 'archived'>('active')
   const { active: activeProducts, archived: archivedProducts } = splitProductsByStatus(products)
   const visibleProducts = tab === 'active' ? activeProducts : archivedProducts
@@ -20,7 +20,7 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Produits</h1>
-          <p className="text-gray-500 text-sm mt-1">{activeProducts.length} actif(s) · {archivedProducts.length} archivé(s)</p>
+          {!error && <p className="text-gray-500 text-sm mt-1">{activeProducts.length} actif(s) · {archivedProducts.length} archivé(s)</p>}
         </div>
         <Link href="/products/new">
           <Button>+ Ajouter un produit</Button>
@@ -50,13 +50,18 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
+          {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <p>{error}</p>
+            {products.length > 0 && <p>Les produits affichés peuvent ne pas être à jour.</p>}
+            <Button type="button" onClick={() => void refresh()} disabled={isLoading}>Réessayer</Button>
+          </div>}
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : (
+          ) : error && products.length === 0 ? null : (
             <ProductTable
               products={visibleProducts}
               mode={tab}

@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation'
 import { ProductForm } from '@/components/products/product-form'
 import { useProducts } from '@/hooks/use-products'
 import type { ProductInput } from '@/lib/schemas/product.schema'
+import Link from 'next/link'
+import { ProductCreationAcknowledgedError } from '@/lib/product-errors'
 
 export default function NewProductPage() {
   const router = useRouter()
   const { create } = useProducts()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [created, setCreated] = useState(false)
 
   async function handleSubmit(data: ProductInput) {
     setError(null)
@@ -19,7 +22,8 @@ export default function NewProductPage() {
       await create(data)
       router.push('/products')
     } catch (err) {
-      setError(String(err))
+      setError(err instanceof Error ? err.message : 'Impossible de créer le produit. Réessayez plus tard.')
+      if (err instanceof ProductCreationAcknowledgedError) setCreated(true)
       setIsLoading(false)
     }
   }
@@ -35,7 +39,7 @@ export default function NewProductPage() {
           {error}
         </div>
       )}
-      <ProductForm onSubmit={handleSubmit} isLoading={isLoading} />
+      {created ? <Link href="/products">Consulter le catalogue</Link> : <ProductForm onSubmit={handleSubmit} isLoading={isLoading} />}
     </div>
   )
 }

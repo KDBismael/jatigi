@@ -1,5 +1,8 @@
 import { createAdminClient, createClient } from '@/services/supabase/server'
 import type { Product } from '@/types/product'
+import { ProductCreationAcknowledgedError } from '@/lib/product-errors'
+
+const productSelection = '*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)'
 
 type ProductInsert = Omit<Product, 'id' | 'created_at' | 'updated_at' | 'is_active'>
 type ProductUpdate = Partial<ProductInsert> & { is_active?: boolean }
@@ -8,7 +11,7 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
   const supabase = await createAdminClient()
   const { data, error } = await supabase
     .from('products')
-    .select('*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)')
+    .select(productSelection)
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
 
@@ -39,12 +42,17 @@ async function productHistoryCount(id: string, organizationId: string): Promise<
 
 export async function getProductById(id: string, organizationId: string): Promise<Product | null> {
   const supabase = await createAdminClient()
-  const { data, error } = await supabase.from('products').select('*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)').eq('id', id).eq('organization_id', organizationId).single()
+  const { data, error } = await supabase.from('products').select(productSelection).eq('id', id).eq('organization_id', organizationId).single()
   if (error) return null
   return data as Product
 }
 
 export async function createProduct(input: ProductInsert, organizationId: string): Promise<Product> {
+  // Verify the exact read schema before the atomic product/initial-lot write.
+  const reader = await createAdminClient()
+  const { error: readError } = await reader.from('products').select(productSelection)
+    .eq('organization_id', organizationId).limit(0)
+  if (readError) throw new Error('Le catalogue est momentanément indisponible. Aucun produit créé. Réessayez plus tard.')
   const supabase = await createClient()
   const qty = input.stock_quantity
   const { data: id, error } = await supabase.rpc('create_product_with_initial_lot', {
@@ -57,9 +65,13 @@ export async function createProduct(input: ProductInsert, organizationId: string
     p_total_packaging: input.packaging_cost * Math.max(qty, 1),
   })
   if (error) throw new Error(error.message)
-  const product = await getProductById(id as string, organizationId)
-  if (!product) throw new Error('Produit créé mais introuvable')
-  return product
+  try {
+    const product = await getProductById(id as string, organizationId)
+    if (product) return product
+  } catch {
+    // The RPC committed: a read/network failure must never invite another write.
+  }
+  throw new ProductCreationAcknowledgedError(id as string)
 }
 
 export async function updateProduct(id: string, input: ProductUpdate, organizationId: string): Promise<Product> {
@@ -69,7 +81,7 @@ export async function updateProduct(id: string, input: ProductUpdate, organizati
     .update(input)
     .eq('id', id)
     .eq('organization_id', organizationId)
-    .select('*, offers:product_offers(*), variants:product_variants(*), images:product_images(id,created_at)')
+    .select(productSelection)
     .single()
   if (error) throw new Error(error.message)
   return data as Product

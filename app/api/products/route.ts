@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { productSchema } from '@/lib/schemas/product.schema'
 import { createProduct, getProducts } from '@/services/product-service'
+import { ProductCreationAcknowledgedError } from '@/lib/product-errors'
 
 async function getAuthContext() {
   const supabase = await createClient()
@@ -44,7 +45,8 @@ export async function GET() {
 
     return NextResponse.json(products)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('Product catalogue read failed', err)
+    return NextResponse.json({ error: 'Impossible de charger les produits. Réessayez.' }, { status: 503 })
   }
 }
 
@@ -81,6 +83,10 @@ export async function POST(request: NextRequest) {
     )
     return NextResponse.json(product, { status: 201 })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    if (err instanceof ProductCreationAcknowledgedError) {
+      return NextResponse.json({ created: true, id: err.productId, code: err.code, message: err.message }, { status: 202 })
+    }
+    console.error('Product creation failed', err)
+    return NextResponse.json({ error: 'Impossible de créer le produit. Le catalogue est momentanément indisponible. Réessayez plus tard.' }, { status: 503 })
   }
 }
