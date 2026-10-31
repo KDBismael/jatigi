@@ -54,7 +54,7 @@ export default async function AdminOrganizationsPage() {
               {orgs.map((org) => (
                 <tr key={org.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium text-gray-900">{org.name}</td>
-                  <td className="px-4 py-3 text-gray-700">{org.owner_name ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-700">{org.owner_name ?? 'Non renseigné'}</td>
                   <td className="px-4 py-3 text-gray-700 text-right">{org.users_count}</td>
                   <td className="px-4 py-3 text-gray-700 text-right">{org.orders_count}</td>
                   <td className="px-4 py-3 font-medium text-gray-900 text-right">{formatCurrency(org.revenue)}</td>

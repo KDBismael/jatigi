@@ -18,7 +18,7 @@ describe('saisie avec un catalogue volumineux', () => {
     fireEvent.change(screen.getAllByLabelText('Remise sur la ligne')[1], { target: { value: 'amount' } })
     fireEvent.change(screen.getByLabelText('Montant sur la ligne (FCFA)'), { target: { value: '1000' } })
     fireEvent.change(screen.getByLabelText('Motif de la remise (obligatoire)'), { target: { value: 'Promotion' } })
-    fireEvent.click(screen.getAllByRole('button', { name: '✕' })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: 'Retirer ce produit' })[0])
     expect(screen.getAllByText(/14.?000/).length).toBeGreaterThan(0)
     fireEvent.change(document.querySelector('input[name="lines.0.quantity"]')!, { target: { value: '2' } })
     expect(screen.getAllByText(/9.?000/).length).toBeGreaterThan(0)

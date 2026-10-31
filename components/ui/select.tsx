@@ -1,30 +1,36 @@
-import { cn } from '@/lib/utils'
-import { SelectHTMLAttributes, forwardRef } from 'react'
+import { cn } from "@/lib/utils";
+import { SelectHTMLAttributes, forwardRef, useId } from "react";
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string
-  error?: string
-  options: { value: string; label: string }[]
-  placeholder?: string
+  label?: string;
+  error?: string;
+  options: { value: string; label: string }[];
+  placeholder?: string;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, id, options, placeholder, ...props }, ref) => {
+    const generatedId = useId();
+    const fieldId = id ?? generatedId;
     return (
       <div className="space-y-1">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor={fieldId}
+            className="block text-sm font-medium text-gray-700"
+          >
             {label}
           </label>
         )}
         <div className="relative">
           <select
             ref={ref}
-            id={id}
+            id={fieldId}
             className={cn(
-              'w-full appearance-none pl-3 pr-9 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white [color-scheme:light] transition-colors hover:border-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30',
-              error && 'border-red-400 hover:border-red-400 focus:border-red-500 focus:ring-red-500/30',
-              className
+              "w-full min-h-11 appearance-none pl-3 pr-9 py-2.5 border border-gray-300 rounded-lg text-base md:text-sm text-gray-900 bg-white [color-scheme:light] transition-colors hover:border-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30",
+              error &&
+                "border-red-400 hover:border-red-400 focus:border-red-500 focus:ring-red-500/30",
+              className,
             )}
             {...props}
           >
@@ -42,12 +48,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+            />
           </svg>
         </div>
         {error && <p className="text-xs text-red-600">{error}</p>}
       </div>
-    )
-  }
-)
-Select.displayName = 'Select'
+    );
+  },
+);
+Select.displayName = "Select";

@@ -1,4 +1,5 @@
 'use client'
+import { Icon } from '@/components/ui/icon'
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -149,7 +150,7 @@ export default function ProductDetailPage() {
       <div className="text-center py-16 text-gray-500">
         Produit introuvable.
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-4 block mx-auto">
-          ← Retour
+          <Icon name="chevron-left" className="inline-block h-4 w-4" /> Retour
         </Button>
       </div>
     )
@@ -167,7 +168,7 @@ export default function ProductDetailPage() {
       {isAdmin && <CustomerExport key={product.id} product={product} />}
       {/* Header — stacks on mobile */}
       <div className="flex items-start gap-2">
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-0.5 shrink-0">←</Button>
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-0.5 shrink-0" aria-label="Retour"><Icon name="chevron-left" /></Button>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-xl font-bold text-gray-900 truncate">{product.name}</h1>

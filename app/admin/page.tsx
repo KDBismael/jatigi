@@ -18,7 +18,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       <Card className="p-5 space-y-4">
-        <h2 className="font-semibold">Croissance SaaS {saas.mode==='test'?'— paiements de test':''}</h2>
+        <h2 className="font-semibold">Croissance SaaS {saas.mode==='test'?'(paiements de test)':''}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <CountCard label="Commandes sur 7 jours" value={saas.ordersLast7Days}/>
           <CountCard label="Boutiques inscrites" value={saas.signups}/>

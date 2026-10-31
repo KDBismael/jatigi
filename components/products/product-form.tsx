@@ -103,7 +103,7 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
                 {...register('total_transport')}
               />
               <Input
-                label="Coût d'emballage (FCFA)"
+                label="Total emballage (FCFA)"
                 type="number"
                 min={0}
                 placeholder="Ex : 1 000"

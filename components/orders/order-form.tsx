@@ -1,4 +1,5 @@
 'use client'
+import { Icon } from '@/components/ui/icon'
 
 import { useForm, useFieldArray, useWatch, useFormState, type Control, type UseFormRegister, type UseFormSetValue, type UseFieldArrayRemove, type Resolver } from 'react-hook-form'
 import { memo, useEffect, useMemo } from 'react'
@@ -269,10 +270,11 @@ const OrderLineFields = memo(function OrderLineFields({ index, control, register
         type="button"
         variant="ghost"
         size="sm"
+        aria-label="Retirer ce produit"
         onClick={() => remove(index)}
         className="text-red-500 mb-0.5"
       >
-        ✕
+        <Icon name="x" />
       </Button>
     )}
   </div>

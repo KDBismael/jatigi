@@ -1,4 +1,5 @@
 'use client'
+import { Icon } from '@/components/ui/icon'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -106,7 +107,7 @@ export function PrinterPicker({ orderId, settings, onSettingsChange, onSystemPri
     className="fixed inset-0 m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-5 text-gray-900 shadow-xl backdrop:bg-black/40">
     <div className="mb-4 flex items-center justify-between gap-3">
       <h2 id="printer-picker-title" className="text-lg font-semibold">Imprimer le reçu</h2>
-      <Button variant="ghost" size="sm" onClick={onClose} disabled={busy} aria-label="Fermer le sélecteur d’imprimante">✕</Button>
+      <Button variant="ghost" size="sm" onClick={onClose} disabled={busy} aria-label="Fermer le sélecteur d’imprimante"><Icon name="x" /></Button>
     </div>
     <p className="mb-4 text-sm text-gray-500">La commande est déjà enregistrée. Réimprimer ne crée aucun doublon.</p>
     <fieldset disabled={busy} className="space-y-3">

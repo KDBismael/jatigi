@@ -8,6 +8,19 @@
 }
 
 @theme inline {
+  --color-gold: #C9A227;
+  --color-gold-edge: #4A3D1A;
+  --color-gold-hover: #B8921F;
+  --color-gold-muted: #BFA35A;
+  --color-gold-cream: #FBF7EA;
+  --color-gold-cream-border: #EADBA8;
+  --color-gold-cream-dark: #241E10;
+  --color-gold-text: #7A5C0F;
+  --color-gold-foil-start: #F7E7B4;
+  --color-gold-foil-mid: #E2C063;
+  --color-gold-foil-deep: #B88A1E;
+  --color-gold-ink: #17140D;
+  --color-gold-soft: #F1DC97;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
@@ -83,3 +96,49 @@ html[data-warko-theme="dark"] .app-shell .hover\:bg-gray-100:hover { background-
   .order-document-a4 { min-height: auto; padding: 0 !important; width: auto !important; }
   .document-totals { break-inside: avoid; }
 }
+
+/* Selected theme and sign-out remain distinct on the app's dark surfaces. */
+html[data-warko-theme="dark"] .app-shell .theme-choice[aria-pressed="true"] { background-color: #e2e8f0; color: #0f172a; }
+html[data-warko-theme="dark"] .app-shell .more-signout { color: #fca5a5; border-color: #7f1d1d; }
+html[data-warko-theme="dark"] .app-shell .more-menu-group > :not(:last-child) { border-color: #334155; }
+
+/* Semantic surfaces keep readable contrast in dark app screens. */
+html[data-warko-theme="dark"] .app-shell .bg-indigo-50 { background-color: #1e1b4b; }
+html[data-warko-theme="dark"] .app-shell .bg-indigo-100 { background-color: #312e81; }
+html[data-warko-theme="dark"] .app-shell .text-indigo-600,
+html[data-warko-theme="dark"] .app-shell .text-indigo-700,
+html[data-warko-theme="dark"] .app-shell .text-indigo-800,
+html[data-warko-theme="dark"] .app-shell .text-indigo-900 { color: #a5b4fc; }
+html[data-warko-theme="dark"] .app-shell .bg-green-50 { background-color: #052e26; }
+html[data-warko-theme="dark"] .app-shell .bg-green-100 { background-color: #064e3b; }
+html[data-warko-theme="dark"] .app-shell .text-green-600,
+html[data-warko-theme="dark"] .app-shell .text-green-700,
+html[data-warko-theme="dark"] .app-shell .text-green-800,
+html[data-warko-theme="dark"] .app-shell .text-green-900 { color: #86efac; }
+html[data-warko-theme="dark"] .app-shell .bg-red-50 { background-color: #450a0a; }
+html[data-warko-theme="dark"] .app-shell .bg-red-100 { background-color: #7f1d1d; }
+html[data-warko-theme="dark"] .app-shell .text-red-600,
+html[data-warko-theme="dark"] .app-shell .text-red-700,
+html[data-warko-theme="dark"] .app-shell .text-red-800,
+html[data-warko-theme="dark"] .app-shell .text-red-900 { color: #fca5a5; }
+html[data-warko-theme="dark"] .app-shell .bg-orange-50 { background-color: #431407; }
+html[data-warko-theme="dark"] .app-shell .bg-orange-100 { background-color: #7c2d12; }
+html[data-warko-theme="dark"] .app-shell .text-orange-600,
+html[data-warko-theme="dark"] .app-shell .text-orange-700,
+html[data-warko-theme="dark"] .app-shell .text-orange-800,
+html[data-warko-theme="dark"] .app-shell .text-orange-900 { color: #fdba74; }
+html[data-warko-theme="dark"] .app-shell .bg-amber-50 { background-color: #451a03; }
+html[data-warko-theme="dark"] .app-shell .bg-amber-100 { background-color: #78350f; }
+html[data-warko-theme="dark"] .app-shell .text-amber-600,
+html[data-warko-theme="dark"] .app-shell .text-amber-700,
+html[data-warko-theme="dark"] .app-shell .text-amber-800,
+html[data-warko-theme="dark"] .app-shell .text-amber-900 { color: #fde68a; }
+html[data-warko-theme="dark"] .app-shell .bg-rose-50 { background-color: #4c0519; }
+html[data-warko-theme="dark"] .app-shell .bg-rose-100 { background-color: #881337; }
+html[data-warko-theme="dark"] .app-shell .text-rose-600,
+html[data-warko-theme="dark"] .app-shell .text-rose-700,
+html[data-warko-theme="dark"] .app-shell .text-rose-800,
+html[data-warko-theme="dark"] .app-shell .text-rose-900 { color: #fda4af; }
+html[data-warko-theme="dark"] .app-shell .divide-gray-100 > :not(:last-child) { border-color: #334155; }
+
+@media (max-width: 767px) { .app-shell input, .app-shell select, .app-shell textarea { font-size: 16px; } }

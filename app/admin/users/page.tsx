@@ -31,8 +31,8 @@ export default async function AdminUsersPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{u.full_name}</p>
-                  <p className="text-xs text-gray-500 truncate">{u.email ?? '—'}</p>
-                  <p className="text-xs text-gray-400 truncate">{u.phone ?? '—'}</p>
+                  <p className="text-xs text-gray-500 truncate">{u.email ?? 'Non renseigné'}</p>
+                  <p className="text-xs text-gray-400 truncate">{u.phone ?? 'Non renseigné'}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <RoleBadge role={u.role} />
@@ -40,7 +40,7 @@ export default async function AdminUsersPage() {
                 </div>
               </div>
               <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                <span className="truncate">{u.organization_name ?? '—'}</span>
+                <span className="truncate">{u.organization_name ?? 'Non renseigné'}</span>
                 <span>{formatDate(u.created_at)}</span>
               </div>
             </li>
@@ -69,10 +69,10 @@ export default async function AdminUsersPage() {
                       {u.is_owner && <Badge className="bg-amber-100 text-amber-800">Propriétaire</Badge>}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{u.email ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{u.phone ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{u.email ?? 'Non renseigné'}</td>
+                  <td className="px-4 py-3 text-gray-600">{u.phone ?? 'Non renseigné'}</td>
                   <td className="px-4 py-3"><RoleBadge role={u.role} /></td>
-                  <td className="px-4 py-3 text-gray-700">{u.organization_name ?? '—'}</td>
+                  <td className="px-4 py-3 text-gray-700">{u.organization_name ?? 'Non renseigné'}</td>
                   <td className="px-4 py-3 text-gray-500">{formatDate(u.created_at)}</td>
                 </tr>
               ))}
