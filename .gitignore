@@ -46,3 +46,6 @@ login-page.png
 
 # Supabase CLI temporary metadata
 /supabase/.temp/
+
+# Launch QA browser evidence (local generated screenshots)
+/artifacts/launch-qa/

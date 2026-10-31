@@ -1,0 +1,148 @@
+{
+  "checkedAt": "2026-10-30T21:55:09.997Z",
+  "databaseChecked": true,
+  "configurationChecksPassed": false,
+  "checks": [
+    {
+      "id": "NEXT_PUBLIC_SUPABASE_URL",
+      "ok": true,
+      "message": "NEXT_PUBLIC_SUPABASE_URL présent."
+    },
+    {
+      "id": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "ok": true,
+      "message": "NEXT_PUBLIC_SUPABASE_ANON_KEY présent."
+    },
+    {
+      "id": "SUPABASE_SERVICE_ROLE_KEY",
+      "ok": true,
+      "message": "SUPABASE_SERVICE_ROLE_KEY présent."
+    },
+    {
+      "id": "RESEND_API_KEY",
+      "ok": false,
+      "message": "RESEND_API_KEY manquant."
+    },
+    {
+      "id": "NOTIFICATION_FROM_EMAIL",
+      "ok": false,
+      "message": "NOTIFICATION_FROM_EMAIL manquant."
+    },
+    {
+      "id": "NOTIFICATION_UNSUBSCRIBE_SECRET",
+      "ok": false,
+      "message": "NOTIFICATION_UNSUBSCRIBE_SECRET manquant."
+    },
+    {
+      "id": "CRON_SECRET",
+      "ok": false,
+      "message": "CRON_SECRET manquant."
+    },
+    {
+      "id": "APP_BASE_URL",
+      "ok": false,
+      "message": "Une origine HTTPS publique sans chemin ni paramètres est nécessaire."
+    },
+    {
+      "id": "MONERIZ_MODE",
+      "ok": false,
+      "message": "Le lancement demande le mode live ; test reste réservé à la recette."
+    },
+    {
+      "id": "schema:organizations",
+      "ok": false,
+      "message": "42703 : column organizations.country does not exist"
+    },
+    {
+      "id": "schema:orders",
+      "ok": false,
+      "message": "42703 : column orders.delivery_date does not exist"
+    },
+    {
+      "id": "schema:order_lines",
+      "ok": true,
+      "message": "Lecture sans données réussie."
+    },
+    {
+      "id": "schema:order_delivery_assignments",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.order_delivery_assignments' in the schema cache"
+    },
+    {
+      "id": "schema:billing_settings",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.billing_settings' in the schema cache"
+    },
+    {
+      "id": "schema:organization_subscriptions",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.organization_subscriptions' in the schema cache"
+    },
+    {
+      "id": "schema:billing_invoices",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.billing_invoices' in the schema cache"
+    },
+    {
+      "id": "schema:billing_payments",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.billing_payments' in the schema cache"
+    },
+    {
+      "id": "schema:subscription_grants",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.subscription_grants' in the schema cache"
+    },
+    {
+      "id": "schema:organization_usage",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.organization_usage' in the schema cache"
+    },
+    {
+      "id": "schema:moneriz_events",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.moneriz_events' in the schema cache"
+    },
+    {
+      "id": "schema:notification_jobs",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.notification_jobs' in the schema cache"
+    },
+    {
+      "id": "schema:product_variants",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.product_variants' in the schema cache"
+    },
+    {
+      "id": "schema:product_images",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.product_images' in the schema cache"
+    },
+    {
+      "id": "schema:stock_movements",
+      "ok": false,
+      "message": "PGRST205 : Could not find the table 'public.stock_movements' in the schema cache"
+    },
+    {
+      "id": "schema:live_sessions",
+      "ok": true,
+      "message": "Lecture sans données réussie."
+    },
+    {
+      "id": "schema:products",
+      "ok": false,
+      "message": "PGRST200 : Could not find a relationship between 'products' and 'product_variants' in the schema cache"
+    },
+    {
+      "id": "billing-mode-match",
+      "ok": false,
+      "message": "Le mode de la base doit correspondre au mode du serveur."
+    }
+  ],
+  "remainingManualChecks": [
+    "Paiement Moneriz confirmé et webhook de recette",
+    "Expéditeur email vérifié et cron opérationnel",
+    "Identité légale de l’éditeur et politique Auth Supabase",
+    "Parcours métier complet et isolation entre boutiques"
+  ]
+}

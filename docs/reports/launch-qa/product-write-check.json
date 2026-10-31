@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-10-30T22:09:43.644Z",
+  "scope": "uniquement les boutiques QA créées pendant cet audit",
+  "checks": [
+    {
+      "persona": "impatient",
+      "phase": "before",
+      "verified": true,
+      "products": 1
+    },
+    {
+      "persona": "impatient",
+      "phase": "after",
+      "verified": true,
+      "products": 0
+    },
+    {
+      "persona": "sceptique",
+      "phase": "before",
+      "verified": true,
+      "products": 0
+    },
+    {
+      "persona": "sceptique",
+      "phase": "after",
+      "verified": true,
+      "products": 0
+    },
+    {
+      "persona": "mobile",
+      "phase": "before",
+      "verified": true,
+      "products": 1
+    },
+    {
+      "persona": "mobile",
+      "phase": "after",
+      "verified": true,
+      "products": 0
+    },
+    {
+      "persona": "litteral",
+      "phase": "before",
+      "verified": true,
+      "products": 1
+    },
+    {
+      "persona": "litteral",
+      "phase": "after",
+      "verified": true,
+      "products": 0
+    },
+    {
+      "persona": "briseur",
+      "phase": "before",
+      "verified": true,
+      "products": 1
+    },
+    {
+      "persona": "briseur",
+      "phase": "after",
+      "verified": true,
+      "products": 0
+    }
+  ]
+}

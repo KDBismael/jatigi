@@ -1,0 +1,160 @@
+{
+  "checkedAt": "2026-10-31T13:30:10.006Z",
+  "scope": "Données QA isolées, droit Business temporaire sans paiement, aucun email ni cron déclenché.",
+  "checks": [
+    {
+      "name": "Produit réel QA",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Livreur réel QA",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Créer employee",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Créer manager",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Commande réelle QA",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "employee refuse /api/expenses",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "employee refuse /api/goals",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "employee refuse /api/lives",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "employee refuse /api/analytics",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "employee refuse /api/team",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "employee produits protégés",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "employee accès commandes",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "employee coûts masqués",
+      "ok": true
+    },
+    {
+      "name": "employee statut confirmé",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "manager refuse /api/expenses",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "manager refuse /api/goals",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "manager refuse /api/lives",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "manager refuse /api/analytics",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "manager refuse /api/team",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "manager produits protégés",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "manager accès commandes",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "manager coûts masqués",
+      "ok": true
+    },
+    {
+      "name": "manager statut confirmé",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "Autre boutique refuse commande",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "name": "Créer session live",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Relire session live",
+      "ok": true
+    },
+    {
+      "name": "Créer dépense réelle",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Dépense persistée dans boutique QA",
+      "ok": true
+    },
+    {
+      "name": "Créer objectif global",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Relire objectif global",
+      "ok": true
+    },
+    {
+      "name": "Refuse objectif sur live autre boutique",
+      "ok": false,
+      "status": 201
+    },
+    {
+      "name": "Fixture Business active",
+      "ok": true
+    }
+  ]
+}

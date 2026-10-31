@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-31T13:27:14.943Z",
+  "status": 200,
+  "emailEnabled": true,
+  "signupDisabled": false,
+  "emailAutoConfirm": false,
+  "phoneEnabled": false,
+  "returnedFields": [
+    "external",
+    "disable_signup",
+    "mailer_autoconfirm",
+    "phone_autoconfirm",
+    "sms_provider",
+    "saml_enabled",
+    "saml_private_key_next_configured",
+    "passkeys_enabled"
+  ],
+  "smtpCredentialsExposed": false
+}

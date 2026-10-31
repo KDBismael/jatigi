@@ -1,0 +1,26 @@
+import fs from'node:fs';import{createClient}from'@supabase/supabase-js';import{createServerClient}from'@supabase/ssr';process.loadEnvFile('.env');
+const base='http://localhost:3011',f=JSON.parse(fs.readFileSync('/private/tmp/warko-advanced-qa.json','utf8')),checks=[];const check=(name,ok,details={})=>{checks.push({name,ok,...details});console.log(JSON.stringify(checks.at(-1)))};
+const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});const org=await db.from('organizations').select('name').eq('id',f.organizationId).single();if(!org.data?.name.startsWith('QA avancée '))throw Error('QA only');
+async function session(account){let cookies=[];const c=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{cookies:{getAll:()=>cookies,setAll:v=>{cookies=v}}});const login=await c.auth.signInWithPassword(account);if(login.error)throw Error('QA auth failed');return{id:login.data.user.id,cookies,request:async(path,method='GET',body)=>{const r=await fetch(base+path,{method,redirect:'manual',headers:{Cookie:cookies.map(c=>`${c.name}=${c.value}`).join('; '),'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});const text=await r.text();let data;try{data=JSON.parse(text)}catch{data=null}return{status:r.status,data}}}}
+const owner=await session(f.owner),employee=await session(f.employee),manager=await session(f.manager),b=JSON.parse(fs.readFileSync('/private/tmp/warko-qa-postsql-impatient.json','utf8')),other=await session({email:b.email,password:b.password});const date=new Date().toISOString().slice(0,10),month=date.slice(0,7)+'-01';
+try{
+ for(const [role,actor]of[['employee',employee],['manager',manager]]){
+  for(const path of['/api/expenses','/api/goals','/api/lives','/api/team','/api/analytics']){const r=await actor.request(path);check(`${role}: accès administratif refusé ${path}`,r.status===403,{status:r.status})}
+  const r=await actor.request('/api/orders');check(`${role}: commandes sans coûts`,r.status===200&&!JSON.stringify(r.data).includes('unit_cost'),{status:r.status});
+ }
+ let r=await other.request('/api/goals','POST',{month,scope:'live',live_session_id:f.liveId,amount:1000});check('Objectif sur live étranger refusé',r.status===400,{status:r.status});
+ r=await owner.request('/api/lives','PUT',{id:f.liveId,name:'QA live avancé',session_date:date,slot:'evening',target_amount:20000,status:'active'});check('Live clôturé retourne conflit',r.status===409,{status:r.status});
+ r=await other.request('/api/expenses','PUT',{id:f.expenseId,category:'internet',label:'Tentative QA',amount:9999,expense_date:date});check('Dépense étrangère retourne introuvable',r.status===404,{status:r.status});
+ const row=await db.from('expenses').select('amount').eq('id',f.expenseId).eq('organization_id',f.organizationId).single();check('Montant dépense préservé',Number(row.data?.amount)===2000);
+ r=await owner.request('/api/expenses?month='+date.slice(0,7));checks.push({name:'Dépenses mensuelles',ok:r.status===200,status:r.status,blockedByMissingMigration:r.status===503});
+ await db.from('subscription_grants').update({revoked_at:new Date().toISOString()}).eq('id',f.grantId).eq('organization_id',f.organizationId);
+ r=await owner.request('/api/delivery-drivers','POST',{name:'QA quota final',phone:''});check('Découverte: deuxième livreur bloqué',r.status===402,{status:r.status});
+ r=await owner.request('/api/team','POST',{full_name:'QA quota final',email:`qa-final-limit-${Date.now()}@example.com`,password:'Qa!LimitFinal9',role:'employee'});check('Découverte: utilisateur supplémentaire bloqué',r.status===402,{status:r.status});
+ await db.from('organization_usage').upsert({organization_id:f.organizationId,month,orders_count:99},{onConflict:'organization_id,month'});
+ const payload={client_name:'QA quota final concurrence',channel:'magasin',order_date:date,seller_id:owner.id,lines:[{product_id:f.productId,quantity:1}]};const results=await Promise.all([owner.request('/api/orders','POST',payload),owner.request('/api/orders','POST',payload)]);check('100e acceptée, 101e concurrente refusée',results.filter(r=>r.status===201).length===1&&results.filter(r=>r.status===402).length===1,{statuses:results.map(r=>r.status)});
+ const usage=await db.from('organization_usage').select('orders_count').eq('organization_id',f.organizationId).eq('month',month).single();check('Aucun dépassement compteur100',usage.data?.orders_count===100);
+}finally{
+ const count=await db.from('orders').select('id',{count:'exact',head:true}).eq('organization_id',f.organizationId).gte('created_at',month);if(count.count!==null)await db.from('organization_usage').upsert({organization_id:f.organizationId,month,orders_count:count.count},{onConflict:'organization_id,month'});
+ await db.from('subscription_grants').update({revoked_at:null}).eq('id',f.grantId).eq('organization_id',f.organizationId);
+}
+fs.writeFileSync('docs/reports/launch-qa/advanced-final-checks.json',JSON.stringify({checkedAt:new Date().toISOString(),scope:'Fixtures QA isolées uniquement, quota de test rétabli au nombre réel, aucun email ni paiement.',checks},null,2));console.log(JSON.stringify({checks:checks.length,passed:checks.filter(c=>c.ok).length}));

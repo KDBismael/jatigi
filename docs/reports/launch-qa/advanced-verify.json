@@ -1,0 +1,119 @@
+{
+  "checkedAt": "2026-10-31T13:42:47.923Z",
+  "scope": "Boutique QA seulement. Business temporaire sans paiement ; compteur99 de test restauré au nombre réel de commandes en fin de test.",
+  "checks": [
+    {
+      "name": "Objectif cross-boutique refusé après correctif",
+      "ok": true,
+      "status": 400
+    },
+    {
+      "name": "Objectif live propre autorisé",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Employé crée commande sans coûts exposés",
+      "ok": true,
+      "status": 201
+    },
+    {
+      "name": "Admin confie commande en livraison",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Responsable lit commande en livraison sans coûts",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Responsable ne modifie pas les champs généraux",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "Responsable ne modifie pas les remises",
+      "ok": true,
+      "status": 403
+    },
+    {
+      "name": "Responsable livre la commande",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Responsable accède au bilan journalier Business QA",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Démarrer session live",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Clôturer session live",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Session clôturée verrouillée",
+      "ok": false,
+      "status": 400
+    },
+    {
+      "name": "Autre boutique ne modifie pas le live",
+      "ok": true,
+      "status": 404
+    },
+    {
+      "name": "Modifier sa dépense",
+      "ok": true,
+      "status": 200
+    },
+    {
+      "name": "Autre boutique refuse dépense sans erreur interne",
+      "ok": false,
+      "status": 500
+    },
+    {
+      "name": "Dépense intacte après tentative cross-boutique",
+      "ok": true
+    },
+    {
+      "name": "Liste dépenses récurrentes nécessite migration dédiée",
+      "ok": false,
+      "status": 503,
+      "waitingForMigration": true
+    },
+    {
+      "name": "Découverte refuse un deuxième livreur",
+      "ok": false,
+      "status": 402
+    },
+    {
+      "name": "Découverte refuse un utilisateur supplémentaire",
+      "ok": false,
+      "status": 402
+    },
+    {
+      "name": "100e commande autorisée et 101e concurrente refusée",
+      "ok": false,
+      "statuses": [
+        201,
+        402
+      ]
+    },
+    {
+      "name": "Compteur jamais supérieur à 100",
+      "ok": true,
+      "ordersCount": 100
+    },
+    {
+      "name": "Session live incluse en Découverte",
+      "ok": true,
+      "status": 201
+    }
+  ]
+}

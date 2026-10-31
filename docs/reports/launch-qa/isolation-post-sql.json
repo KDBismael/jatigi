@@ -1,0 +1,92 @@
+{
+  "checkedAt": "2026-10-31T12:59:42.659Z",
+  "scope": "Deux boutiques QA, lectures HTTP uniquement, aucun token enregistré.",
+  "checks": [
+    {
+      "test": "A: own order listed",
+      "ok": true
+    },
+    {
+      "test": "A: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "A: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER/document?format=a4",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "A: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER/document?format=58mm",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "A: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER/document?format=80mm",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "A: own PDF a4",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "test": "A: own PDF 58mm",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "test": "A: own PDF 80mm",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "test": "B: own order listed",
+      "ok": true
+    },
+    {
+      "test": "B: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "B: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER/document?format=a4",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "B: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER/document?format=58mm",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "B: other shop order refused",
+      "path": "/api/orders/OTHER_QA_ORDER/document?format=80mm",
+      "status": 404,
+      "ok": true
+    },
+    {
+      "test": "B: own PDF a4",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "test": "B: own PDF 58mm",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "test": "B: own PDF 80mm",
+      "status": 200,
+      "ok": true
+    }
+  ]
+}

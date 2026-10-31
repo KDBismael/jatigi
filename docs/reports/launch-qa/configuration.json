@@ -1,0 +1,58 @@
+{
+  "checkedAt": "2026-10-30T21:54:58.641Z",
+  "databaseChecked": false,
+  "configurationChecksPassed": false,
+  "checks": [
+    {
+      "id": "NEXT_PUBLIC_SUPABASE_URL",
+      "ok": true,
+      "message": "NEXT_PUBLIC_SUPABASE_URL présent."
+    },
+    {
+      "id": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "ok": true,
+      "message": "NEXT_PUBLIC_SUPABASE_ANON_KEY présent."
+    },
+    {
+      "id": "SUPABASE_SERVICE_ROLE_KEY",
+      "ok": true,
+      "message": "SUPABASE_SERVICE_ROLE_KEY présent."
+    },
+    {
+      "id": "RESEND_API_KEY",
+      "ok": false,
+      "message": "RESEND_API_KEY manquant."
+    },
+    {
+      "id": "NOTIFICATION_FROM_EMAIL",
+      "ok": false,
+      "message": "NOTIFICATION_FROM_EMAIL manquant."
+    },
+    {
+      "id": "NOTIFICATION_UNSUBSCRIBE_SECRET",
+      "ok": false,
+      "message": "NOTIFICATION_UNSUBSCRIBE_SECRET manquant."
+    },
+    {
+      "id": "CRON_SECRET",
+      "ok": false,
+      "message": "CRON_SECRET manquant."
+    },
+    {
+      "id": "APP_BASE_URL",
+      "ok": false,
+      "message": "Une origine HTTPS publique sans chemin ni paramètres est nécessaire."
+    },
+    {
+      "id": "MONERIZ_MODE",
+      "ok": false,
+      "message": "Le lancement demande le mode live ; test reste réservé à la recette."
+    }
+  ],
+  "remainingManualChecks": [
+    "Paiement Moneriz confirmé et webhook de recette",
+    "Expéditeur email vérifié et cron opérationnel",
+    "Identité légale de l’éditeur et politique Auth Supabase",
+    "Parcours métier complet et isolation entre boutiques"
+  ]
+}

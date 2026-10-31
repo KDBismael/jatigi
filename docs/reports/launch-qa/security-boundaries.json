@@ -1,0 +1,145 @@
+{
+  "checkedAt": "2026-10-30T22:03:02.955Z",
+  "base": "http://localhost:3011",
+  "checks": [
+    {
+      "path": "/api/me",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/products",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/orders",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/orders/export",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/customers/export",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/delivery-drivers",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/delivery-balance?date=2026-10-30",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/analytics",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/expenses",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/goals",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/lives",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/reports",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/team",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/sales-people",
+      "status": 403,
+      "ok": true
+    },
+    {
+      "path": "/api/organization/branding",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/billing",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/onboarding",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/order-options",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/orders/00000000-0000-4000-8000-000000000000/document?format=58mm",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/billing/receipts/00000000-0000-4000-8000-000000000000",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/billing/checkout",
+      "method": "POST",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/billing/subscription",
+      "method": "POST",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/billing/reconcile",
+      "method": "POST",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/api/organization/settings",
+      "method": "PATCH",
+      "status": 401,
+      "ok": true
+    },
+    {
+      "path": "/conditions",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "path": "/confidentialite",
+      "status": 200,
+      "ok": true
+    },
+    {
+      "path": "/contact",
+      "status": 200,
+      "ok": true
+    }
+  ]
+}

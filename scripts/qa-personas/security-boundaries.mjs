@@ -1,0 +1,9 @@
+import fs from 'node:fs'
+const base=process.env.QA_BASE_URL||'http://localhost:3011'
+const paths=['/api/me','/api/products','/api/orders','/api/orders/export','/api/customers/export','/api/delivery-drivers','/api/delivery-balance?date=2026-10-30','/api/analytics','/api/expenses','/api/goals','/api/lives','/api/reports','/api/team','/api/sales-people','/api/organization/branding','/api/billing','/api/onboarding','/api/order-options','/api/orders/00000000-0000-4000-8000-000000000000/document?format=58mm','/api/billing/receipts/00000000-0000-4000-8000-000000000000']
+const checks=[]
+for(const path of paths){const response=await fetch(base+path,{redirect:'manual'});checks.push({path,status:response.status,ok:[401,403].includes(response.status)})}
+for(const path of ['/api/billing/checkout','/api/billing/subscription','/api/billing/reconcile']){const response=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});checks.push({path,method:'POST',status:response.status,ok:[401,403].includes(response.status)})}
+{const path='/api/organization/settings';const response=await fetch(base+path,{method:'PATCH',headers:{'Content-Type':'application/json'},body:'{}'});checks.push({path,method:'PATCH',status:response.status,ok:[401,403].includes(response.status)})}
+for(const path of ['/conditions','/confidentialite','/contact']){const response=await fetch(base+path,{redirect:'manual'});checks.push({path,status:response.status,ok:response.status===200})}
+const result={checkedAt:new Date().toISOString(),base,checks};fs.mkdirSync('docs/reports/launch-qa',{recursive:true});fs.writeFileSync(process.env.QA_OUTPUT||'docs/reports/launch-qa/security-boundaries.json',JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify({checks:checks.length,passed:checks.filter(x=>x.ok).length,failures:checks.filter(x=>!x.ok)}));process.exitCode=checks.every(x=>x.ok)?0:1
