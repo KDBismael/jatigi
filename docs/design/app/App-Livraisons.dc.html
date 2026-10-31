@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Livraisons mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@keyframes l-fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.l-open{animation:l-fade .3s ease both}
+.l-press{transition:transform .15s ease,background-color .2s ease;cursor:pointer}
+.l-press:active{transform:scale(.97)}
+@media (prefers-reduced-motion: reduce){.l-open{animation:none}.l-press{transition:none}}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1700px; display: flex; flex-direction: column; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #F9FAFB">
+<dc-import name="AppTopBar" hint-size="390px,62px"></dc-import>
+<main style="flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+<div>
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">Bilan du jour</h1>
+<p style="margin: 2px 0 0; font-size: 14px; color: #6B7280">Colis confiés aux livreurs ce jour de tournée (heure d’Abidjan).</p>
+</div>
+
+<!-- Date: segmented control + date field, all 44px -->
+<div style="display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px">
+<button type="button" class="l-press" aria-pressed="true" style="min-height: 44px; border: 0; border-radius: 10px; background: #4F46E5; color: #FFFFFF; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Aujourd’hui</button>
+<button type="button" class="l-press" aria-pressed="false" style="min-height: 44px; border: 1px solid #D1D5DB; border-radius: 10px; background: #FFFFFF; color: #374151; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Hier</button>
+<label style="display: flex; align-items: center; gap: 8px; min-height: 44px; border: 1px solid #D1D5DB; border-radius: 10px; background: #FFFFFF; padding: 0 10px; font-size: 14px; color: #374151"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Date de tournée</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"></path></svg><span style="font-variant-numeric: tabular-nums">29/10/2026</span></label>
+</div>
+
+<!-- Day total -->
+<section aria-labelledby="tot" style="background: #EEF2FF; border: 1px solid #E0E7FF; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px">
+<h2 id="tot" style="margin: 0; font-size: 15px; font-weight: 600">Total de la journée</h2>
+<span style="font-size: 18px; font-weight: 800; color: #3730A3; font-variant-numeric: tabular-nums">195 000 FCFA</span>
+</div>
+<div style="font-size: 12px; color: #4B5563; margin-top: -8px">À remettre attendu, hors frais de livraison</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center">
+<div style="background: #FFFFFF; border-radius: 10px; padding: 8px 4px"><div style="font-size: 18px; font-weight: 700">17</div><div style="font-size: 11px; color: #6B7280">Livrés</div></div>
+<div style="background: #FFFFFF; border-radius: 10px; padding: 8px 4px"><div style="font-size: 18px; font-weight: 700">1</div><div style="font-size: 11px; color: #6B7280">En cours</div></div>
+<div style="background: #FFFFFF; border-radius: 10px; padding: 8px 4px"><div style="font-size: 18px; font-weight: 700">1</div><div style="font-size: 11px; color: #6B7280">Annulés</div></div>
+<div style="background: #FFFFFF; border-radius: 10px; padding: 8px 4px"><div style="font-size: 18px; font-weight: 700">0</div><div style="font-size: 11px; color: #6B7280">Reportés</div></div>
+</div>
+</section>
+
+<!-- Drivers: whole header row is the toggle, SVG chevron instead of ▾ / ▴ -->
+<sc-for list="{{drivers}}" as="d" hint-placeholder-count="3">
+<article style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; overflow: hidden">
+<button type="button" class="l-press" aria-expanded="{{d.open}}" data-testid="delivery-driver-toggle" onClick="{{d.toggle}}" style="width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; border: 0; background: #FFFFFF; text-align: left; font-family: Inter, sans-serif">
+<span style="flex: none; width: 40px; height: 40px; border-radius: 999px; background: #EEF2FF; color: #3730A3; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">{{d.initials}}</span>
+<span style="flex: 1; min-width: 0">
+<span style="display: block; font-size: 15px; font-weight: 600; color: #111827">{{d.name}}</span>
+<span style="display: block; font-size: 12px; color: #6B7280">{{d.summary}}</span>
+</span>
+<span style="text-align: right">
+<span style="display: block; font-size: 15px; font-weight: 700; color: {{d.dueColor}}; font-variant-numeric: tabular-nums">{{d.due}}</span>
+<span style="display: block; font-size: 11px; color: #6B7280">reste dû</span>
+</span>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{d.chev}}"><path d="m6 9 6 6 6-6"></path></svg>
+</button>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 14px; border-top: 1px solid #F3F4F6; font-size: 13px; font-variant-numeric: tabular-nums">
+<div><dt style="color: #6B7280">Encaissé sur la tournée</dt><dd style="margin: 2px 0 0; font-weight: 600">{{d.collected}} FCFA</dd></div>
+<div><dt style="color: #6B7280">Frais retenus</dt><dd style="margin: 2px 0 0; font-weight: 600">{{d.fees}} FCFA</dd></div>
+<div><dt style="color: #6B7280">Reversé à cette date</dt><dd style="margin: 2px 0 0; font-weight: 600">{{d.remitted}} FCFA</dd></div>
+<div><dt style="color: #6B7280">À remettre attendu</dt><dd style="margin: 2px 0 0; font-weight: 600; color: #3730A3">{{d.expected}} FCFA</dd></div>
+</dl>
+<sc-if value="{{d.open}}" hint-placeholder-val="{{false}}">
+<div class="l-open" style="border-top: 1px solid #F3F4F6; background: #F9FAFB; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 13px; font-weight: 600; color: #374151">Commandes de la tournée</div>
+<sc-for list="{{d.orders}}" as="o" hint-placeholder-count="2">
+<a href="#" style="display: flex; justify-content: space-between; gap: 10px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 10px; padding: 10px 12px; text-decoration: none; color: #111827; font-size: 13px">
+<span style="min-width: 0"><span style="display: block; font-weight: 600; color: #4338CA">{{o.client}}</span><span style="display: block; color: #6B7280">{{o.products}}</span></span>
+<span style="text-align: right; flex: none"><span style="{{o.badge}}">{{o.status}}</span><span style="display: block; margin-top: 4px; font-weight: 600; font-variant-numeric: tabular-nums">{{o.amount}} FCFA</span></span>
+</a>
+</sc-for>
+</div>
+</sc-if>
+<div style="display: flex; gap: 8px; padding: 0 14px 14px">
+<button type="button" class="l-press" style="flex: 1; min-height: 44px; border: 0; border-radius: 10px; background: #4F46E5; color: #FFFFFF; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Enregistrer un reversement</button>
+</div>
+</article>
+</sc-for>
+
+<button type="button" class="l-press" style="min-height: 44px; border: 1px solid #D1D5DB; border-radius: 10px; background: #FFFFFF; color: #374151; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Exporter le bilan (Google Sheets)</button>
+</main>
+<div style="position: sticky; bottom: 0">
+<dc-import name="AppBottomNav" active="deliveries" hint-size="390px,72px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1700}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { open: 'koffi' }; }
+  renderVals() {
+    var self = this;
+    var st = { 'Livré': ['#DCFCE7', '#166534'], 'En cours': ['#FEF9C3', '#854D0E'], 'Annulé': ['#FEE2E2', '#991B1B'] };
+    var data = [
+      { key: 'koffi', name: 'Koffi', initials: 'KO', summary: '8 colis · 7 livrés · 1 en cours', due: '28 000', collected: '96 000', fees: '8 000', remitted: '60 000', expected: '88 000',
+        orders: [{ client: 'Aïcha K.', products: 'Sérum éclat × 2', status: 'Livré', amount: '18 000' }, { client: 'Mariam D.', products: 'Perruque lisse 16" × 1', status: 'En cours', amount: '35 000' }] },
+      { key: 'ibrahim', name: 'Ibrahim', initials: 'IB', summary: '5 colis · 4 livrés · 1 annulé', due: '14 500', collected: '57 000', fees: '5 000', remitted: '37 500', expected: '52 000',
+        orders: [{ client: 'Nadia O.', products: 'Gel douche × 4', status: 'Livré', amount: '12 000' }, { client: 'Koné A.', products: 'Savon noir × 2', status: 'Annulé', amount: '0' }] },
+      { key: 'serge', name: 'Serge', initials: 'SE', summary: '6 colis · 6 livrés', due: '0', collected: '61 000', fees: '6 000', remitted: '55 000', expected: '55 000',
+        orders: [{ client: 'Bintou C.', products: 'Coffret parfum × 1', status: 'Livré', amount: '25 000' }] }
+    ];
+    var drivers = data.map(function (d) {
+      var open = self.state.open === d.key;
+      var o = {};
+      for (var k in d) o[k] = d[k];
+      o.open = open;
+      o.dueColor = d.due === '0' ? '#166534' : '#B45309';
+      o.chev = 'flex: none; transition: transform .25s ease; transform: rotate(' + (open ? '180' : '0') + 'deg)';
+      o.toggle = function () { self.setState({ open: open ? null : d.key }); };
+      o.orders = d.orders.map(function (r) {
+        var c = st[r.status];
+        return { client: r.client, products: r.products, status: r.status, amount: r.amount, badge: 'display: inline-block; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; background: ' + c[0] + '; color: ' + c[1] };
+      });
+      return o;
+    });
+    return { drivers: drivers };
+  }
+}
+</script>
+</body>
+</html>

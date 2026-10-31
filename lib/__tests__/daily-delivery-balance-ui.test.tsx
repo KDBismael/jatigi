@@ -26,7 +26,7 @@ describe('bilan quotidien des tournées', () => {
     expect(await screen.findByRole('button', { name: /Koffi/ })).toBeTruthy()
     expect(screen.getByText(/Archivé/)).toBeTruthy()
     expect(screen.getByText(/2 commandes sans date de tournée/)).toBeTruthy()
-    expect(screen.getByText(/hors frais de livraison/)).toBeTruthy()
+    expect(screen.getAllByText(/hors frais de livraison/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/7.?500/).length).toBe(2)
     expect(screen.queryByText('Awa')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Koffi/ }))
