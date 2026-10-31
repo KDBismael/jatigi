@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Only these paths are accessible without a session
-const PUBLIC_PATHS = ['/', '/auth/login', '/auth/callback', '/auth/signup', '/auth/forgot-password', '/auth/reset-password']
+const PUBLIC_PATHS = ['/', '/conditions', '/confidentialite', '/contact', '/auth/login', '/auth/callback', '/auth/signup', '/auth/forgot-password', '/auth/reset-password']
 
 // Admin-only paths — authenticated non-admins get redirected to /orders
 const ADMIN_ONLY_PATHS = ['/dashboard', '/products', '/deliveries', '/analytics', '/team', '/expenses', '/pilotage', '/reports', '/subscription']
