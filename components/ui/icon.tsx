@@ -132,6 +132,13 @@ const ICONS = {
       d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
     />
   ),
+  image: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M5 4.5h14A1.5 1.5 0 0120.5 6v12a1.5 1.5 0 01-1.5 1.5H5A1.5 1.5 0 013.5 18V6A1.5 1.5 0 015 4.5zM3.5 16l5-5 4 4 2.5-2.5 5.5 5.5M15 9.5a1.5 1.5 0 100-.01"
+    />
+  ),
 } as const;
 export type IconName = keyof typeof ICONS;
 export function Icon({
