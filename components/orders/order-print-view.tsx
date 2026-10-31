@@ -1,11 +1,12 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { PrinterPicker } from '@/components/orders/printer-picker'
 import { usePrinterSettings } from '@/hooks/use-printer-settings'
-import { formatDocumentMoney as money, type DocumentFormat, type OrderDocument } from '@/lib/order-document'
+import { formatDocumentMoney, type DocumentFormat, type OrderDocument } from '@/lib/order-document'
+import styles from './order-print-view.module.css'
 
 export function OrderPrintView({ document: doc, orderId, initialFormat, preferenceKey, initialOpen = false }: {
   document: OrderDocument; orderId: string; initialFormat: DocumentFormat; preferenceKey: string; initialOpen?: boolean
@@ -15,13 +16,24 @@ export function OrderPrintView({ document: doc, orderId, initialFormat, preferen
   const [pickerOpen, setPickerOpen] = useState(initialOpen)
   const [height, setHeight] = useState(297)
   const [printing, setPrinting] = useState(false)
+  const [previewScale, setPreviewScale] = useState(1)
+  const preview = useRef<HTMLDivElement>(null)
   const sheet = useRef<HTMLElement>(null)
   const thermal = format !== 'a4'
   useEffect(() => {
     const element = sheet.current
-    if (!element) return
-    const observer = new ResizeObserver(() => setHeight(Math.ceil(element.getBoundingClientRect().height * 25.4 / 96) + 2))
+    const container = preview.current
+    if (!element || !container) return
+    function measure() {
+      // Offset dimensions remain the real paper size when the screen preview is zoomed.
+      setHeight(Math.ceil(element!.offsetHeight * 25.4 / 96) + 2)
+      setPreviewScale(format === 'a4' && element!.offsetWidth > 0 && container!.clientWidth > 0
+        ? Math.min(1, container!.clientWidth / element!.offsetWidth) : 1)
+    }
+    const observer = new ResizeObserver(measure)
     observer.observe(element)
+    observer.observe(container)
+    measure()
     return () => observer.disconnect()
   }, [format])
   async function print() {
@@ -44,8 +56,8 @@ export function OrderPrintView({ document: doc, orderId, initialFormat, preferen
       {pickerOpen && <PrinterPicker orderId={orderId} settings={{ ...preferences.settings, format }} onSettingsChange={preferences.save}
         onSystemPrint={print} getElement={() => sheet.current} onClose={() => setPickerOpen(false)} />}
     </div>
-    <div className="overflow-x-auto print:overflow-visible">
-      <article ref={sheet} data-format={format} className={`order-document mx-auto bg-white text-black shadow-lg ${thermal ? 'order-document-thermal' : 'order-document-a4'}`} style={{ width: thermal ? (format === '58mm' ? '58mm' : '80mm') : '210mm' }}>
+    <div ref={preview} className="overflow-x-auto print:overflow-visible" style={{ '--preview-scale': previewScale } as CSSProperties}>
+      <article ref={sheet} data-format={format} className={`${styles.sheet} order-document mx-auto bg-white text-black shadow-lg ${thermal ? 'order-document-thermal' : 'order-document-a4'}`} style={{ width: thermal ? (format === '58mm' ? '58mm' : '80mm') : '210mm' }}>
         <header className="document-header">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {doc.logoUrl && <img src={doc.logoUrl} alt={`Logo ${doc.organizationName}`} className="document-logo" />}
@@ -62,9 +74,9 @@ export function OrderPrintView({ document: doc, orderId, initialFormat, preferen
         <section aria-label="Produits commandés" className="document-lines">
           {doc.lines.map((line, index) => <div key={index} className="document-line">
             <p className="document-product">{line.name}</p>{line.detail && <p>{line.detail}</p>}
-            <div className="document-amount"><span>Qté : {line.quantity}</span><span>Prix : {money(line.price)}</span></div>
-            {line.discountReason && <><div className="document-amount"><span>Avant remise</span><span>{money(line.subtotal)}</span></div><div className="document-amount"><span>Remise</span><span>-{money(line.discountAmount)}</span></div><p className="document-reason">Motif : {line.discountReason}</p></>}
-            <div className="document-amount document-line-total"><span>Total ligne</span><span>{money(line.total)}</span></div>
+            <div className="document-amount"><span>Qté : {line.quantity}</span><span>Prix : {formatDocumentMoney(line.price)}</span></div>
+            {line.discountReason && <><div className="document-amount"><span>Avant remise</span><span>{formatDocumentMoney(line.subtotal)}</span></div><div className="document-amount"><span>Remise</span><span>-{formatDocumentMoney(line.discountAmount)}</span></div><p className="document-reason">Motif : {line.discountReason}</p></>}
+            <div className="document-amount document-line-total"><span>Total ligne</span><span>{formatDocumentMoney(line.total)}</span></div>
           </div>)}
         </section>
         <section className="document-totals">
@@ -81,5 +93,5 @@ export function OrderPrintView({ document: doc, orderId, initialFormat, preferen
   </main>
 }
 function Amount({ label, amount, strong = false }: { label: string; amount: number; strong?: boolean }) {
-  return <div className={`document-amount ${strong ? 'document-emphasis' : ''}`}><span>{label}</span><span>{money(amount)}</span></div>
+  return <div className={`document-amount ${strong ? 'document-emphasis' : ''}`}><span>{label}</span><span>{formatDocumentMoney(amount)}</span></div>
 }

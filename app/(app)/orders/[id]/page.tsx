@@ -1,95 +1,154 @@
-'use client'
+"use client";
+import { Icon } from "@/components/ui/icon";
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { DiscountEditor } from '@/components/orders/discount-editor'
-import { OrderStatusBadge } from '@/components/orders/order-status-badge'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency, formatDate, resolveUnitCost } from '@/lib/utils'
-import { orderAmounts, orderRemittableAmount } from '@/lib/order-amounts'
-import { canManageDeliveries } from '@/lib/delivery-access'
-import { DELIVERY_STATUSES } from '@/lib/order-access'
-import { CHANNELS, CHANNEL_LABELS, STATUSES, STATUS_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS, type OrderStatus } from '@/lib/constants'
-import { useAuthStore } from '@/stores/auth-store'
-import type { Order } from '@/types/order'
-import { useDeliveryDrivers } from '@/hooks/use-delivery-drivers'
-import { useOrderOptions } from '@/hooks/use-order-options'
+import { useEffect, useRef, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { DiscountEditor } from "@/components/orders/discount-editor";
+import { OrderLinesCard } from "@/components/orders/order-lines-card";
+import { OrderDetailHeader } from "@/components/orders/order-detail-header";
+import { OrderStatusActions } from "@/components/orders/order-status-actions";
+import { OrderDeliveryCard } from "@/components/orders/order-delivery-card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatCurrency, resolveUnitCost } from "@/lib/utils";
+import { orderAmounts, orderRemittableAmount } from "@/lib/order-amounts";
+import { canManageDeliveries } from "@/lib/delivery-access";
+import { DELIVERY_STATUSES } from "@/lib/order-access";
+import {
+  CHANNELS,
+  CHANNEL_LABELS,
+  STATUSES,
+  PAYMENT_METHODS,
+  PAYMENT_METHOD_LABELS,
+  type OrderStatus,
+} from "@/lib/constants";
+import { useAuthStore } from "@/stores/auth-store";
+import type { Order } from "@/types/order";
+import { useDeliveryDrivers } from "@/hooks/use-delivery-drivers";
+import { useOrderOptions } from "@/hooks/use-order-options";
 
-const channelOptions = CHANNELS.map((c) => ({ value: c, label: CHANNEL_LABELS[c] }))
-const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({ value: m, label: PAYMENT_METHOD_LABELS[m] }))
+const channelOptions = CHANNELS.map((c) => ({
+  value: c,
+  label: CHANNEL_LABELS[c],
+}));
+const paymentMethodOptions = PAYMENT_METHODS.map((m) => ({
+  value: m,
+  label: PAYMENT_METHOD_LABELS[m],
+}));
 
 export default function OrderDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const router = useRouter()
-  const isManager = useAuthStore(s=>s.profile?.role==='manager')
-  const availableStatuses = isManager ? DELIVERY_STATUSES : STATUSES
-  const isAdmin = useAuthStore((s) => s.isAdmin())
-  const canSettle = canManageDeliveries(useAuthStore(s => s.profile?.role))
-  const { drivers } = useDeliveryDrivers()
-  const { sellers, lives } = useOrderOptions()
-  const [order, setOrder] = useState<Order | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [updating, setUpdating] = useState(false)
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const isManager = useAuthStore((s) => s.profile?.role === "manager");
+  const availableStatuses = isManager ? DELIVERY_STATUSES : STATUSES;
+  const isAdmin = useAuthStore((s) => s.isAdmin());
+  const canSettle = canManageDeliveries(useAuthStore((s) => s.profile?.role));
+  const { drivers } = useDeliveryDrivers();
+  const { sellers, lives } = useOrderOptions();
+  const [order, setOrder] = useState<Order | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   // Edit state
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState('')
-  const [editPhone, setEditPhone] = useState('')
-  const [editChannel, setEditChannel] = useState('')
-  const [editDate, setEditDate] = useState('')
-  const [editDriverId, setEditDriverId] = useState('')
-  const [editDeliveryDate, setEditDeliveryDate] = useState('')
-  const [editLocation, setEditLocation] = useState('')
-  const [editDeliveryFee, setEditDeliveryFee] = useState('')
-  const [editSellerId, setEditSellerId] = useState('')
-  const [editLiveId, setEditLiveId] = useState('')
-  const [editConfirmationAmount, setEditConfirmationAmount] = useState('')
-  const [editPaymentMethod, setEditPaymentMethod] = useState('')
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [statusError, setStatusError] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editChannel, setEditChannel] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editDriverId, setEditDriverId] = useState("");
+  const [editDeliveryDate, setEditDeliveryDate] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editDeliveryFee, setEditDeliveryFee] = useState("");
+  const [editSellerId, setEditSellerId] = useState("");
+  const [editLiveId, setEditLiveId] = useState("");
+  const [editConfirmationAmount, setEditConfirmationAmount] = useState("");
+  const [editPaymentMethod, setEditPaymentMethod] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/orders/${id}`)
-      .then((r) => r.json())
-      .then(setOrder)
-      .finally(() => setIsLoading(false))
-  }, [id])
+    const controller = new AbortController();
+    let active = true;
+    async function load() {
+      if (!active) return;
+      setIsLoading(true);
+      setLoadError(null);
+      try {
+        const response = await fetch(`/api/orders/${id}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(
+            typeof data.error === "string"
+              ? data.error
+              : "Impossible de charger la commande.",
+          );
+        if (active) setOrder(data);
+      } catch (error) {
+        if (active) {
+          setOrder(null);
+          setLoadError(
+            error instanceof Error
+              ? error.message
+              : "Connexion impossible. Réessayez.",
+          );
+        }
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    }
+    void Promise.resolve().then(load);
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [id]);
 
-  function startEdit() {
-    if (!order) return
-    setEditName(order.client_name)
-    setEditPhone(order.client_phone ?? '')
-    setEditChannel(order.channel)
-    setEditDate(order.order_date)
-    setEditDriverId(order.delivery_driver_id ?? '')
-    setEditDeliveryDate(order.delivery_date ?? '')
-    setEditLocation(order.delivery_location ?? '')
-    setEditDeliveryFee(String(order.delivery_fee ?? 0))
-    setEditSellerId(order.seller_id ?? '')
-    setEditLiveId(order.live_session_id ?? '')
-    setEditConfirmationAmount(order.confirmation_amount ? String(order.confirmation_amount) : '')
-    setEditPaymentMethod(order.payment_method ?? '')
-    setSaveError(null)
-    setIsEditing(true)
+  const deliveryDateRef = useRef<HTMLInputElement>(null);
+  const [focusDeliveryDate, setFocusDeliveryDate] = useState(false);
+  useEffect(() => {
+    if (isEditing && focusDeliveryDate) deliveryDateRef.current?.focus();
+  }, [isEditing, focusDeliveryDate]);
+
+  function startEdit(focusDate = false) {
+    setFocusDeliveryDate(focusDate);
+    if (!order) return;
+    setEditName(order.client_name);
+    setEditPhone(order.client_phone ?? "");
+    setEditChannel(order.channel);
+    setEditDate(order.order_date);
+    setEditDriverId(order.delivery_driver_id ?? "");
+    setEditDeliveryDate(order.delivery_date ?? "");
+    setEditLocation(order.delivery_location ?? "");
+    setEditDeliveryFee(String(order.delivery_fee ?? 0));
+    setEditSellerId(order.seller_id ?? "");
+    setEditLiveId(order.live_session_id ?? "");
+    setEditConfirmationAmount(
+      order.confirmation_amount ? String(order.confirmation_amount) : "",
+    );
+    setEditPaymentMethod(order.payment_method ?? "");
+    setSaveError(null);
+    setIsEditing(true);
   }
 
   async function saveEdit() {
-    setSaveError(null)
+    setSaveError(null);
     if (editDriverId && !editDeliveryDate) {
-      setSaveError('Renseignez la date de tournée du colis confié au livreur.')
-      return
+      setSaveError("Renseignez la date de tournée du colis confié au livreur.");
+      return;
     }
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const res = await fetch(`/api/orders/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           client_name: editName,
           client_phone: editPhone || null,
@@ -99,45 +158,57 @@ export default function OrderDetailPage() {
           delivery_date: editDriverId ? editDeliveryDate : null,
           delivery_location: editLocation || null,
           delivery_fee: Number(editDeliveryFee) || 0,
-          ...(isAdmin ? { seller_id: editSellerId, live_session_id: editLiveId || null } : {}),
+          ...(isAdmin
+            ? { seller_id: editSellerId, live_session_id: editLiveId || null }
+            : {}),
           confirmation_amount: Number(editConfirmationAmount) || 0,
-          payment_method: editPaymentMethod || '',
+          payment_method: editPaymentMethod || "",
         }),
-      })
+      });
       if (!res.ok) {
-        const err = await res.json()
-        setSaveError(typeof err.error === 'string' ? err.error : 'Vérifiez les informations et la date de tournée.')
-        return
+        const err = await res.json();
+        setSaveError(
+          typeof err.error === "string"
+            ? err.error
+            : "Vérifiez les informations et la date de tournée.",
+        );
+        return;
       }
-      const updated = await res.json()
-      setOrder(updated)
-      setIsEditing(false)
+      const updated = await res.json();
+      setOrder(updated);
+      setIsEditing(false);
+    } catch {
+      setSaveError("Connexion impossible. Réessayez.");
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
   }
 
   async function handleStatusChange(status: OrderStatus) {
-    if (!order) return
-    setUpdating(true)
-    setStatusError(null)
+    if (!order) return;
+    setUpdating(true);
+    setStatusError(null);
     try {
       const res = await fetch(`/api/orders/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
-      })
+      });
       if (res.ok) {
-        const updated = await res.json()
-        setOrder(updated)
+        const updated = await res.json();
+        setOrder(updated);
       } else {
-        const data = await res.json()
-        setStatusError(typeof data.error === 'string' ? data.error : 'Impossible de modifier le statut.')
+        const data = await res.json();
+        setStatusError(
+          typeof data.error === "string"
+            ? data.error
+            : "Impossible de modifier le statut.",
+        );
       }
     } catch {
-      setStatusError('Connexion impossible. Réessayez.')
+      setStatusError("Connexion impossible. Réessayez.");
     } finally {
-      setUpdating(false)
+      setUpdating(false);
     }
   }
 
@@ -148,54 +219,79 @@ export default function OrderDetailPage() {
         <Skeleton className="h-40" />
         <Skeleton className="h-60" />
       </div>
-    )
+    );
   }
 
   if (!order) {
     return (
       <div className="text-center py-16 text-gray-500">
-        Commande introuvable.
-        <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-4 block mx-auto">
-          ← Retour
+        {loadError ? (
+          <p role="alert">{loadError}</p>
+        ) : (
+          <p>Commande introuvable.</p>
+        )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="mt-4 block mx-auto"
+        >
+          <Icon name="chevron-left" className="inline-block h-4 w-4" /> Retour
         </Button>
       </div>
-    )
+    );
   }
 
-  const lines = order.order_lines ?? []
-  const totalRevenue = lines.reduce((s, l) => s + Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity), 0)
-  const totalCost = lines.reduce((s, l) => s + Number(l.total_cost ?? resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity), 0)
-  const totalProfit = totalRevenue - totalCost
-  const amounts = orderAmounts(lines, order.delivery_fee ?? 0, order.confirmation_amount ?? 0)
-  const toReverse = orderRemittableAmount(lines, order.confirmation_amount ?? 0)
+  const lines = order.order_lines ?? [];
+  const totalRevenue = lines.reduce(
+    (s, l) => s + Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity),
+    0,
+  );
+  const totalCost = lines.reduce(
+    (s, l) =>
+      s +
+      Number(
+        l.total_cost ??
+          resolveUnitCost(l.unit_cost ?? 0, l.product) * l.quantity,
+      ),
+    0,
+  );
+  const totalProfit = totalRevenue - totalCost;
+  const amounts = orderAmounts(
+    lines,
+    order.delivery_fee ?? 0,
+    order.confirmation_amount ?? 0,
+  );
+  const toReverse = orderRemittableAmount(
+    lines,
+    order.confirmation_amount ?? 0,
+  );
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>←</Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">{order.client_name}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {CHANNEL_LABELS[order.channel]} · {formatDate(order.order_date)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <OrderStatusBadge status={order.status} />
-          <Link href={`/orders/${order.id}/print`}><Button variant="secondary" size="sm">Imprimer</Button></Link>
-          {!isEditing && !isManager && (
-            <Button variant="secondary" size="sm" onClick={startEdit}>Modifier</Button>
-          )}
-        </div>
-      </div>
+      <OrderDetailHeader
+        order={order}
+        onEdit={!isEditing && !isManager ? () => startEdit() : undefined}
+      />
+      <OrderStatusActions
+        status={order.status}
+        statuses={availableStatuses}
+        busy={updating}
+        onChange={handleStatusChange}
+        error={statusError}
+        canEdit={!isManager}
+      />
 
       {/* Inline edit form */}
       {isEditing && (
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Modifier la commande</h2>
+            <h2 className="font-semibold text-gray-900">
+              Modifier la commande
+            </h2>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 label="Nom du client"
                 value={editName}
@@ -209,31 +305,90 @@ export default function OrderDetailPage() {
               />
             </div>
             <Select
+              id="edit-order-driver"
               label="Livreur assigné"
-              disabled={Boolean(order.status === 'delivered' || order.status === 'cancelled' || order.discounts_locked_at)}
-              options={drivers.filter(driver => driver.is_active || driver.id === order.delivery_driver_id).map((driver) => ({ value: driver.id, label: `${driver.name}${driver.is_active ? '' : ' (archivé)'}` }))}
+              disabled={Boolean(
+                order.status === "delivered" ||
+                  order.status === "cancelled" ||
+                  order.discounts_locked_at,
+              )}
+              options={drivers
+                .filter(
+                  (driver) =>
+                    driver.is_active || driver.id === order.delivery_driver_id,
+                )
+                .map((driver) => ({
+                  value: driver.id,
+                  label: `${driver.name}${driver.is_active ? "" : " (archivé)"}`,
+                }))}
               placeholder="Aucun livreur"
               value={editDriverId}
-              onChange={(event) => { setEditDriverId(event.target.value); if (event.target.value !== order.delivery_driver_id) setEditDeliveryDate(new Date().toISOString().slice(0,10)) }}
+              onChange={(event) => {
+                setEditDriverId(event.target.value);
+                if (event.target.value !== order.delivery_driver_id)
+                  setEditDeliveryDate(new Date().toISOString().slice(0, 10));
+              }}
             />
-            {editDriverId && <div>
-              <Input id="edit-order-delivery-date" label="Date de tournée" type="date" required value={editDeliveryDate}
-                disabled={Boolean(order.delivery_date && (order.status === 'delivered' || order.status === 'cancelled' || order.discounts_locked_at))}
-                onChange={event => setEditDeliveryDate(event.target.value)} />
-              <p className="mt-1 text-xs text-gray-500">Jour où le colis est confié au livreur. Pour reprendre un colis reporté, choisissez sa nouvelle journée de tournée.</p>
-            </div>}
-            {isAdmin && <div className="grid grid-cols-2 gap-4">
-              <Select label="Vendeur" options={sellers.map(s=>({value:s.id,label:s.full_name}))} value={editSellerId} onChange={e=>setEditSellerId(e.target.value)} />
-              <Select label="Session live" options={lives.map(l=>({value:l.id,label:`${l.name||'Live'} · ${l.session_date}`}))} placeholder="Aucun live" value={editLiveId} onChange={e=>setEditLiveId(e.target.value)} />
-            </div>}
+            {editDriverId && (
+              <div>
+                <Input
+                  ref={deliveryDateRef}
+                  id="edit-order-delivery-date"
+                  label="Date de tournée"
+                  type="date"
+                  required
+                  value={editDeliveryDate}
+                  disabled={Boolean(
+                    order.delivery_date &&
+                      (order.status === "delivered" ||
+                        order.status === "cancelled" ||
+                        order.discounts_locked_at),
+                  )}
+                  onChange={(event) => setEditDeliveryDate(event.target.value)}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Jour où le colis est confié au livreur. Pour reprendre un
+                  colis reporté, choisissez sa nouvelle journée de tournée.
+                </p>
+              </div>
+            )}
+            {isAdmin && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Select
+                  label="Vendeur"
+                  options={sellers.map((s) => ({
+                    value: s.id,
+                    label: s.full_name,
+                  }))}
+                  value={editSellerId}
+                  onChange={(e) => setEditSellerId(e.target.value)}
+                />
+                <Select
+                  label="Session live"
+                  options={lives.map((l) => ({
+                    value: l.id,
+                    label: `${l.name || "Live"} · ${l.session_date}`,
+                  }))}
+                  placeholder="Aucun live"
+                  value={editLiveId}
+                  onChange={(e) => setEditLiveId(e.target.value)}
+                />
+              </div>
+            )}
             <Input
               label="Lieu de livraison (optionnel)"
               placeholder="Ex : Cocody, Angré 8e tranche"
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
             />
-            <Input label="Coût de livraison (FCFA)" type="number" min={0} value={editDeliveryFee} onChange={(e) => setEditDeliveryFee(e.target.value)} />
-            <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Coût de livraison (FCFA)"
+              type="number"
+              min={0}
+              value={editDeliveryFee}
+              onChange={(e) => setEditDeliveryFee(e.target.value)}
+            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Select
                 label="Canal"
                 options={channelOptions}
@@ -247,7 +402,7 @@ export default function OrderDetailPage() {
                 onChange={(e) => setEditDate(e.target.value)}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 label="Montant du dépôt (FCFA)"
                 type="number"
@@ -264,12 +419,20 @@ export default function OrderDetailPage() {
                 onChange={(e) => setEditPaymentMethod(e.target.value)}
               />
             </div>
-            {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+            {saveError && (
+              <p role="alert" className="text-sm text-red-600">
+                {saveError}
+              </p>
+            )}
             <div className="flex gap-2">
               <Button onClick={saveEdit} disabled={isSaving}>
-                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                {isSaving ? "Enregistrement..." : "Enregistrer"}
               </Button>
-              <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={isSaving}>
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditing(false)}
+                disabled={isSaving}
+              >
                 Annuler
               </Button>
             </div>
@@ -277,182 +440,77 @@ export default function OrderDetailPage() {
         </Card>
       )}
 
-      <Card>
-        <CardHeader><h2 className="font-semibold text-gray-900">Livraison</h2></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-2 gap-4 text-sm"><div><p className="text-gray-500">Vendeur</p><p className="font-medium">{order.seller?.full_name ?? '—'}</p></div><div><p className="text-gray-500">Live</p><p className="font-medium">{order.live_session?.name ?? (order.live_session ? 'Live' : '—')}</p></div></div>
-          {order.delivery_driver ? (
-            <div><p className="font-medium text-gray-900">{order.delivery_driver.name}</p>{order.delivery_driver.phone && <p className="text-sm text-gray-500 mt-1">{order.delivery_driver.phone}</p>}</div>
-          ) : <p className="text-sm text-gray-500">Aucun livreur assigné.</p>}
-          {order.delivery_driver_id && <p className="text-sm text-gray-500">Date de tournée : {order.delivery_date ? formatDate(order.delivery_date) : 'Non renseignée — à compléter pour le bilan quotidien.'}</p>}
-          {canSettle && (
-            <div className="flex items-center justify-between rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm">
-              <span className="text-gray-500">À reverser par le livreur (hors livraison)</span>
-              <span className="font-semibold text-indigo-600">{formatCurrency(toReverse)}</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <OrderDeliveryCard
+        order={order}
+        canSettle={canSettle}
+        toReverse={toReverse}
+        onFillDate={
+          !isManager && !isEditing ? () => startEdit(true) : undefined
+        }
+      />
 
       {/* Deposit (read-only) */}
       {order.confirmation_amount > 0 && !isEditing && (
         <Card>
-          <CardHeader><h2 className="font-semibold text-gray-900">Dépôt de réservation</h2></CardHeader>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">
+              Dépôt de réservation
+            </h2>
+          </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500">Dépôt payé par le client</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(order.confirmation_amount)}</span>
+              <span className="font-semibold text-gray-900">
+                {formatCurrency(order.confirmation_amount)}
+              </span>
             </div>
             {order.payment_method && (
               <div className="flex items-center justify-between text-sm mt-2">
                 <span className="text-gray-500">Moyen de paiement</span>
-                <span className="font-medium text-gray-700">{PAYMENT_METHOD_LABELS[order.payment_method]}</span>
+                <span className="font-medium text-gray-700">
+                  {PAYMENT_METHOD_LABELS[order.payment_method]}
+                </span>
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Status change */}
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-gray-900">Statut</h2>
-        </CardHeader>
-        <CardContent>
-          {statusError && <p role="alert" className="mb-3 text-sm text-red-600">{statusError}</p>}
-          <div className="flex flex-wrap gap-2">
-            {availableStatuses.map((s) => (
-              <Button
-                key={s}
-                size="sm"
-                variant={order.status === s ? 'primary' : 'secondary'}
-                disabled={updating || order.status === s}
-                onClick={() => handleStatusChange(s)}
-              >
-                {STATUS_LABELS[s]}
-              </Button>
-            ))}
-          </div>
-          {order.status === 'postponed' && <p className="mt-3 text-sm text-orange-700">Colis reporté : utilisez « Modifier » pour choisir la nouvelle date de tournée. Le bilan de la journée précédente sera conservé.</p>}
-        </CardContent>
-      </Card>
-
       {!isManager && <DiscountEditor order={order} onSaved={setOrder} />}
 
-      {/* Order lines */}
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-gray-900">Produits commandés</h2>
-        </CardHeader>
-        <CardContent>
-          {/* Mobile: card per line */}
-          <ul className="space-y-3 sm:hidden">
-            {lines.map((l) => {
-              const effectiveCost = resolveUnitCost(l.unit_cost ?? 0, l.product)
-              const lineRevenue = Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity)
-              const lineProfit = lineRevenue - Number(l.total_cost ?? effectiveCost * l.quantity)
-              return (
-                <li key={l.id} className="rounded-xl border border-gray-100 bg-gray-50/50 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div><p className="font-medium text-gray-900 leading-snug">{l.product?.name ?? 'Produit'}</p>
-                      {l.pricing_type === 'offer' && <p className="text-xs text-indigo-600">{l.offer_name} · {l.offer_count} offre(s) × {l.units_per_offer}</p>}</div>
-                    <span className="shrink-0 text-xs text-gray-500">×{l.quantity}</span>
-                  </div>
-                  {isAdmin && (
-                    <dl className="mt-2 space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <dt className="text-gray-500">{l.pricing_type === 'offer' ? 'Prix / offre' : 'Prix unit.'}</dt>
-                        <dd className="text-gray-700">{formatCurrency(l.pricing_type === 'offer' ? (l.offer_price ?? 0) : (l.unit_price ?? 0))}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-gray-500">Coût unit.</dt>
-                        <dd className="text-gray-500">{formatCurrency(effectiveCost)}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-gray-500">Total</dt>
-                        <dd className="font-medium text-gray-900">{formatCurrency(lineRevenue)}</dd>
-                      </div>
-                      <div className="flex justify-between">
-                        <dt className="text-gray-500">Bénéfice</dt>
-                        <dd className={lineProfit >= 0 ? 'font-semibold text-green-600' : 'font-semibold text-red-600'}>
-                          {formatCurrency(lineProfit)}
-                        </dd>
-                      </div>
-                    </dl>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-
-          {/* Desktop: table */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-left">
-                  <th className="pb-2 pr-4 font-medium text-gray-500">Produit</th>
-                  <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Qté</th>
-                  {isAdmin && (
-                    <>
-                      <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Prix</th>
-                      <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Coût unit.</th>
-                      <th className="pb-2 pr-4 font-medium text-gray-500 text-right">Total</th>
-                      <th className="pb-2 font-medium text-gray-500 text-right">Bénéfice</th>
-                    </>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {lines.map((l) => {
-                  const effectiveCost = resolveUnitCost(l.unit_cost ?? 0, l.product)
-                  const lineRevenue = Number(l.line_total ?? (l.unit_price ?? 0) * l.quantity)
-                  const lineProfit = lineRevenue - Number(l.total_cost ?? effectiveCost * l.quantity)
-                  return (
-                    <tr key={l.id}>
-                      <td className="py-2.5 pr-4 font-medium text-gray-900">
-                        {l.product?.name ?? 'Produit'}
-                        {l.pricing_type === 'offer' && <span className="block text-xs font-normal text-indigo-600">{l.offer_name} · {l.offer_count} offre(s) × {l.units_per_offer}</span>}
-                      </td>
-                      <td className="py-2.5 pr-4 text-gray-600 text-right">{l.quantity}</td>
-                      {isAdmin && (
-                        <>
-                          <td className="py-2.5 pr-4 text-gray-600 text-right">{formatCurrency(l.pricing_type === 'offer' ? (l.offer_price ?? 0) : (l.unit_price ?? 0))}</td>
-                          <td className="py-2.5 pr-4 text-gray-500 text-right">{formatCurrency(effectiveCost)}</td>
-                          <td className="py-2.5 pr-4 font-medium text-gray-900 text-right">{formatCurrency(lineRevenue)}</td>
-                          <td className={`py-2.5 font-semibold text-right ${lineProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatCurrency(lineProfit)}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <OrderLinesCard lines={lines} isAdmin={isAdmin} />
 
       {/* Financial summary — admin only */}
       {isAdmin && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-5">
-              <p className="text-xs text-gray-500 font-medium">Total avec livraison</p>
-              <p className="text-xl font-bold text-indigo-600 mt-1">{formatCurrency(amounts.totalAmount)}</p>
-              <p className="text-xs text-gray-400 mt-1">Colis {formatCurrency(totalRevenue)} + livraison {formatCurrency(amounts.deliveryFee)}</p>
+              <p className="text-xs text-gray-500 font-medium">
+                Total avec livraison
+              </p>
+              <p className="text-xl font-bold text-indigo-600 mt-1">
+                {formatCurrency(amounts.totalAmount)}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Colis {formatCurrency(totalRevenue)} + livraison{" "}
+                {formatCurrency(amounts.deliveryFee)}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-5">
               <p className="text-xs text-gray-500 font-medium">Coût total</p>
-              <p className="text-xl font-bold text-gray-700 mt-1">{formatCurrency(totalCost)}</p>
+              <p className="text-xl font-bold text-gray-700 mt-1">
+                {formatCurrency(totalCost)}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-5">
               <p className="text-xs text-gray-500 font-medium">Bénéfice net</p>
-              <p className={`text-xl font-bold mt-1 ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p
+                className={`text-xl font-bold mt-1 ${totalProfit >= 0 ? "text-green-600" : "text-red-600"}`}
+              >
                 {formatCurrency(totalProfit)}
               </p>
             </CardContent>
@@ -464,7 +522,9 @@ export default function OrderDetailPage() {
       {(order.client_phone || order.delivery_location) && !isEditing && (
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Contact &amp; livraison</h2>
+            <h2 className="font-semibold text-gray-900">
+              Contact &amp; livraison
+            </h2>
           </CardHeader>
           <CardContent className="space-y-2">
             {order.client_phone && (
@@ -473,12 +533,14 @@ export default function OrderDetailPage() {
             {order.delivery_location && (
               <div>
                 <p className="text-xs text-gray-500">Lieu de livraison</p>
-                <p className="text-sm text-gray-700">{order.delivery_location}</p>
+                <p className="text-sm text-gray-700">
+                  {order.delivery_location}
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
       )}
     </div>
-  )
+  );
 }

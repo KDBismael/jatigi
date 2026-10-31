@@ -1,0 +1,7 @@
+/* Zoom participates in layout, so the preview height shrinks with its width.
+   Screen-only scaling preserves the physical sheet and printer/export targets. */
+@media screen {
+  .sheet {
+    zoom: var(--preview-scale, 1);
+  }
+}

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Détail commande mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.c-press{transition:transform .15s ease,background-color .2s ease,border-color .2s ease;cursor:pointer}
+.c-press:active{transform:scale(.97)}
+@media (prefers-reduced-motion: reduce){.c-press{transition:none}}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1560px; display: flex; flex-direction: column; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #F9FAFB">
+<dc-import name="AppTopBar" hint-size="390px,62px"></dc-import>
+<main style="flex: 1; padding: 12px 16px 16px; display: flex; flex-direction: column; gap: 14px">
+
+<!-- Back: chevron + word, never a lone ← -->
+<a href="#" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding-right: 8px; color: #4F46E5; text-decoration: none; font-size: 14px; font-weight: 600"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>Commandes</a>
+
+<!-- Header: title block, then actions on their own row (no more 4 items squeezed in one line) -->
+<header style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="min-width: 0">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">Mariam D.</h1>
+<p style="margin: 2px 0 0; font-size: 14px; color: #6B7280">WhatsApp · 29/10/2026</p>
+</div>
+<span style="flex: none; font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #FEF9C3; color: #854D0E">En livraison</span>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<button type="button" class="c-press" style="min-height: 44px; border: 1px solid #D1D5DB; border-radius: 10px; background: #FFFFFF; color: #374151; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Imprimer</button>
+<button type="button" class="c-press" style="min-height: 44px; border: 1px solid #D1D5DB; border-radius: 10px; background: #FFFFFF; color: #374151; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Modifier</button>
+</div>
+</header>
+
+<!-- Status change: one tap -->
+<section aria-labelledby="st" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<h2 id="st" style="margin: 0; font-size: 15px; font-weight: 600">Mettre à jour le statut</h2>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+<button type="button" class="c-press" style="min-height: 44px; border: 0; border-radius: 10px; background: #16A34A; color: #FFFFFF; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Livrée</button>
+<button type="button" class="c-press" style="min-height: 44px; border: 1px solid #FDBA74; border-radius: 10px; background: #FFF7ED; color: #9A3412; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Reportée</button>
+<button type="button" class="c-press" style="min-height: 44px; border: 1px solid #FECACA; border-radius: 10px; background: #FEF2F2; color: #991B1B; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Annulée</button>
+<button type="button" class="c-press" style="min-height: 44px; border: 1px solid #FECDD3; border-radius: 10px; background: #FFF1F2; color: #9F1239; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Retournée</button>
+</div>
+</section>
+
+<!-- Delivery: empty values read "Non renseigné", missing date is an actionable note -->
+<section aria-labelledby="liv" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; overflow: hidden">
+<h2 id="liv" style="margin: 0; padding: 12px 14px; font-size: 15px; font-weight: 600; border-bottom: 1px solid #F3F4F6">Livraison</h2>
+<div style="padding: 14px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="flex: none; width: 40px; height: 40px; border-radius: 999px; background: #EEF2FF; color: #3730A3; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center">KO</span>
+<div style="flex: 1; min-width: 0"><div style="font-weight: 600">Koffi</div><div style="font-size: 13px; color: #6B7280; font-variant-numeric: tabular-nums">07 08 12 34 56</div></div>
+<a href="#" class="c-press" style="flex: none; min-height: 40px; display: flex; align-items: center; padding: 0 12px; border: 1px solid #D1D5DB; border-radius: 10px; color: #374151; text-decoration: none; font-size: 13px; font-weight: 600">Appeler</a>
+</div>
+<div role="note" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px">
+<div style="font-size: 13px; color: #78350F"><b>Date de tournée non renseignée.</b><br>Nécessaire pour le bilan quotidien.</div>
+<a href="#" style="flex: none; font-size: 13px; font-weight: 700; color: #92400E">Renseigner</a>
+</div>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; font-size: 13px">
+<div><dt style="color: #6B7280">Lieu</dt><dd style="margin: 2px 0 0; font-weight: 600">Cocody, Angré 8e tranche</dd></div>
+<div><dt style="color: #6B7280">Frais de livraison</dt><dd style="margin: 2px 0 0; font-weight: 600; font-variant-numeric: tabular-nums">1 500 FCFA</dd></div>
+<div><dt style="color: #6B7280">Vendeur</dt><dd style="margin: 2px 0 0; font-weight: 600; color: #9CA3AF">Non renseigné</dd></div>
+<div><dt style="color: #6B7280">Session live</dt><dd style="margin: 2px 0 0; font-weight: 600; color: #9CA3AF">Aucune</dd></div>
+</dl>
+<div style="display: flex; justify-content: space-between; align-items: center; background: #EEF2FF; border-radius: 10px; padding: 10px 12px; font-size: 13px">
+<span style="color: #374151">À reverser par le livreur<br><span style="color: #6B7280">hors frais de livraison</span></span>
+<b style="font-size: 16px; color: #3730A3; font-variant-numeric: tabular-nums">25 000 FCFA</b>
+</div>
+</div>
+</section>
+
+<!-- Articles -->
+<section aria-labelledby="art" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; overflow: hidden">
+<h2 id="art" style="margin: 0; padding: 12px 14px; font-size: 15px; font-weight: 600; border-bottom: 1px solid #F3F4F6">Articles</h2>
+<div style="padding: 4px 14px; font-variant-numeric: tabular-nums">
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px"><span><b>Perruque lisse 16"</b><br><span style="font-size: 13px; color: #6B7280">1 × 35 000</span></span><b>35 000</b></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 13px; color: #4B5563"><span>Dépôt reçu (Wave)</span><span>− 10 000</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid #E5E7EB; font-size: 15px"><b>Reste à encaisser</b><b>25 000 FCFA</b></div>
+</div>
+</section>
+</main>
+<div style="position: sticky; bottom: 0">
+<dc-import name="AppBottomNav" active="orders" hint-size="390px,72px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1560}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
