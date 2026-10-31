@@ -20,9 +20,9 @@ export async function PUT(r:NextRequest){
  const db=await createAdminClient()
  const {data:current,error:readError}=await db.from('live_sessions').select('*').eq('id',id.data).eq('organization_id',a.organizationId).single()
  if(readError||!current)return NextResponse.json({error:'Session introuvable'},{status:404})
+ if(['completed','cancelled'].includes(current.status))return NextResponse.json({error:'Session clôturée'},{status:409})
  try {
   const transition=p.data.status===current.status?{}:liveTransition(current.status,p.data.status,new Date().toISOString())
-  if(['completed','cancelled'].includes(current.status))return NextResponse.json({error:'Session clôturée'},{status:409})
   const {data,error}=await db.from('live_sessions').update({...p.data,...transition}).eq('id',id.data).eq('organization_id',a.organizationId).eq('status',current.status).select().single()
   if(error){if(error.message.includes('PLAN_LIVE_REQUIRED'))return billingErrorResponse(new Error(error.message));return NextResponse.json({error:'Session déjà modifiée, rechargez la page'},{status:409})}
   return NextResponse.json(data)

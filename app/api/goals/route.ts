@@ -36,6 +36,16 @@ export async function POST(request: NextRequest) {
     if (!seller) return NextResponse.json({ error: 'Vendeur introuvable' }, { status: 400 })
   }
 
+  if (input.scope === 'live') {
+    const { data: live, error } = await db
+      .from('live_sessions')
+      .select('id')
+      .eq('id', input.live_session_id!)
+      .eq('organization_id', auth.organizationId)
+      .single()
+    if (error || !live) return NextResponse.json({ error: 'Session live introuvable' }, { status: 400 })
+  }
+
   const payload = {
     ...input,
     organization_id: auth.organizationId,

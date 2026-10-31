@@ -9,8 +9,11 @@ export const expenseSchema = z.object({
   recurring: z.boolean().optional().default(false), day_of_month: z.coerce.number().int().min(1).max(28).optional(),
 })
 export const goalSchema = z.object({
-  month: z.string().regex(/^\d{4}-\d{2}-01$/), scope: z.enum(['global','seller','live']),
+  month: z.iso.date().refine(value => value.endsWith('-01'), 'Choisissez le premier jour du mois.'), scope: z.enum(['global','seller','live']),
   amount: z.coerce.number().min(0), seller_id: z.string().uuid().optional().nullable(), live_session_id: z.string().uuid().optional().nullable(),
+}).superRefine((data, ctx) => {
+  if (data.scope === 'seller' && !data.seller_id) ctx.addIssue({code:'custom',path:['seller_id'],message:'Choisissez un vendeur.'})
+  if (data.scope === 'live' && !data.live_session_id) ctx.addIssue({code:'custom',path:['live_session_id'],message:'Choisissez une session live.'})
 })
 export const liveSchema = z.object({
   name: z.string().trim().max(120).optional().nullable(), session_date: z.string().date(),
