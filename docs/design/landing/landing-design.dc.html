@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Landing page</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#4F46E5}a:hover{color:#3730A3}
+.w-root{container-type:inline-size;container-name:w;scroll-behavior:smooth}
+.w-root *{box-sizing:border-box}
+.w-wrap{max-width:1160px;margin:0 auto;padding-left:20px;padding-right:20px}
+.w-num{font-variant-numeric:tabular-nums}
+.w-nav-links{display:none}
+.w-hero-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:48px}
+.w-h1{font-size:40px;line-height:1.04}
+.w-h2{font-size:31px;line-height:1.1}
+.w-lead{font-size:17px}
+.w-ctas{display:flex;flex-direction:column;gap:12px}
+.w-g2{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.w-g3{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.w-feat{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.w-steps{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.w-plans{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+.w-solrow{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.w-split{display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
+.w-sticky{display:flex}
+.w-sec{padding-top:72px;padding-bottom:72px}
+.w-pro{order:-1}
+.w-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+.w-app{display:grid;grid-template-columns:minmax(0,1fr)}
+.w-app-side{display:none}
+.w-app-bottom{display:flex}
+.w-m4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.w-m5{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.w-dl4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.w-drv{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.w-drv-h{display:none}
+.w-ord{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+@container w (min-width:720px){
+.w-wrap{padding-left:32px;padding-right:32px}
+.w-nav-links{display:flex}
+.w-h1{font-size:54px}
+.w-h2{font-size:40px}
+.w-lead{font-size:19px}
+.w-ctas{flex-direction:row}
+.w-g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.w-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.w-feat{grid-template-columns:repeat(2,minmax(0,1fr))}
+.w-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+.w-solrow{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px;align-items:center}
+.w-sticky{display:none}
+.w-sec{padding-top:104px;padding-bottom:104px}
+.w-m4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.w-m5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.w-dl4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.w-ord{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@container w (min-width:1040px){
+.w-hero-grid{grid-template-columns:minmax(0,1.1fr) minmax(0,0.9fr);gap:56px;align-items:center}
+.w-h1{font-size:66px}
+.w-feat{grid-template-columns:repeat(3,minmax(0,1fr))}
+.w-steps{grid-template-columns:repeat(4,minmax(0,1fr))}
+.w-plans{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}
+.w-pro{order:0}
+.w-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:center}
+.w-app{grid-template-columns:210px minmax(0,1fr)}
+.w-app-side{display:flex}
+.w-app-bottom{display:none}
+.w-drv{grid-template-columns:2fr repeat(4,1fr) 1.5fr;align-items:center;gap:12px}
+.w-drv-h{display:grid}
+.w-drv .w-drv-lbl{display:none}
+}
+
+/* micro-interactions */
+@keyframes w-up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes w-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes w-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes w-pop{0%{opacity:0;transform:translateY(12px) scale(.9)}60%{opacity:1;transform:translateY(-3px) scale(1.03)}100%{opacity:1;transform:none}}
+@keyframes w-ping{0%{transform:scale(1);opacity:.65}100%{transform:scale(2.8);opacity:0}}
+@keyframes w-grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes w-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes w-bump{0%{transform:scale(1)}35%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes w-progress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes w-glow{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0)}50%{box-shadow:0 0 0 6px rgba(251,191,36,.12)}}
+@keyframes w-nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.w-in{animation:w-up .75s cubic-bezier(.2,.7,.2,1) both}
+.w-d1{animation-delay:.08s}.w-d2{animation-delay:.16s}.w-d3{animation-delay:.26s}.w-d4{animation-delay:.36s}.w-d5{animation-delay:.5s}.w-d6{animation-delay:.9s}
+.w-float{animation:w-float 7s ease-in-out infinite}
+.w-pop{animation:w-pop .55s cubic-bezier(.2,.8,.2,1.2) both}
+.w-pop-late{animation:w-pop .55s cubic-bezier(.2,.8,.2,1.2) 1.1s both}
+.w-ping{position:relative}
+.w-ping::after{content:"";position:absolute;inset:0;border-radius:inherit;background:inherit;animation:w-ping 1.8s ease-out infinite}
+.w-glow{animation:w-glow 2.6s ease-in-out infinite}
+.w-bump{display:inline-block;animation:w-bump .5s cubic-bezier(.2,.8,.2,1.3)}
+.w-nudge{animation:w-nudge 1.6s ease-in-out infinite}
+.w-btn{transition:transform .18s ease,box-shadow .2s ease,background-color .2s ease,border-color .2s ease,color .2s ease;cursor:pointer}
+.w-btn:hover{transform:translateY(-2px)}
+.w-btn:active{transform:translateY(0) scale(.97)}
+.w-btn-primary:hover{box-shadow:0 12px 28px rgba(79,70,229,.38);background-color:#4338CA !important}
+.w-btn-ghost:hover{border-color:#6366F1 !important;background-color:rgba(99,102,241,.12) !important}
+.w-btn-light:hover{box-shadow:0 12px 28px rgba(14,16,32,.25)}
+.w-btn-outline:hover{background-color:#12142A !important;color:#FFFFFF !important}
+.w-arrow{transition:transform .22s cubic-bezier(.2,.8,.2,1.3)}
+.w-btn:hover .w-arrow{transform:translateX(4px)}
+.w-card{transition:transform .28s cubic-bezier(.2,.7,.2,1),box-shadow .28s ease,border-color .28s ease}
+.w-card:hover{transform:translateY(-4px);box-shadow:0 20px 44px rgba(14,16,32,.09);border-color:#C7C9F4 !important}
+.w-card-dark:hover{border-color:#6366F1 !important;box-shadow:0 20px 44px rgba(0,0,0,.35)}
+.w-ico{transition:transform .35s cubic-bezier(.2,.8,.2,1.5)}
+.w-card:hover .w-ico{transform:scale(1.1) rotate(-6deg)}
+.w-link{background-image:linear-gradient(currentColor,currentColor);background-size:0 1.5px;background-repeat:no-repeat;background-position:0 100%;transition:background-size .25s ease,color .2s ease;padding-bottom:2px}
+.w-link:hover{background-size:100% 1.5px;color:#FFFFFF !important}
+.w-row{transition:transform .2s ease,box-shadow .2s ease}
+.w-row:hover{transform:translateX(4px);box-shadow:0 6px 16px rgba(14,16,32,.06)}
+.w-chip{transition:transform .15s ease,background-color .2s ease,color .2s ease,border-color .2s ease;cursor:pointer}
+.w-chip:hover{transform:translateY(-1px)}
+.w-chip:active{transform:scale(.95)}
+.w-tab{transition:background-color .2s ease,color .2s ease,border-color .2s ease,transform .15s ease;cursor:pointer}
+.w-tab:active{transform:scale(.97)}
+.w-screen{animation:w-fade .45s cubic-bezier(.2,.7,.2,1) both}
+.w-stagger>*{animation:w-fade .45s cubic-bezier(.2,.7,.2,1) both}
+.w-stagger>*:nth-child(2){animation-delay:.05s}.w-stagger>*:nth-child(3){animation-delay:.1s}.w-stagger>*:nth-child(4){animation-delay:.15s}.w-stagger>*:nth-child(5){animation-delay:.2s}.w-stagger>*:nth-child(6){animation-delay:.25s}
+.w-bar{transform-origin:bottom;animation:w-grow .9s cubic-bezier(.2,.7,.2,1) both}
+.w-fill{transform-origin:left;animation:w-fill 1.3s cubic-bezier(.2,.7,.2,1) .2s both}
+.w-progress{transform-origin:left;animation:w-progress 6s linear both}
+.w-faq-a{animation:w-fade .3s ease both}
+.w-pill{transition:transform .35s cubic-bezier(.2,.8,.2,1.15)}
+.w-swap{animation:w-fade .35s cubic-bezier(.2,.7,.2,1) both}
+.w-sec-step{transition:transform .28s ease,background-color .28s ease,border-color .28s ease}
+.w-sec-step:hover{transform:translateY(-4px);border-color:#6366F1 !important}
+.w-sec-step .w-stepn{transition:transform .3s cubic-bezier(.2,.8,.2,1.5)}
+.w-sec-step:hover .w-stepn{transform:scale(1.15)}
+.w-root a:focus-visible,.w-root button:focus-visible{outline:3px solid #818CF8;outline-offset:3px}
+@supports (animation-timeline: view()){
+.w-reveal{animation:w-up linear both;animation-timeline:view();animation-range:entry 0% entry 35%}
+}
+@media (prefers-reduced-motion: reduce){
+.w-root *,.w-root *::after{animation:none !important;transition:none !important;scroll-behavior:auto !important}
+}
+</style>
+</helmet>
+
+<div class="w-root" data-testid="landing-page" style="font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #12142A; background: #F6F6FA; min-height: 100vh">
+
+<!-- ============ NAV ============ -->
+<header data-testid="landing-nav" style="background: #0E1020; border-bottom: 1px solid #23264A; position: sticky; top: 0; z-index: 20">
+<div class="w-wrap" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 68px">
+<a href="/" data-testid="nav-logo" aria-label="Warko, accueil" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #FFFFFF">
+<svg class="w-ico" width="32" height="32" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#4F46E5"></rect><path d="M13 19 L23 45 L32 29 L41 45 L51 19" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg>
+<span style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.02em">Warko</span>
+</a>
+<nav class="w-nav-links" aria-label="Navigation principale" style="align-items: center; gap: 28px; font-size: 15px">
+<a href="#produit" class="w-link" data-testid="nav-link-product" data-track="nav_product" style="color: #C7CAE6; text-decoration: none">Le produit</a>
+<a href="#fonctionnalites" class="w-link" data-testid="nav-link-features" data-track="nav_features" style="color: #C7CAE6; text-decoration: none">Fonctionnalités</a>
+<a href="#tarifs" class="w-link" data-testid="nav-link-pricing" data-track="nav_pricing" style="color: #C7CAE6; text-decoration: none">Tarifs</a>
+<a href="#faq" class="w-link" data-testid="nav-link-faq" data-track="nav_faq" style="color: #C7CAE6; text-decoration: none">FAQ</a>
+</nav>
+<div style="display: flex; align-items: center; gap: 8px">
+<a href="/auth/login" data-testid="nav-login" data-track="nav_login" style="color: #FFFFFF; text-decoration: none; font-size: 15px; font-weight: 500; padding: 12px 12px; min-height: 44px; display: flex; align-items: center">Se connecter</a>
+<a href="/auth/signup" class="w-btn w-btn-light" data-testid="nav-signup" data-track="cta_signup" data-track-location="nav" style="background: #FFFFFF; color: #0E1020; text-decoration: none; font-size: 15px; font-weight: 600; padding: 0 16px; min-height: 44px; border-radius: 12px; display: flex; align-items: center">Essayer</a>
+</div>
+</div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section id="hero" data-testid="section-hero" style="background: #0E1020; color: #FFFFFF; padding-top: 48px; padding-bottom: 88px; overflow: hidden">
+<div class="w-wrap w-hero-grid">
+<div style="display: flex; flex-direction: column; gap: 24px">
+<div class="w-in" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="display: inline-flex; align-items: center; gap: 8px; border: 1px solid #34386A; background: #171A33; color: #C7CAE6; border-radius: 999px; padding: 6px 12px 6px 8px; font-size: 13px; font-weight: 500">
+<span class="w-ping" style="width: 8px; height: 8px; border-radius: 999px; background: #34D399"></span>
+Pour les vendeurs WhatsApp, Facebook, Instagram et TikTok
+</span>
+</div>
+<h1 class="w-h1 w-in w-d1" data-testid="hero-headline" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.035em">Vous savez combien vos livreurs vous doivent <span style="color: #FBBF24">ce soir&nbsp;?</span></h1>
+<p class="w-lead w-in w-d2" data-testid="hero-subheadline" style="margin: 0; color: #C7CAE6; line-height: 1.55; max-width: 560px">Warko calcule en temps réel ce que chaque livreur a encaissé, ce qu’il a gardé en frais et ce qu’il doit vous reverser. Vos commandes, votre stock et votre bénéfice au même endroit. Fini le cahier.</p>
+<div class="w-ctas w-in w-d3">
+<a href="/auth/signup" class="w-btn w-btn-primary" data-testid="cta-hero-signup" data-track="cta_signup" data-track-location="hero" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: #4F46E5; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 17px; min-height: 56px; padding: 0 28px; border-radius: 14px">
+Essayer gratuitement
+<svg class="w-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+</a>
+<a href="#produit" class="w-btn w-btn-ghost" data-testid="cta-hero-product" data-track="cta_see_product" data-track-location="hero" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #34386A; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 17px; min-height: 56px; padding: 0 24px; border-radius: 14px">
+Voir l’application
+</a>
+</div>
+<ul class="w-in w-d4" data-testid="hero-reassurance" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 14px; color: #A9ADD0">
+<li style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg>Gratuit jusqu’à 30 commandes/mois</li>
+<li style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg>Aucune carte requise</li>
+<li style="display: flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg>Rien à installer, ça marche sur votre téléphone</li>
+</ul>
+</div>
+
+<!-- Interactive phone demo -->
+<div class="w-in w-d3" data-testid="hero-demo" style="display: flex; flex-direction: column; align-items: center; gap: 14px">
+<div class="w-float" style="position: relative; width: 316px; max-width: 100%">
+<div role="group" aria-label="Démo interactive : bilan du jour d’une boutique (exemple)" style="background: #FFFFFF; color: #12142A; border-radius: 36px; border: 8px solid #2A2D4F; padding: 20px 16px 18px; box-shadow: 0 30px 80px rgba(0,0,0,0.45)">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<div>
+<div style="font-size: 12px; color: #545873; font-weight: 500">Bilan du jour</div>
+<div style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 700; font-size: 18px">Jeudi 29 octobre</div>
+</div>
+<span style="font-size: 11px; font-weight: 600; color: #4338CA; background: #EEF0FF; border-radius: 999px; padding: 4px 8px">Exemple</span>
+</div>
+<div class="w-glow" style="margin-top: 14px; background: #0E1020; color: #FFFFFF; border-radius: 18px; padding: 16px">
+<div style="font-size: 12px; color: #A9ADD0">Reste dû ce soir</div>
+<div class="w-num" data-testid="hero-demo-due" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 32px; letter-spacing: -0.02em; color: #FBBF24">
+<sc-if value="{{heroSettled}}" hint-placeholder-val="{{false}}"><span class="w-bump">14 500</span></sc-if>
+<sc-if value="{{heroOpen}}" hint-placeholder-val="{{true}}"><span>42 500</span></sc-if>
+<span style="font-size: 16px; color: #FFFFFF">FCFA</span></div>
+<div class="w-num" style="display: flex; justify-content: space-between; font-size: 12px; color: #C7CAE6; margin-top: 8px">
+<span>Encaissé 214 000</span><span>Reversé {{heroRemitted}}</span>
+</div>
+</div>
+<div style="margin-top: 14px; display: flex; flex-direction: column; gap: 8px">
+<div class="w-row" style="display: flex; align-items: center; gap: 10px; border: 1px solid #E4E4EE; border-radius: 12px; padding: 10px 12px; background: #FFFFFF">
+<div style="width: 34px; height: 34px; border-radius: 999px; background: {{koffiAvatarBg}}; color: {{koffiAvatarFg}}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; transition: background-color .3s">KO</div>
+<div style="flex: 1; min-width: 0">
+<div style="font-weight: 600; font-size: 14px">Koffi</div>
+<div style="font-size: 12px; color: #545873">8 commandes · frais 8 000</div>
+</div>
+<sc-if value="{{heroOpen}}" hint-placeholder-val="{{true}}">
+<div style="text-align: right">
+<div class="w-num" style="font-weight: 700; font-size: 14px">28 000</div>
+<div style="font-size: 11px; font-weight: 600; color: #92400E">À réclamer</div>
+</div>
+</sc-if>
+<sc-if value="{{heroSettled}}" hint-placeholder-val="{{false}}">
+<div class="w-pop" style="text-align: right">
+<div class="w-num" style="font-weight: 700; font-size: 14px">0</div>
+<div style="font-size: 11px; font-weight: 600; color: #166534">Soldé</div>
+</div>
+</sc-if>
+</div>
+<div class="w-row" style="display: flex; align-items: center; gap: 10px; border: 1px solid #E4E4EE; border-radius: 12px; padding: 10px 12px; background: #FFFFFF">
+<div style="width: 34px; height: 34px; border-radius: 999px; background: #FEF3C7; color: #92400E; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">IB</div>
+<div style="flex: 1; min-width: 0">
+<div style="font-weight: 600; font-size: 14px">Ibrahim</div>
+<div style="font-size: 12px; color: #545873">5 commandes · frais 5 000</div>
+</div>
+<div style="text-align: right">
+<div class="w-num" style="font-weight: 700; font-size: 14px">14 500</div>
+<div style="font-size: 11px; font-weight: 600; color: #92400E">À réclamer</div>
+</div>
+</div>
+<div class="w-row" style="display: flex; align-items: center; gap: 10px; border: 1px solid #E4E4EE; border-radius: 12px; padding: 10px 12px; background: #FFFFFF">
+<div style="width: 34px; height: 34px; border-radius: 999px; background: #DCFCE7; color: #166534; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px">SE</div>
+<div style="flex: 1; min-width: 0">
+<div style="font-weight: 600; font-size: 14px">Serge</div>
+<div style="font-size: 12px; color: #545873">6 commandes · frais 6 000</div>
+</div>
+<div style="text-align: right">
+<div class="w-num" style="font-weight: 700; font-size: 14px">0</div>
+<div style="font-size: 11px; font-weight: 600; color: #166534">Soldé</div>
+</div>
+</div>
+</div>
+<sc-if value="{{heroOpen}}" hint-placeholder-val="{{true}}">
+<button type="button" class="w-btn w-btn-primary" data-testid="hero-demo-settle" data-track="hero_demo_settle" onClick="{{settleKoffi}}" style="margin-top: 14px; width: 100%; min-height: 48px; border: 0; background: #4F46E5; color: #FFFFFF; border-radius: 12px; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Enregistrer le reversement de Koffi</button>
+</sc-if>
+<sc-if value="{{heroSettled}}" hint-placeholder-val="{{false}}">
+<button type="button" class="w-btn w-swap" data-testid="hero-demo-reset" data-track="hero_demo_reset" onClick="{{resetHero}}" style="margin-top: 14px; width: 100%; min-height: 48px; border: 1.5px solid #E4E4EE; background: #FFFFFF; color: #12142A; border-radius: 12px; font-family: Inter, sans-serif; font-weight: 600; font-size: 14px">Revoir la démo</button>
+</sc-if>
+</div>
+<!-- floating toast -->
+<sc-if value="{{heroOpen}}" hint-placeholder-val="{{true}}">
+<div class="w-pop-late" aria-hidden="true" style="position: absolute; left: -12px; bottom: 104px; background: #FFFFFF; color: #12142A; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 16px 40px rgba(0,0,0,0.35); font-size: 13px">
+<span style="width: 28px; height: 28px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"></path></svg></span>
+<span><b>Serge</b> a reversé <b class="w-num">55 000 FCFA</b></span>
+</div>
+</sc-if>
+<sc-if value="{{heroSettled}}" hint-placeholder-val="{{false}}">
+<div class="w-pop" role="status" data-testid="hero-demo-toast" style="position: absolute; left: -12px; bottom: 104px; background: #FFFFFF; color: #12142A; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 16px 40px rgba(0,0,0,0.35); font-size: 13px">
+<span style="width: 28px; height: 28px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg></span>
+<span><b>Koffi</b> a reversé <b class="w-num">28 000 FCFA</b></span>
+</div>
+</sc-if>
+</div>
+<sc-if value="{{heroOpen}}" hint-placeholder-val="{{true}}">
+<p class="w-in w-d6" style="margin: 0; font-size: 13px; color: #A9ADD0">Essayez&nbsp;: enregistrez le reversement de Koffi.</p>
+</sc-if>
+<sc-if value="{{heroSettled}}" hint-placeholder-val="{{false}}">
+<p class="w-swap" style="margin: 0; font-size: 13px; color: #A9ADD0">Le solde s’est mis à jour tout seul. C’est ça, Warko.</p>
+</sc-if>
+</div>
+</div>
+</section>
+
+<!-- ============ PROBLÈME ============ -->
+<section id="probleme" data-testid="section-problem" class="w-sec" style="background: #F6F6FA">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 40px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Le problème</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em">Le soir, c’est toujours la même histoire.</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: #545873">Vos livreurs encaissent l’argent à votre place. Mais combien ont-ils encaissé, combien ont-ils gardé en frais, combien doivent-ils vous rendre&nbsp;? Tout est noté dans un cahier, des vocaux WhatsApp ou un Excel jamais à jour. Quand c’est noté.</p>
+</div>
+<div class="w-g3">
+<article class="w-card w-reveal" data-testid="problem-card-money" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div aria-hidden="true" class="w-num" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 12px 14px; font-size: 14px; color: #78350F; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Koffi a encaissé</span><span>96 000</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Frais</span><span>8 000</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Déjà donné</span><span><s>50 000</s> 60 000&nbsp;?</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px; border-top: 1px dashed #D97706; padding-top: 6px; font-weight: 700"><span>Il reste</span><span>?</span></div>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">De l’argent disparaît</h3>
+<p style="margin: 0; color: #545873; line-height: 1.55; font-size: 15px">Un montant «&nbsp;oublié&nbsp;» par-ci, une commande mal notée par-là. Sans trace fiable, impossible de vérifier.</p>
+</article>
+<article class="w-card w-reveal" data-testid="problem-card-disputes" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div aria-hidden="true" style="background: #F6F6FA; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.4">
+<span style="align-self: flex-end; max-width: 85%; background: #4F46E5; color: #FFFFFF; border-radius: 14px 14px 4px 14px; padding: 8px 12px">Tu me dois encore 28 000.</span>
+<span style="align-self: flex-start; max-width: 85%; background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 14px 14px 14px 4px; padding: 8px 12px">Non, je t’ai tout donné hier soir.</span>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Des litiges tous les jours</h3>
+<p style="margin: 0; color: #545873; line-height: 1.55; font-size: 15px">C’est votre parole contre celle du livreur. Chaque fin de journée devient une négociation.</p>
+</article>
+<article class="w-card w-reveal" data-testid="problem-card-profit" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<div aria-hidden="true" class="w-num" style="background: #F6F6FA; border-radius: 12px; padding: 12px 14px; font-size: 14px; color: #3B3F5C; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Ventes du mois</span><span>3 480 000</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Pub, transport, emballage</span><span>?</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid #E4E4EE; padding-top: 6px; font-weight: 700; color: #12142A"><span>Bénéfice</span><span style="color: #B45309">Aucune idée</span></div>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Vous ne connaissez pas votre vrai bénéfice</h3>
+<p style="margin: 0; color: #545873; line-height: 1.55; font-size: 15px">Entre les frais de livraison, la pub et l’emballage, la fin du mois reste un mystère.</p>
+</article>
+</div>
+</div>
+</section>
+
+<!-- ============ SOLUTION ============ -->
+<section id="solution" data-testid="section-solution" class="w-sec" style="background: #FFFFFF; border-top: 1px solid #E4E4EE">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 40px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">La solution</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em">Ce que Warko règle concrètement.</h2>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div class="w-solrow w-card w-reveal" data-testid="solution-row-riders" style="border: 1px solid #E4E4EE; border-radius: 20px; padding: 20px; background: #FFFFFF">
+<p style="margin: 0; font-size: 17px; font-weight: 600; color: #545873">«&nbsp;Je ne sais pas combien mon livreur me doit.&nbsp;»</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #4F46E5">Avec Warko</span><p style="margin: 0; font-size: 16px; line-height: 1.55">Warko calcule <b>en temps réel</b> le solde de chaque livreur&nbsp;: montant encaissé, frais retenus, somme due, avec un bilan quotidien.</p></div>
+</div>
+<div class="w-solrow w-card w-reveal" data-testid="solution-row-orders" style="border: 1px solid #E4E4EE; border-radius: 20px; padding: 20px; background: #FFFFFF">
+<p style="margin: 0; font-size: 17px; font-weight: 600; color: #545873">«&nbsp;Je perds des commandes entre le cahier et WhatsApp.&nbsp;»</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #4F46E5">Avec Warko</span><p style="margin: 0; font-size: 16px; line-height: 1.55">Toutes vos commandes au même endroit avec leur statut, <b>quel que soit le canal de vente</b>.</p></div>
+</div>
+<div class="w-solrow w-card w-reveal" data-testid="solution-row-profit" style="border: 1px solid #E4E4EE; border-radius: 20px; padding: 20px; background: #FFFFFF">
+<p style="margin: 0; font-size: 17px; font-weight: 600; color: #545873">«&nbsp;Je ne sais pas si je gagne ou si je perds de l’argent.&nbsp;»</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #4F46E5">Avec Warko</span><p style="margin: 0; font-size: 16px; line-height: 1.55">Le tableau de bord calcule chiffre d’affaires, dépenses, frais de livraison et <b>bénéfice net réel</b>.</p></div>
+</div>
+<div class="w-solrow w-card w-reveal" data-testid="solution-row-stock" style="border: 1px solid #E4E4EE; border-radius: 20px; padding: 20px; background: #FFFFFF">
+<p style="margin: 0; font-size: 17px; font-weight: 600; color: #545873">«&nbsp;Mes stocks sont approximatifs.&nbsp;»</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #4F46E5">Avec Warko</span><p style="margin: 0; font-size: 16px; line-height: 1.55">Chaque commande <b>ajuste le stock automatiquement</b>, avec gestion des lots et des variantes.</p></div>
+</div>
+<div class="w-solrow w-card w-reveal" data-testid="solution-row-team" style="border: 1px solid #E4E4EE; border-radius: 20px; padding: 20px; background: #FFFFFF">
+<p style="margin: 0; font-size: 17px; font-weight: 600; color: #545873">«&nbsp;Mon équipe n’a pas la bonne info au bon moment.&nbsp;»</p>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #4F46E5">Avec Warko</span><p style="margin: 0; font-size: 16px; line-height: 1.55">Chaque collaborateur a <b>un rôle dédié</b> et n’accède qu’à ce qui le concerne.</p></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ============ COMMENT ÇA MARCHE ============ -->
+<section id="comment-ca-marche" data-testid="section-how-it-works" class="w-sec" style="background: #0E1020; color: #FFFFFF">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 40px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #A5B4FC">Comment ça marche</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em">Prêt en moins de 5 minutes.</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: #C7CAE6">Un assistant vous guide pas à pas. Ce que vous créez est réel et utilisable tout de suite, pas une démo.</p>
+</div>
+<ol class="w-steps" style="list-style: none; margin: 0; padding: 0">
+<li class="w-sec-step w-reveal" data-testid="step-1" style="background: #171A33; border: 1px solid #2A2D4F; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<span class="w-num w-stepn" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 40px; color: #818CF8; line-height: 1; transform-origin: left">1</span>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Ajoutez vos produits</h3>
+<p style="margin: 0; color: #C7CAE6; font-size: 15px; line-height: 1.55">Nom, prix et stock. Les variantes et les lots si vous en avez.</p>
+</li>
+<li class="w-sec-step w-reveal" data-testid="step-2" style="background: #171A33; border: 1px solid #2A2D4F; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<span class="w-num w-stepn" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 40px; color: #818CF8; line-height: 1; transform-origin: left">2</span>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Ajoutez vos livreurs</h3>
+<p style="margin: 0; color: #C7CAE6; font-size: 15px; line-height: 1.55">Un nom, un numéro, les frais de livraison. C’est tout.</p>
+</li>
+<li class="w-sec-step w-reveal" data-testid="step-3" style="background: #171A33; border: 1px solid #2A2D4F; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<span class="w-num w-stepn" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 40px; color: #818CF8; line-height: 1; transform-origin: left">3</span>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Saisissez vos commandes</h3>
+<p style="margin: 0; color: #C7CAE6; font-size: 15px; line-height: 1.55">Client, produits, adresse, livreur assigné. Le stock se met à jour seul.</p>
+</li>
+<li class="w-sec-step w-reveal" data-testid="step-4" style="background: #4F46E5; border: 1px solid #6366F1; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<span class="w-num w-stepn" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 40px; color: #FBBF24; line-height: 1; transform-origin: left">4</span>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Le soir, vous savez</h3>
+<p style="margin: 0; color: #E0E3FF; font-size: 15px; line-height: 1.55">Qui doit combien, qui a reversé, et ce qu’il reste à réclamer. En un coup d’œil.</p>
+</li>
+</ol>
+</div>
+</section>
+
+<!-- ============ LE PRODUIT (showcase) ============ -->
+<section id="produit" data-testid="section-product-showcase" class="w-sec" style="background: #FFFFFF">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 28px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px; max-width: 760px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Le produit</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em">Voici Warko, tel que vous l’utiliserez.</h2>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: #545873">Les vrais écrans de l’application, avec des données d’exemple. Touchez un onglet pour explorer.</p>
+</div>
+
+<div class="w-tabs" role="tablist" aria-label="Écrans de l’application" data-testid="showcase-tabs">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" class="w-tab" id="showcase-tab-{{t.key}}" aria-selected="{{t.active}}" aria-controls="showcase-panel" data-testid="showcase-tab-{{t.key}}" data-track="showcase_tab" data-track-value="{{t.key}}" onClick="{{t.pick}}" style="{{t.style}}">
+<span style="display: flex; align-items: center; gap: 8px">{{t.label}}</span>
+<sc-if value="{{t.showProgress}}" hint-placeholder-val="{{false}}">
+<span aria-hidden="true" style="position: absolute; left: 14px; right: 14px; bottom: 6px; height: 2px; border-radius: 2px; background: rgba(255,255,255,.25); overflow: hidden"><span class="w-progress" style="display: block; height: 100%; background: #FBBF24"></span></span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="1">
+<sc-if value="{{t.active}}" hint-placeholder-val="{{false}}">
+<p class="w-swap" style="margin: -8px 0 0; font-size: 15px; color: #545873; max-width: 720px; line-height: 1.55">{{t.caption}}</p>
+</sc-if>
+</sc-for>
+
+<!-- device frame -->
+<div class="w-reveal" data-testid="showcase-device" style="border: 1px solid #DCDDE8; border-radius: 20px; background: #FFFFFF; box-shadow: 0 30px 80px rgba(14,16,32,0.12); overflow: hidden">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #F1F1F6; border-bottom: 1px solid #E4E4EE">
+<span aria-hidden="true" style="display: flex; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 999px; background: #D6D7E4"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #D6D7E4"></span><span style="width: 10px; height: 10px; border-radius: 999px; background: #D6D7E4"></span></span>
+<span class="w-num" style="flex: 1; min-width: 0; background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 8px; padding: 5px 10px; font-size: 12px; color: #545873; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">warko.app{{tabPath}}</span>
+</div>
+<div class="w-app" style="background: #F9FAFB; min-height: 560px">
+<!-- sidebar (desktop) -->
+<aside class="w-app-side" aria-hidden="true" style="flex-direction: column; gap: 2px; background: #FFFFFF; border-right: 1px solid #E5E7EB; padding: 16px 10px">
+<div style="display: flex; align-items: center; gap: 8px; padding: 4px 10px 16px">
+<svg width="24" height="24" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#4F46E5"></rect><path d="M13 19 L23 45 L32 29 L41 45 L51 19" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg>
+<span style="font-weight: 700; font-size: 15px">Warko</span>
+</div>
+<sc-for list="{{sideNav}}" as="n" hint-placeholder-count="9">
+<div style="{{n.style}}">{{n.label}}</div>
+</sc-for>
+</aside>
+
+<div id="showcase-panel" role="tabpanel" aria-labelledby="showcase-tab-{{tab}}" style="min-width: 0; padding: 18px 16px 24px">
+
+<!-- ===== Tableau de bord ===== -->
+<sc-if value="{{tabDashboard}}" hint-placeholder-val="{{true}}">
+<div class="w-screen" data-testid="showcase-screen-dashboard" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div>
+<div style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em; color: #111827">Bonjour, Kouassi</div>
+<div style="font-size: 13px; color: #6B7280; margin-top: 2px">Bienvenue, voici l’ensemble de votre activité.</div>
+</div>
+<span style="flex: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #D1D5DB; background: #FFFFFF; border-radius: 8px; padding: 7px 10px; font-size: 12px; font-weight: 500; color: #374151"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"></path><path d="M16.5 12 12 16.5 7.5 12"></path><path d="M12 16.5V3"></path></svg>Exporter en Excel</span>
+</div>
+<div class="w-m4 w-stagger">
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">CA aujourd’hui</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #4F46E5; margin-top: 4px">195 000 <span style="font-size: 11px; color: #9CA3AF; font-weight: 500">FCFA</span></div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">CA ce mois</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #4F46E5; margin-top: 4px">3 480 000 <span style="font-size: 11px; color: #9CA3AF; font-weight: 500">FCFA</span></div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">Panier moyen</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 4px">11 500 <span style="font-size: 11px; color: #9CA3AF; font-weight: 500">FCFA</span></div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">Bénéfice estimé</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #15803D; margin-top: 4px">1 120 000 <span style="font-size: 11px; color: #9CA3AF; font-weight: 500">FCFA</span></div></div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px">
+<div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; align-items: flex-end">
+<div><div style="font-size: 12px; color: #6B7280">Objectif mensuel</div><div class="w-num" style="font-size: 16px; font-weight: 700; color: #111827">3 480 000 / 5 000 000 FCFA</div></div>
+<span class="w-num" style="font-size: 20px; font-weight: 700; color: #4F46E5">69,6 %</span>
+</div>
+<div style="margin-top: 10px; height: 10px; border-radius: 999px; background: #F3F4F6; overflow: hidden"><div class="w-fill" style="width: 69.6%; height: 100%; border-radius: 999px; background: #4F46E5"></div></div>
+</div>
+<div class="w-m4 w-stagger">
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">Commandes du mois</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #111827; margin-top: 4px">312</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">Livraisons effectuées</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #15803D; margin-top: 4px">268</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">Commandes annulées</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #B91C1C; margin-top: 4px">19</div></div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 12px"><div style="font-size: 11px; color: #6B7280">Dépenses</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #B91C1C; margin-top: 4px">410 000 <span style="font-size: 11px; color: #9CA3AF; font-weight: 500">FCFA</span></div></div>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px">
+<div style="padding: 12px 14px; border-bottom: 1px solid #F3F4F6; display: flex; justify-content: space-between; align-items: center"><span style="font-size: 14px; font-weight: 600; color: #111827">Évolution des ventes · cette semaine</span><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #6B7280"><span style="width: 8px; height: 8px; border-radius: 999px; background: #4F46E5"></span>Ventes</span></div>
+<div role="img" aria-label="Graphique d’exemple des ventes de la semaine, en hausse jusqu’à jeudi" style="display: flex; align-items: flex-end; gap: 10px; height: 150px; padding: 14px 14px 8px">
+<sc-for list="{{bars}}" as="b" hint-placeholder-count="7">
+<div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end">
+<div class="w-bar" style="{{b.style}}"></div>
+<span style="font-size: 11px; color: #6B7280">{{b.day}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<!-- ===== Commandes ===== -->
+<sc-if value="{{tabOrders}}" hint-placeholder-val="{{false}}">
+<div class="w-screen" data-testid="showcase-screen-orders" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<div>
+<div style="font-size: 22px; font-weight: 700; color: #111827">Commandes</div>
+<div style="font-size: 13px; color: #6B7280; margin-top: 2px">TikTok, WhatsApp, Facebook, Instagram ou boutique&nbsp;: tout est ici.</div>
+</div>
+<span style="flex: none; display: inline-flex; align-items: center; gap: 6px; background: #4F46E5; color: #FFFFFF; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Nouvelle commande</span>
+</div>
+<div role="group" aria-label="Filtrer par statut" style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px">
+<sc-for list="{{orderFilters}}" as="f" hint-placeholder-count="5">
+<button type="button" class="w-chip" aria-pressed="{{f.active}}" data-testid="showcase-filter-{{f.key}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+<div class="w-ord w-stagger" data-testid="showcase-order-list">
+<sc-for list="{{orders}}" as="o" hint-placeholder-count="4">
+<article class="w-row" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.04)">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px">
+<div style="min-width: 0">
+<div style="font-weight: 600; font-size: 15px; color: #111827">{{o.client}}</div>
+<div class="w-num" style="font-size: 12px; color: #6B7280">{{o.phone}} · {{o.channel}}</div>
+</div>
+<span style="{{o.badgeStyle}}">{{o.status}}</span>
+</div>
+<div style="font-size: 13px; color: #374151">{{o.products}}</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border-top: 1px solid #F3F4F6; padding-top: 10px">
+<div><div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #6B7280">Montant</div><div class="w-num" style="font-size: 14px; font-weight: 600; color: #111827">{{o.amount}} FCFA</div></div>
+<div><div style="font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #6B7280">Livreur</div><div style="font-size: 14px; font-weight: 500; color: #1F2937">{{o.driver}}</div></div>
+</div>
+</article>
+</sc-for>
+</div>
+<sc-if value="{{noOrders}}" hint-placeholder-val="{{false}}">
+<p style="margin: 0; padding: 24px; text-align: center; font-size: 14px; color: #6B7280">Aucune commande avec ce statut.</p>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ===== Livraisons ===== -->
+<sc-if value="{{tabDeliveries}}" hint-placeholder-val="{{false}}">
+<div class="w-screen" data-testid="showcase-screen-deliveries" style="display: flex; flex-direction: column; gap: 14px">
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px">
+<div>
+<div style="font-size: 17px; font-weight: 600; color: #111827">Bilan du jour</div>
+<div style="font-size: 13px; color: #6B7280; margin-top: 2px">Colis confiés aux livreurs à la date de tournée sélectionnée (heure d’Abidjan).</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="background: #4F46E5; color: #FFFFFF; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 600">Aujourd’hui</span>
+<span style="background: #FFFFFF; border: 1px solid #D1D5DB; color: #374151; border-radius: 8px; padding: 7px 12px; font-size: 13px; font-weight: 500">Hier</span>
+<span class="w-num" style="background: #FFFFFF; border: 1px solid #D1D5DB; color: #374151; border-radius: 8px; padding: 7px 12px; font-size: 13px">29/10/2026</span>
+<span style="margin-left: auto; border: 1px solid #D1D5DB; color: #374151; border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 500">Exporter le bilan (Google Sheets)</span>
+</div>
+</div>
+<div style="background: #EEF2FF; border: 1px solid #E0E7FF; border-radius: 12px; padding: 14px">
+<div style="font-size: 14px; font-weight: 600; color: #111827">Total de la journée</div>
+<div class="w-m5 w-stagger" style="margin-top: 10px">
+<div><div style="font-size: 11px; color: #6B7280">Livrés</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #111827">17</div></div>
+<div><div style="font-size: 11px; color: #6B7280">En cours</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #111827">1</div></div>
+<div><div style="font-size: 11px; color: #6B7280">Annulés</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #111827">1</div></div>
+<div><div style="font-size: 11px; color: #6B7280">Reportés</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #111827">0</div></div>
+<div><div style="font-size: 11px; color: #6B7280">À remettre attendu</div><div class="w-num" style="font-size: 18px; font-weight: 700; color: #4338CA">195 000 FCFA</div></div>
+</div>
+</div>
+<div class="w-drv-h" aria-hidden="true" style="grid-template-columns: 2fr repeat(4,1fr) 1.5fr; gap: 12px; padding: 0 14px; font-size: 11px; font-weight: 500; color: #6B7280">
+<span>Livreur</span><span>Livrés</span><span>En cours</span><span>Annulés</span><span>Reportés</span><span style="text-align: right">À remettre attendu</span>
+</div>
+<div class="w-stagger" style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{drivers}}" as="d" hint-placeholder-count="3">
+<article class="w-row" style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden">
+<div class="w-drv" style="padding: 14px">
+<div><button type="button" class="w-chip" aria-expanded="{{d.open}}" data-testid="showcase-driver-{{d.key}}" onClick="{{d.toggle}}" style="background: none; border: 0; padding: 0; min-height: 32px; font-family: Inter, sans-serif; font-size: 15px; font-weight: 600; color: #4338CA; display: inline-flex; align-items: center; gap: 6px">{{d.name}}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="{{d.chev}}"><path d="m6 9 6 6 6-6"></path></svg></button></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span class="w-drv-lbl" style="color: #6B7280">Livrés</span><span class="w-num" style="font-weight: 500">{{d.delivered}}</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span class="w-drv-lbl" style="color: #6B7280">En cours</span><span class="w-num" style="font-weight: 500">{{d.progress}}</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span class="w-drv-lbl" style="color: #6B7280">Annulés</span><span class="w-num" style="font-weight: 500">{{d.cancelled}}</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px"><span class="w-drv-lbl" style="color: #6B7280">Reportés</span><span class="w-num" style="font-weight: 500">{{d.postponed}}</span></div>
+<div style="display: flex; justify-content: space-between; font-size: 13px; text-align: right"><span class="w-drv-lbl" style="color: #6B7280">À remettre attendu</span><span class="w-num" style="font-weight: 700; color: #4338CA; flex: 1">{{d.expected}} FCFA</span></div>
+</div>
+<dl class="w-dl4" style="margin: 0; border-top: 1px solid #F3F4F6; padding: 12px 14px; font-size: 13px">
+<div><dt style="color: #6B7280">Encaissé sur la tournée</dt><dd class="w-num" style="margin: 2px 0 0">{{d.collected}} FCFA</dd></div>
+<div><dt style="color: #6B7280">Frais retenus</dt><dd class="w-num" style="margin: 2px 0 0">{{d.fees}} FCFA</dd></div>
+<div><dt style="color: #6B7280">Reversé à cette date</dt><dd class="w-num" style="margin: 2px 0 0">{{d.remitted}} FCFA</dd></div>
+<div><dt style="color: #6B7280">Reste dû global actuel</dt><dd class="w-num" style="margin: 2px 0 0; font-weight: 700; color: {{d.dueColor}}">{{d.due}} FCFA</dd></div>
+</dl>
+<sc-if value="{{d.open}}" hint-placeholder-val="{{false}}">
+<div class="w-faq-a" style="border-top: 1px solid #F3F4F6; background: #F9FAFB; padding: 12px 14px">
+<div style="font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 8px">Commandes de la tournée</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{d.orders}}" as="r" hint-placeholder-count="2">
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px">
+<div style="min-width: 0"><div style="font-weight: 600; color: #4338CA">{{r.client}}</div><div class="w-num" style="color: #6B7280">{{r.phone}}</div><div style="color: #374151">{{r.products}}</div></div>
+<div style="text-align: right"><div style="color: #4B5563">{{r.status}}</div><div class="w-num" style="font-weight: 600; color: #111827">{{r.label}}&nbsp;: {{r.amount}} FCFA</div></div>
+</div>
+</sc-for>
+</div>
+<p class="w-num" style="margin: 8px 0 0; font-size: 12px; color: #6B7280">{{d.more}}</p>
+</div>
+</sc-if>
+</article>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<!-- bottom nav (mobile) -->
+<nav class="w-app-bottom" aria-hidden="true" style="justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E5E7EB; padding: 8px 4px 10px">
+<sc-for list="{{bottomNav}}" as="n" hint-placeholder-count="4">
+<span style="{{n.style}}"><span style="{{n.dot}}"></span>{{n.label}}</span>
+</sc-for>
+</nav>
+</div>
+<p style="margin: 0; font-size: 12px; color: #6B7280; text-align: center">Captures recréées à partir de l’application Warko · noms et montants d’exemple</p>
+</div>
+</section>
+
+<!-- ============ FONCTIONNALITÉS ============ -->
+<section id="fonctionnalites" data-testid="section-features" class="w-sec" style="background: #F6F6FA; border-top: 1px solid #E4E4EE">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 40px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px; max-width: 720px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Fonctionnalités</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em">Tout ce qu’il faut, de la commande à l’encaissement.</h2>
+</div>
+
+<div class="w-feat">
+<article class="w-card w-reveal" data-testid="feature-orders" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" style="display: flex; flex-wrap: wrap; gap: 6px; background: #F6F6FA; border-radius: 12px; padding: 12px">
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #DBEAFE; color: #1E40AF">Reçue</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #E0E7FF; color: #3730A3">Confirmée</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #FEF9C3; color: #854D0E">En livraison</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #DCFCE7; color: #166534">Livrée</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #FFEDD5; color: #9A3412">Reportée</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #FEE2E2; color: #991B1B">Annulée</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px; background: #FFE4E6; color: #9F1239">Retournée</span>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Commandes centralisées</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.55">Filtrez par période, statut ou livreur. Suivez chaque commande de la réception au retour.</p>
+</article>
+<article class="w-card w-reveal" data-testid="feature-riders" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" class="w-num" style="background: #F6F6FA; border-radius: 12px; padding: 12px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="color: #545873">29/10 · 19:42</span><span style="font-weight: 700; color: #166534">+ 60 000 FCFA</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span style="font-weight: 600">Koffi</span><span style="color: #545873">saisi par Awa</span></div>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Reversements tracés</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.55">Chaque reversement garde la date, le montant et qui l’a saisi. Impossible de saisir plus que le solde dû.</p>
+</article>
+<article class="w-card w-reveal" data-testid="feature-stock" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" class="w-num" style="background: #F6F6FA; border-radius: 12px; padding: 12px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Lot du 12/10</span><span style="font-weight: 700; color: #166534">+ 24</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Commande Aïcha K.</span><span style="font-weight: 700; color: #B91C1C">− 2</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid #E4E4EE; padding-top: 8px"><span style="color: #545873">Sérum éclat en stock</span><span style="font-weight: 700">22</span></div>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Stock automatique</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.55">Lots, variantes, mouvements&nbsp;: entrées, sorties commande et retours tracés.</p>
+</article>
+<article class="w-card w-reveal" data-testid="feature-live" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" class="w-num" style="background: #F6F6FA; border-radius: 12px; padding: 12px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px"><span style="font-weight: 600">Live du soir</span><span style="font-size: 11px; font-weight: 700; color: #B91C1C; background: #FEE2E2; border-radius: 999px; padding: 2px 8px">En cours</span></div>
+<div style="height: 8px; border-radius: 999px; background: #E4E4EE; overflow: hidden"><div style="width: 71%; height: 100%; border-radius: 999px; background: #4F46E5"></div></div>
+<div style="display: flex; justify-content: space-between; gap: 8px; color: #545873"><span>142 000 / 200 000 FCFA</span><span>71 %</span></div>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Objectifs &amp; sessions live</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.55">Fixez un objectif de CA par live, saisissez vite pendant la diffusion, récap à la clôture.</p>
+</article>
+<article class="w-card w-reveal" data-testid="feature-expenses" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" class="w-num" style="background: #F6F6FA; border-radius: 12px; padding: 12px 14px; font-size: 13px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Publicité</span><span>180 000</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px"><span>Transport</span><span>65 000</span></div>
+<div style="display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid #E4E4EE; padding-top: 8px; font-weight: 700"><span>Dépenses d’octobre</span><span style="color: #B91C1C">410 000</span></div>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Dépenses &amp; bilans mensuels</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.55">Transport, emballage, publicité&nbsp;: classées par catégorie, avec un bilan clair chaque mois.</p>
+</article>
+<article class="w-card w-reveal" data-testid="feature-print" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 10px">
+<div aria-hidden="true" style="display: flex; flex-wrap: wrap; gap: 6px; background: #F6F6FA; border-radius: 12px; padding: 12px">
+<span style="font-size: 12px; font-weight: 600; border-radius: 8px; padding: 5px 10px; background: #FFFFFF; border: 1px solid #E4E4EE">Bon A4</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 8px; padding: 5px 10px; background: #FFFFFF; border: 1px solid #E4E4EE">Ticket 80 mm</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 8px; padding: 5px 10px; background: #FFFFFF; border: 1px solid #E4E4EE">Ticket 58 mm</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 8px; padding: 5px 10px; background: #FFFFFF; border: 1px solid #E4E4EE">Excel</span>
+<span style="font-size: 12px; font-weight: 600; border-radius: 8px; padding: 5px 10px; background: #FFFFFF; border: 1px solid #E4E4EE">Google Sheets</span>
+</div>
+<h3 style="margin: 0; font-size: 18px; font-weight: 700">Bons &amp; exports</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.55">Bon de commande en A4 ou ticket thermique, exports Excel et Google Sheets.</p>
+</article>
+</div>
+
+<div class="w-g2">
+<article class="w-card w-card-dark w-reveal" data-testid="feature-roles" style="background: #0E1020; color: #FFFFFF; border: 1px solid #0E1020; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.02em">Déléguez sans tout montrer.</h3>
+<p style="margin: 0; color: #C7CAE6; font-size: 15px; line-height: 1.6">Votre responsable livraisons gère les statuts et les reversements. Il ne voit ni vos marges, ni vos prix d’achat, ni votre chiffre d’affaires.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<span style="font-size: 13px; border: 1px solid #34386A; border-radius: 999px; padding: 6px 12px; color: #E0E3FF">Propriétaire</span>
+<span style="font-size: 13px; border: 1px solid #34386A; border-radius: 999px; padding: 6px 12px; color: #E0E3FF">Gestionnaire commandes</span>
+<span style="font-size: 13px; border: 1px solid #34386A; border-radius: 999px; padding: 6px 12px; color: #E0E3FF">Responsable livraisons</span>
+</div>
+</article>
+<article class="w-card w-reveal" data-testid="feature-mobile" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 14px">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 24px; font-weight: 800; letter-spacing: -0.02em">Pensé pour votre téléphone.</h3>
+<p style="margin: 0; color: #545873; font-size: 15px; line-height: 1.6">Warko s’ouvre dans le navigateur de votre smartphone, même d’entrée de gamme et en 4G. Rien à télécharger, mode sombre inclus, vos données vous suivent partout.</p>
+</article>
+</div>
+</div>
+</section>
+
+<!-- ============ TÉMOIGNAGE ============ -->
+<section id="temoignage" data-testid="section-testimonial" class="w-sec" style="background: #FFFFFF; border-top: 1px solid #E4E4EE">
+<div class="w-wrap">
+<figure class="w-reveal" data-testid="testimonial-card" style="margin: 0 auto; max-width: 860px; display: flex; flex-direction: column; gap: 24px; text-align: center; align-items: center">
+<span aria-hidden="true" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 72px; line-height: 0.6; color: #4F46E5; height: 36px">«</span>
+<blockquote style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 700; font-size: 26px; line-height: 1.3; letter-spacing: -0.02em">[Citation d’un commerçant qui utilise Warko au quotidien. À remplacer par un vrai témoignage, idéalement sur le temps gagné le soir ou l’argent retrouvé.]</blockquote>
+<figcaption style="display: flex; align-items: center; gap: 12px">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: #EEF0FF; color: #4338CA; display: flex; align-items: center; justify-content: center; font-weight: 700">[P]</span>
+<span style="text-align: left"><span style="display: block; font-weight: 700">[Prénom N.]</span><span style="display: block; font-size: 14px; color: #545873">[Activité] · [Ville] · [X] livreurs</span></span>
+</figcaption>
+</figure>
+</div>
+</section>
+
+<!-- ============ TARIFS ============ -->
+<section id="tarifs" data-testid="section-pricing" class="w-sec" style="background: #F6F6FA">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 32px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Tarifs</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em; max-width: 720px">Commencez gratuitement. Passez au Pro quand vous grandissez.</h2>
+<p style="margin: 0; font-size: 16px; color: #545873; max-width: 560px; line-height: 1.6">Le prix suit votre nombre de livreurs. Prix de lancement, sans engagement.</p>
+<div role="group" aria-label="Période de facturation" data-testid="pricing-toggle" style="position: relative; display: inline-flex; background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 999px; padding: 4px; gap: 4px; margin-top: 6px">
+<span class="w-pill" aria-hidden="true" style="position: absolute; top: 4px; left: 4px; width: 132px; height: 44px; border-radius: 999px; background: #12142A; transform: {{pillTransform}}"></span>
+<button type="button" class="w-tab" data-testid="pricing-toggle-monthly" data-track="pricing_toggle_monthly" aria-pressed="{{isMonthly}}" onClick="{{setMonthly}}" style="position: relative; width: 132px; min-height: 44px; border-radius: 999px; border: 0; background: transparent; color: {{monthlyColor}}; font-family: Inter, sans-serif; font-size: 15px; font-weight: 600">Mensuel</button>
+<button type="button" class="w-tab" data-testid="pricing-toggle-annual" data-track="pricing_toggle_annual" aria-pressed="{{isAnnual}}" onClick="{{setAnnual}}" style="position: relative; width: 132px; min-height: 44px; border-radius: 999px; border: 0; background: transparent; color: {{annualColor}}; font-family: Inter, sans-serif; font-size: 15px; font-weight: 600">Annuel <span style="font-size: 12px; font-weight: 700; color: {{badgeColor}}">−20&nbsp;%</span></button>
+</div>
+</div>
+
+<div class="w-plans">
+<!-- Découverte -->
+<article class="w-card w-reveal" data-testid="pricing-plan-decouverte" data-plan="decouverte" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 700">Découverte</h3>
+<p style="margin: 0; color: #545873; font-size: 14px">Pour démarrer et prendre de bonnes habitudes.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; min-height: 84px">
+<div class="w-num" style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">0</span><span style="font-weight: 600; color: #545873">FCFA</span></div>
+<span style="font-size: 13px; color: #545873">Gratuit, pour toujours</span>
+</div>
+<a href="/auth/signup?plan=decouverte" class="w-btn w-btn-outline" data-testid="pricing-cta-decouverte" data-track="cta_signup" data-track-location="pricing" data-plan="decouverte" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 12px; border: 1.5px solid #12142A; color: #12142A; text-decoration: none; font-weight: 600">Essayer gratuitement</a>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-size: 15px">
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span><b>1</b> livreur</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span><b>30</b> commandes / mois</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span><b>1</b> utilisateur (vous)</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Bilan livreur basique (solde global)</span></li>
+<li style="display: flex; gap: 10px; color: #6B6F88"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9A9DB3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg><span>Sessions live</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Support&nbsp;: FAQ</span></li>
+</ul>
+</article>
+
+<!-- Pro -->
+<article class="w-pro w-card w-card-dark w-reveal" data-testid="pricing-plan-pro" data-plan="pro" style="background: #0E1020; color: #FFFFFF; border: 2px solid #4F46E5; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px; position: relative">
+<span style="position: absolute; top: -14px; left: 28px; background: #FBBF24; color: #12142A; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 5px 12px">Recommandé</span>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 700">Pro</h3>
+<p style="margin: 0; color: #C7CAE6; font-size: 14px">Pour les vendeurs avec plusieurs livreurs.</p>
+</div>
+<div style="min-height: 84px">
+<sc-if value="{{isMonthly}}" hint-placeholder-val="{{true}}">
+<div class="w-swap" style="display: flex; flex-direction: column; gap: 4px">
+<div class="w-num" style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap"><s style="color: #8C90B5; font-size: 16px">7 000</s><span data-testid="pricing-price-pro" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">5 000</span><span style="font-weight: 600; color: #C7CAE6">FCFA / mois</span></div>
+<span style="font-size: 13px; color: #FBBF24; font-weight: 600">Prix de lancement</span>
+</div>
+</sc-if>
+<sc-if value="{{isAnnual}}" hint-placeholder-val="{{false}}">
+<div class="w-swap" style="display: flex; flex-direction: column; gap: 4px">
+<div class="w-num" style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap"><s style="color: #8C90B5; font-size: 16px">60 000</s><span data-testid="pricing-price-pro" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">48 000</span><span style="font-weight: 600; color: #C7CAE6">FCFA / an</span></div>
+<span class="w-num" style="font-size: 13px; color: #FBBF24; font-weight: 600">Soit 4 000 FCFA/mois · Économisez 12 000 FCFA</span>
+</div>
+</sc-if>
+</div>
+<a href="/auth/signup?plan=pro" class="w-btn w-btn-primary" data-testid="pricing-cta-pro" data-track="cta_signup" data-track-location="pricing" data-plan="pro" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 12px; background: #4F46E5; color: #FFFFFF; text-decoration: none; font-weight: 600">Choisir Pro</a>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-size: 15px">
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span><b>5</b> livreurs</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Commandes <b>illimitées</b></span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span><b>3</b> utilisateurs (vous + 2)</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Bilan détaillé par livreur + export</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Sessions live</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Support e-mail + WhatsApp (48 h)</span></li>
+</ul>
+</article>
+
+<!-- Business -->
+<article class="w-card w-reveal" data-testid="pricing-plan-business" data-plan="business" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h3 style="margin: 0; font-size: 20px; font-weight: 700">Business</h3>
+<p style="margin: 0; color: #545873; font-size: 14px">Pour les boutiques qui tournent à plein régime.</p>
+</div>
+<div style="min-height: 84px">
+<sc-if value="{{isMonthly}}" hint-placeholder-val="{{true}}">
+<div class="w-swap" style="display: flex; flex-direction: column; gap: 4px">
+<div class="w-num" style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap"><s style="color: #6B6F88; font-size: 16px">15 000</s><span data-testid="pricing-price-business" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">10 000</span><span style="font-weight: 600; color: #545873">FCFA / mois</span></div>
+<span style="font-size: 13px; color: #B45309; font-weight: 600">Prix de lancement</span>
+</div>
+</sc-if>
+<sc-if value="{{isAnnual}}" hint-placeholder-val="{{false}}">
+<div class="w-swap" style="display: flex; flex-direction: column; gap: 4px">
+<div class="w-num" style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap"><s style="color: #6B6F88; font-size: 16px">120 000</s><span data-testid="pricing-price-business" style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-size: 44px; font-weight: 800; letter-spacing: -0.03em">96 000</span><span style="font-weight: 600; color: #545873">FCFA / an</span></div>
+<span class="w-num" style="font-size: 13px; color: #B45309; font-weight: 600">Soit 8 000 FCFA/mois · Économisez 24 000 FCFA</span>
+</div>
+</sc-if>
+</div>
+<a href="/auth/signup?plan=business" class="w-btn w-btn-outline" data-testid="pricing-cta-business" data-track="cta_signup" data-track-location="pricing" data-plan="business" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border-radius: 12px; border: 1.5px solid #12142A; color: #12142A; text-decoration: none; font-weight: 600">Choisir Business</a>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; font-size: 15px">
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Livreurs <b>illimités</b></span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Commandes <b>illimitées</b></span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Utilisateurs <b>illimités</b></span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Bilan détaillé + historique complet</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Sessions live</span></li>
+<li style="display: flex; gap: 10px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m5 12 5 5 9-10"></path></svg><span>Support WhatsApp prioritaire (24 h)</span></li>
+</ul>
+</article>
+</div>
+
+<div class="w-reveal" data-testid="pricing-payment-methods" style="display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center">
+<p style="margin: 0; font-size: 14px; font-weight: 600; color: #3B3F5C">Payez depuis votre téléphone, en moins de 2 minutes</p>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px">
+<span class="w-chip" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: default">Wave</span>
+<span class="w-chip" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: default">Orange Money</span>
+<span class="w-chip" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: default">MTN MoMo</span>
+<span class="w-chip" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: default">Moov Money</span>
+<span class="w-chip" style="background: #FFFFFF; border: 1px solid #E4E4EE; border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 600; color: #545873; cursor: default">Visa / Mastercard</span>
+</div>
+<p style="margin: 0; font-size: 13px; color: #545873">Tableau de bord, catalogue, stock et dépenses inclus dans tous les plans.<br>Pas de virement, pas d’IBAN. Annulable à tout moment, vos données restent à vous.</p>
+</div>
+</div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq" data-testid="section-faq" class="w-sec" style="background: #FFFFFF; border-top: 1px solid #E4E4EE">
+<div class="w-wrap" style="display: flex; flex-direction: column; gap: 32px; max-width: 860px">
+<div class="w-reveal" style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4F46E5">Questions fréquentes</span>
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em">Vous vous demandez sûrement…</h2>
+</div>
+<div style="display: flex; flex-direction: column; border-top: 1px solid #E4E4EE">
+<sc-for list="{{faqs}}" as="item" hint-placeholder-count="8">
+<div data-testid="faq-item-{{item.id}}" style="border-bottom: 1px solid #E4E4EE">
+<h3 style="margin: 0">
+<button type="button" class="w-chip" id="faq-btn-{{item.id}}" data-testid="faq-toggle-{{item.id}}" data-track="faq_open" aria-expanded="{{item.open}}" aria-controls="faq-panel-{{item.id}}" onClick="{{item.toggle}}" style="width: 100%; min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: none; border: 0; padding: 18px 0; text-align: left; font-family: Inter, sans-serif; font-size: 17px; font-weight: 600; color: {{item.qColor}}">
+<span>{{item.q}}</span>
+<span aria-hidden="true" style="{{item.chevWrap}}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="{{item.chevStyle}}"><path d="m6 9 6 6 6-6"></path></svg></span>
+</button>
+</h3>
+<sc-if value="{{item.open}}" hint-placeholder-val="{{false}}">
+<div class="w-faq-a" id="faq-panel-{{item.id}}" role="region" aria-labelledby="faq-btn-{{item.id}}" data-testid="faq-answer-{{item.id}}" style="padding: 0 48px 20px 0; color: #545873; font-size: 16px; line-height: 1.6">{{item.a}}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+
+<!-- ============ FOOTER CTA ============ -->
+<section id="cta-final" data-testid="section-final-cta" style="background: #4F46E5; color: #FFFFFF; padding-top: 88px; padding-bottom: 88px">
+<div class="w-wrap w-reveal" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px">
+<h2 class="w-h2" style="margin: 0; font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; letter-spacing: -0.03em; max-width: 760px">Ce soir, sachez exactement qui vous doit quoi.</h2>
+<p style="margin: 0; font-size: 17px; color: #E0E3FF; max-width: 520px; line-height: 1.6">Créez votre boutique en 60 secondes. Gratuit jusqu’à 30 commandes par mois.</p>
+<a href="/auth/signup" class="w-btn w-btn-light" data-testid="cta-final-signup" data-track="cta_signup" data-track-location="footer" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: #FFFFFF; color: #3730A3; text-decoration: none; font-weight: 700; font-size: 17px; min-height: 56px; padding: 0 32px; border-radius: 14px">
+Essayer gratuitement
+<svg class="w-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+</a>
+<span style="font-size: 14px; color: #E0E3FF">Aucune carte requise</span>
+</div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer data-testid="landing-footer" style="background: #0E1020; color: #A9ADD0; padding-top: 40px; padding-bottom: 96px">
+<div class="w-wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; align-items: center">
+<div style="display: flex; align-items: center; gap: 10px; color: #FFFFFF">
+<svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#4F46E5"></rect><path d="M13 19 L23 45 L32 29 L41 45 L51 19" stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"></path></svg>
+<span style="font-family: 'Bricolage Grotesque', Inter, sans-serif; font-weight: 800; font-size: 19px">Warko</span>
+</div>
+<nav aria-label="Pied de page" style="display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 14px">
+<a href="#produit" class="w-link" style="color: #C7CAE6; text-decoration: none; padding: 12px 0">Le produit</a>
+<a href="#fonctionnalites" class="w-link" style="color: #C7CAE6; text-decoration: none; padding: 12px 0">Fonctionnalités</a>
+<a href="#tarifs" class="w-link" style="color: #C7CAE6; text-decoration: none; padding: 12px 0">Tarifs</a>
+<a href="#faq" class="w-link" style="color: #C7CAE6; text-decoration: none; padding: 12px 0">FAQ</a>
+<a href="/auth/login" class="w-link" data-testid="footer-login" style="color: #C7CAE6; text-decoration: none; padding: 12px 0">Se connecter</a>
+</nav>
+<p style="margin: 0; font-size: 13px; width: 100%">© 2026 Warko · La gestion COD pour les vendeurs des réseaux sociaux.</p>
+</div>
+</footer>
+
+<!-- ============ STICKY MOBILE CTA ============ -->
+<div class="w-sticky" data-testid="sticky-mobile-cta" style="position: sticky; bottom: 0; z-index: 10; background: rgba(255,255,255,0.96); border-top: 1px solid #E4E4EE; padding: 12px 16px; gap: 12px; align-items: center; justify-content: space-between; box-shadow: 0 -8px 24px rgba(14,16,32,0.08)">
+<span style="font-size: 13px; color: #545873; line-height: 1.3"><b style="color: #12142A">Gratuit</b><br>30 commandes/mois</span>
+<a href="/auth/signup" class="w-btn w-btn-primary" data-testid="cta-sticky-signup" data-track="cta_signup" data-track-location="sticky_mobile" style="flex: 1; max-width: 220px; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 12px; background: #4F46E5; color: #FFFFFF; text-decoration: none; font-weight: 600; font-size: 16px">Essayer gratuitement</a>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"defaultBilling":{"editor":"enum","options":["monthly","annual"],"default":"monthly"},"showcaseAutoplay":{"editor":"boolean","default":true},"$preview":{"width":1280,"height":8800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { billing: null, openFaq: 0, heroSettled: false, tab: 'dashboard', userPicked: false, orderFilter: 'all', openDriver: 'koffi' };
+  }
+  componentDidMount() {
+    var self = this;
+    var order = ['dashboard', 'orders', 'deliveries'];
+    this.timer = setInterval(function () {
+      if (self.state.userPicked || self.props.showcaseAutoplay === false) return;
+      var i = order.indexOf(self.state.tab);
+      self.setState({ tab: order[(i + 1) % order.length] });
+    }, 6000);
+  }
+  componentWillUnmount() {
+    if (this.timer) clearInterval(this.timer);
+  }
+  renderVals() {
+    var self = this;
+    var s = this.state;
+    var billing = s.billing || this.props.defaultBilling || 'monthly';
+    var annual = billing === 'annual';
+    var autoplay = this.props.showcaseAutoplay !== false && !s.userPicked;
+
+    // showcase tabs
+    var tabDefs = [
+      { key: 'dashboard', label: 'Tableau de bord', path: '/dashboard', caption: 'Votre chiffre d’affaires, votre bénéfice estimé et votre objectif du mois, mis à jour à chaque commande livrée.' },
+      { key: 'orders', label: 'Commandes', path: '/orders', caption: 'Toutes vos commandes, quel que soit le canal, avec leur statut et leur livreur. Touchez un statut pour filtrer.' },
+      { key: 'deliveries', label: 'Livraisons', path: '/deliveries', caption: 'Le bilan du jour par livreur : livrés, en cours, encaissé, frais retenus, reversé et reste dû. Touchez un nom pour voir sa tournée.' }
+    ];
+    var tabs = tabDefs.map(function (t) {
+      var active = s.tab === t.key;
+      return {
+        key: t.key, label: t.label, caption: t.caption, active: active,
+        showProgress: active && autoplay,
+        pick: function () { self.setState({ tab: t.key, userPicked: true }); },
+        style: 'position: relative; flex: none; min-height: 48px; padding: 0 18px; border-radius: 12px; font-family: Inter, sans-serif; font-size: 15px; font-weight: 600; border: 1px solid ' + (active ? '#12142A' : '#E4E4EE') + '; background: ' + (active ? '#12142A' : '#FFFFFF') + '; color: ' + (active ? '#FFFFFF' : '#3B3F5C')
+      };
+    });
+    var activeDef = tabDefs.filter(function (t) { return t.key === s.tab; })[0] || tabDefs[0];
+    var navMap = { dashboard: 'Tableau de bord', orders: 'Commandes', deliveries: 'Livraisons' };
+    var sideLabels = ['Tableau de bord', 'Commandes', 'Livraisons', 'Produits', 'Analyses', 'Dépenses', 'Objectifs & lives', 'Bilans mensuels', 'Équipe'];
+    var sideNav = sideLabels.map(function (l) {
+      var on = navMap[s.tab] === l;
+      return { label: l, style: 'padding: 9px 10px; border-radius: 8px; font-size: 13px; font-weight: ' + (on ? '600' : '500') + '; background: ' + (on ? '#EEF2FF' : 'transparent') + '; color: ' + (on ? '#4338CA' : '#4B5563') + '; transition: background-color .25s, color .25s' };
+    });
+    var bottomNav = [
+      { label: 'Tableau', k: 'dashboard' }, { label: 'Commandes', k: 'orders' }, { label: 'Livraisons', k: 'deliveries' }, { label: 'Produits', k: 'products' }
+    ].map(function (n) {
+      var on = s.tab === n.k;
+      return {
+        label: n.label,
+        style: 'display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; font-weight: ' + (on ? '600' : '500') + '; color: ' + (on ? '#4F46E5' : '#6B7280') + '; transition: color .25s',
+        dot: 'width: 20px; height: 4px; border-radius: 4px; background: ' + (on ? '#4F46E5' : 'transparent') + '; transition: background-color .25s'
+      };
+    });
+
+    // chart
+    var barVals = [42, 58, 51, 74, 88, 66, 39];
+    var days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    var bars = barVals.map(function (v, i) {
+      return { day: days[i], style: 'width: 100%; max-width: 36px; height: ' + v + '%; border-radius: 6px 6px 2px 2px; background: ' + (i === 4 ? '#4F46E5' : '#C7D2FE') + '; animation-delay: ' + (i * 0.06) + 's' };
+    });
+
+    // orders: status labels and colors from lib/constants.ts
+    var st = {
+      received: { l: 'Reçue', bg: '#DBEAFE', fg: '#1E40AF' },
+      confirmed: { l: 'Confirmée', bg: '#E0E7FF', fg: '#3730A3' },
+      in_progress: { l: 'En livraison', bg: '#FEF9C3', fg: '#854D0E' },
+      delivered: { l: 'Livrée', bg: '#DCFCE7', fg: '#166534' },
+      postponed: { l: 'Reportée', bg: '#FFEDD5', fg: '#9A3412' }
+    };
+    var orderData = [
+      { client: 'Aïcha K.', phone: '07 08 •• •• 12', channel: 'TikTok', products: 'Sérum éclat × 2', amount: '18 000', driver: 'Koffi', s: 'delivered' },
+      { client: 'Mariam D.', phone: '05 44 •• •• 90', channel: 'WhatsApp', products: 'Perruque lisse 16" × 1', amount: '35 000', driver: 'Koffi', s: 'in_progress' },
+      { client: 'Jean-Marc T.', phone: '01 02 •• •• 37', channel: 'Facebook', products: 'Crème corps × 3', amount: '13 500', driver: 'Non assigné', s: 'confirmed' },
+      { client: 'Fatim B.', phone: '07 77 •• •• 05', channel: 'Instagram', products: 'Kit soin cheveux × 1', amount: '22 000', driver: 'Non assigné', s: 'received' },
+      { client: 'Awa S.', phone: '05 60 •• •• 48', channel: 'TikTok', products: 'Huile de ricin × 2', amount: '8 000', driver: 'Non assigné', s: 'postponed' },
+      { client: 'Nadia O.', phone: '07 19 •• •• 61', channel: 'Boutique', products: 'Gel douche × 4', amount: '12 000', driver: 'Ibrahim', s: 'delivered' }
+    ];
+    var filterDefs = [{ key: 'all', label: 'Toutes' }, { key: 'received', label: 'Reçue' }, { key: 'confirmed', label: 'Confirmée' }, { key: 'in_progress', label: 'En livraison' }, { key: 'delivered', label: 'Livrée' }, { key: 'postponed', label: 'Reportée' }];
+    var orderFilters = filterDefs.map(function (f) {
+      var on = s.orderFilter === f.key;
+      return {
+        key: f.key, label: f.label, active: on,
+        pick: function () { self.setState({ orderFilter: f.key, userPicked: true }); },
+        style: 'flex: none; min-height: 36px; padding: 0 12px; border-radius: 999px; font-family: Inter, sans-serif; font-size: 13px; font-weight: 600; border: 1px solid ' + (on ? '#4F46E5' : '#E5E7EB') + '; background: ' + (on ? '#4F46E5' : '#FFFFFF') + '; color: ' + (on ? '#FFFFFF' : '#374151')
+      };
+    });
+    var orders = orderData.filter(function (o) { return s.orderFilter === 'all' || o.s === s.orderFilter; }).map(function (o) {
+      var x = st[o.s];
+      return { client: o.client, phone: o.phone, channel: o.channel, products: o.products, amount: o.amount, driver: o.driver, status: x.l, badgeStyle: 'flex: none; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 3px 9px; background: ' + x.bg + '; color: ' + x.fg };
+    });
+
+    // drivers: labels from components/deliveries/daily-delivery-balance.tsx
+    var driverData = [
+      { key: 'koffi', name: 'Koffi', delivered: 7, progress: 1, cancelled: 0, postponed: 0, expected: '88 000', collected: '96 000', fees: '8 000', remitted: '60 000', due: '28 000', more: '6 autres commandes sur cette tournée',
+        orders: [
+          { client: 'Aïcha K.', phone: '07 08 •• •• 12', products: 'Sérum éclat × 2', status: 'Livré', label: 'À remettre', amount: '18 000' },
+          { client: 'Mariam D.', phone: '05 44 •• •• 90', products: 'Perruque lisse 16" × 1', status: 'En cours', label: 'À remettre si livré', amount: '35 000' }
+        ] },
+      { key: 'ibrahim', name: 'Ibrahim', delivered: 4, progress: 0, cancelled: 1, postponed: 0, expected: '52 000', collected: '57 000', fees: '5 000', remitted: '37 500', due: '14 500', more: '3 autres commandes sur cette tournée',
+        orders: [
+          { client: 'Nadia O.', phone: '07 19 •• •• 61', products: 'Gel douche × 4', status: 'Livré', label: 'À remettre', amount: '12 000' },
+          { client: 'Koné A.', phone: '01 53 •• •• 22', products: 'Savon noir × 2', status: 'Annulé', label: 'À remettre', amount: '0' }
+        ] },
+      { key: 'serge', name: 'Serge', delivered: 6, progress: 0, cancelled: 0, postponed: 0, expected: '55 000', collected: '61 000', fees: '6 000', remitted: '55 000', due: '0', more: '5 autres commandes sur cette tournée',
+        orders: [
+          { client: 'Bintou C.', phone: '05 88 •• •• 74', products: 'Coffret parfum × 1', status: 'Livré', label: 'À remettre', amount: '25 000' }
+        ] }
+    ];
+    var drivers = driverData.map(function (d) {
+      var open = s.openDriver === d.key;
+      var o = {};
+      for (var k in d) o[k] = d[k];
+      o.open = open;
+      o.dueColor = d.due === '0' ? '#166534' : '#B45309';
+      o.chev = 'transition: transform .25s; transform: rotate(' + (open ? '180' : '0') + 'deg)';
+      o.toggle = function () { self.setState({ openDriver: open ? null : d.key, userPicked: true }); };
+      return o;
+    });
+
+    // FAQ
+    var faqData = [
+      { q: 'Faut-il installer une application ?', a: 'Non. Warko fonctionne directement dans le navigateur de votre téléphone, de votre tablette ou de votre ordinateur. Il suffit de créer un compte.' },
+      { q: 'Le plan Découverte est-il vraiment gratuit ?', a: 'Oui, sans carte bancaire et sans limite de durée. Vous pouvez saisir 30 commandes par mois, suivre 1 livreur, voir votre tableau de bord et enregistrer vos dépenses. C’est un vrai outil, pas une démo.' },
+      { q: 'Que se passe-t-il quand j’atteins 30 commandes dans le mois ?', a: 'Vous êtes prévenu dès 25 commandes. À 30, vos commandes existantes restent accessibles et modifiables : seule la création de nouvelles commandes est mise en pause jusqu’au 1er du mois suivant, ou jusqu’à votre passage au plan Pro.' },
+      { q: 'Comment payer mon abonnement ?', a: 'Avec Wave, Orange Money, MTN MoMo ou Moov Money, directement depuis votre téléphone. La carte Visa ou Mastercard est aussi acceptée. Votre nouveau plan s’active dès que le paiement est confirmé.' },
+      { q: 'Mon responsable livraisons peut-il voir mes marges ?', a: 'Non. Il voit uniquement les commandes en livraison, les livreurs et leurs soldes, et le bilan quotidien. Il peut mettre à jour les statuts et enregistrer les reversements, mais il ne voit ni vos produits, ni vos prix d’achat, ni vos dépenses, ni votre chiffre d’affaires.' },
+      { q: 'Je n’ai pas encore de livreur. Warko est-il utile pour moi ?', a: 'Oui. Vous pouvez gérer vos commandes, votre stock, vos dépenses et voir votre bénéfice réel. Le jour où vous confiez vos premières livraisons, le suivi des livreurs est déjà prêt.' },
+      { q: 'Et si un paiement de renouvellement échoue ?', a: 'Vous êtes prévenu 3 jours avant chaque échéance. En cas d’échec, vous avez 3 jours de grâce avec un rappel par jour. Ensuite, votre compte repasse au plan Découverte : vos données sont conservées.' },
+      { q: 'Puis-je changer de plan ou annuler ?', a: 'Oui, à tout moment depuis la page Abonnement : passer au plan supérieur, redescendre ou annuler. Vos données restent à vous.' }
+    ];
+    var faqs = faqData.map(function (f, i) {
+      var open = s.openFaq === i;
+      return {
+        id: i, q: f.q, a: f.a, open: open,
+        qColor: open ? '#4338CA' : '#12142A',
+        chevWrap: 'flex: none; width: 32px; height: 32px; border-radius: 999px; display: flex; align-items: center; justify-content: center; transition: background-color .25s, color .25s; background: ' + (open ? '#4F46E5' : '#EEF0FF') + '; color: ' + (open ? '#FFFFFF' : '#4F46E5'),
+        chevStyle: 'transition: transform .3s cubic-bezier(.2,.8,.2,1.3); transform: rotate(' + (open ? '180' : '0') + 'deg)',
+        toggle: function () { self.setState({ openFaq: open ? -1 : i }); }
+      };
+    });
+
+    return {
+      // hero demo
+      heroSettled: s.heroSettled,
+      heroOpen: !s.heroSettled,
+      heroRemitted: s.heroSettled ? '180 500' : '152 500',
+      koffiAvatarBg: s.heroSettled ? '#DCFCE7' : '#FEF3C7',
+      koffiAvatarFg: s.heroSettled ? '#166534' : '#92400E',
+      settleKoffi: function () { self.setState({ heroSettled: true }); },
+      resetHero: function () { self.setState({ heroSettled: false }); },
+      // showcase
+      tabs: tabs,
+      tab: s.tab,
+      tabPath: activeDef.path,
+      tabDashboard: s.tab === 'dashboard',
+      tabOrders: s.tab === 'orders',
+      tabDeliveries: s.tab === 'deliveries',
+      sideNav: sideNav,
+      bottomNav: bottomNav,
+      bars: bars,
+      orderFilters: orderFilters,
+      orders: orders,
+      noOrders: orders.length === 0,
+      drivers: drivers,
+      // pricing
+      isMonthly: !annual,
+      isAnnual: annual,
+      setMonthly: function () { self.setState({ billing: 'monthly' }); },
+      setAnnual: function () { self.setState({ billing: 'annual' }); },
+      pillTransform: annual ? 'translateX(136px)' : 'translateX(0)',
+      monthlyColor: annual ? '#3B3F5C' : '#FFFFFF',
+      annualColor: annual ? '#FFFFFF' : '#3B3F5C',
+      badgeColor: annual ? '#FBBF24' : '#15803D',
+      // faq
+      faqs: faqs
+    };
+  }
+}
+</script>
+</body>
+</html>
