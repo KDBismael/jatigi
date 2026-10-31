@@ -100,15 +100,8 @@ export default function AccountPage() {
     }
   }
 
-  return (
-    <div className="max-w-md space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Mon compte</h1>
-        <p className="text-gray-500 text-sm mt-1">{profile?.full_name}{currentEmail ? ` · ${currentEmail}` : ''}</p>
-      </div>
-
-      {profile?.role === 'admin' && <><ShopSettings /><OrganizationLogo /></>}
-
+  const isAdmin = profile?.role === 'admin'
+  const emailCard = (
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-gray-900">Modifier l&apos;email</h2>
@@ -133,7 +126,8 @@ export default function AccountPage() {
           </form>
         </CardContent>
       </Card>
-
+  )
+  const passwordCard = (
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-gray-900">Changer le mot de passe</h2>
@@ -171,7 +165,26 @@ export default function AccountPage() {
           </form>
         </CardContent>
       </Card>
-      <Card><CardHeader><h2 className="font-semibold text-gray-900">Apparence</h2></CardHeader><CardContent><ThemeSelect /><p className="mt-2 text-xs text-gray-500">Le mode système suit automatiquement les réglages de cet appareil.</p></CardContent></Card>
+  )
+  const appearanceCard = <Card><CardHeader><h2 className="font-semibold text-gray-900">Apparence</h2></CardHeader><CardContent><ThemeSelect /><p className="mt-2 text-xs text-gray-500">Le mode système suit automatiquement les réglages de cet appareil.</p></CardContent></Card>
+
+  // One column on phones and tablets (same order), two balanced columns from lg.
+  return (
+    <div className="max-w-2xl space-y-6 lg:max-w-6xl">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Mon compte</h1>
+        <p className="text-gray-500 text-sm mt-1">{profile?.full_name}{currentEmail ? ` · ${currentEmail}` : ''}</p>
+      </div>
+
+      <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+        {isAdmin ? <>
+          <div className="space-y-6"><ShopSettings /><OrganizationLogo /></div>
+          <div className="space-y-6">{emailCard}{passwordCard}{appearanceCard}</div>
+        </> : <>
+          <div className="space-y-6">{emailCard}{passwordCard}</div>
+          <div className="space-y-6">{appearanceCard}</div>
+        </>}
+      </div>
     </div>
   )
 }
