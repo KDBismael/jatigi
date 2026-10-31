@@ -18,3 +18,10 @@ it('disparaît après trois créations réelles', async () => {
  await vi.waitFor(()=>expect(fetch).toHaveBeenCalled())
  expect(view.container.textContent).toBe('')
 })
+it('affiche la progression réelle et propose la première création manquante', async () => {
+ vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({completed:{product:true,driver:true,order:false},complete:false,skipped_steps:[3]})}))
+ render(<OnboardingChecklist />)
+ const bar=await screen.findByRole('progressbar',{name:'Configuration de la boutique'})
+ expect(bar.getAttribute('aria-valuenow')).toBe('2')
+ expect(screen.getByRole('link',{name:'Créer ma première commande'}).getAttribute('href')).toBe('/orders/new')
+})

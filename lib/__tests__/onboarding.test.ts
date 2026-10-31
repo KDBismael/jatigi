@@ -27,3 +27,4 @@ describe('onboarding réel et paramètres boutique', () => {
     expect(loginDestination('admin', false, false)).toBe('/dashboard')
   })
 })
+it('advances beyond already created entities even when an earlier progress write failed',()=>{expect(onboardingProgress({onboarding_step:1},{products:1,drivers:0,orders:0}).step).toBe(2);expect(onboardingProgress({onboarding_step:2},{products:1,drivers:1,orders:0}).step).toBe(3)})
