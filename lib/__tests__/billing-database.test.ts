@@ -35,10 +35,10 @@ describe('billing SQL authoritative payments',()=>{
  it('revokes only the reversed invoice and ignores late paid replay',async()=>{const inv=(await db.query<{invoice:Record<string,unknown>}>("SELECT to_jsonb(i) invoice FROM billing_invoices i WHERE payment_id='pay_one'")).rows[0].invoice;await apply(event(inv,'one','reversed'));expect(await effective()).toBe('discovery');await apply({...event(inv,'one'),id:'evt_late_paid'});expect(await effective()).toBe('discovery')})
  it('rejects another organization owner',async()=>{await expect(db.query(`SELECT prepare_billing_invoice($1,'20000000-0000-4000-8000-000000000099','test','pro','monthly','https://warko.app','CI')`,[org])).rejects.toThrow('BILLING_OWNER_REQUIRED')})
  it('prevents browser clients from minting grants or applying events',async()=>{await db.exec('SET ROLE authenticated');try {await expect(db.query("INSERT INTO subscription_grants(organization_id,plan,period_start,period_end) VALUES($1,'business',now(),now()+interval '1 year')",[org])).rejects.toThrow('permission denied');await expect(apply({})).rejects.toThrow('permission denied')}finally{await db.exec('RESET ROLE')}})
- it('keeps the 30th order and rejects the 31st without reserving quota',async()=>{
-  for(let i=0;i<30;i++) await db.query("INSERT INTO orders(client_name,channel,organization_id,seller_id) VALUES('Awa','facebook',$1,$2)",[org,owner])
+ it('keeps the 100th order and rejects the 101st without reserving quota',async()=>{
+  for(let i=0;i<100;i++) await db.query("INSERT INTO orders(client_name,channel,organization_id,seller_id) VALUES('Awa','facebook',$1,$2)",[org,owner])
   await expect(db.query("INSERT INTO orders(client_name,channel,organization_id,seller_id) VALUES('Awa','facebook',$1,$2)",[org,owner])).rejects.toThrow('PLAN_ORDER_LIMIT')
-  expect((await db.query<{orders_count:number}>('SELECT orders_count FROM organization_usage WHERE organization_id=$1',[org])).rows[0].orders_count).toBe(30)
+  expect((await db.query<{orders_count:number}>('SELECT orders_count FROM organization_usage WHERE organization_id=$1',[org])).rows[0].orders_count).toBe(100)
  })
  it('counts only active drivers, allowing archival and replacement',async()=>{
   await db.query("INSERT INTO delivery_drivers(name,organization_id) VALUES('Moussa',$1)",[org])
@@ -47,11 +47,10 @@ describe('billing SQL authoritative payments',()=>{
   await db.query("INSERT INTO delivery_drivers(name,organization_id) VALUES('Remplaçant',$1)",[org])
   expect((await db.query('SELECT * FROM delivery_drivers WHERE organization_id=$1',[org])).rows).toHaveLength(2)
  })
- it('aggregates real SaaS usage without inventing paid revenue',async()=>{const data=(await db.query<{metrics:{signups:number;mrr:number;ordersLast7Days:number}}>('SELECT platform_saas_metrics() metrics')).rows[0].metrics;expect(data.signups).toBe(1);expect(data.mrr).toBe(0);expect(data.ordersLast7Days).toBe(30)})
- it('blocks extra users and live sessions on Discovery',async()=>{
+ it('aggregates real SaaS usage without inventing paid revenue',async()=>{const data=(await db.query<{metrics:{signups:number;mrr:number;ordersLast7Days:number}}>('SELECT platform_saas_metrics() metrics')).rows[0].metrics;expect(data.signups).toBe(1);expect(data.mrr).toBe(0);expect(data.ordersLast7Days).toBe(100)})
+ it('blocks extra users on Discovery',async()=>{
   await db.exec("INSERT INTO auth.users(id) VALUES('20000000-0000-4000-8000-000000000002')")
   await expect(db.query("INSERT INTO profiles(id,full_name,role,organization_id) VALUES('20000000-0000-4000-8000-000000000002','Employee','employee',$1)",[org])).rejects.toThrow('PLAN_USER_LIMIT')
-  await expect(db.query("INSERT INTO live_sessions(name,organization_id,session_date,slot) VALUES('Live',$1,CURRENT_DATE,'morning')",[org])).rejects.toThrow('PLAN_LIVE_REQUIRED')
  })
 
  it('uses a current paid Pro period before an expired Business grace period',async()=>{
@@ -92,6 +91,30 @@ describe('billing SQL authoritative payments',()=>{
   const e={id:'evt_shared_identifier',type:'wallet.updated',createdAt:'2026-10-29T00:00:00Z',data:{}}
   await apply(e,'test');await apply(e,'live')
   expect((await db.query("SELECT * FROM moneriz_events WHERE id='evt_shared_identifier'")).rows).toHaveLength(2)
+ })
+
+ it('lets Discovery create, start and sell in a live while keeping tenant and status checks',async()=>{
+  await db.exec('BEGIN')
+  try {
+   expect(await effective()).toBe('discovery')
+   await db.query('UPDATE organization_usage SET orders_count=0 WHERE organization_id=$1',[org])
+   const live=(await db.query<{id:string}>("INSERT INTO live_sessions(name,organization_id,session_date,slot,status) VALUES('Live gratuit',$1,CURRENT_DATE,'morning','planned') RETURNING id",[org])).rows[0].id
+   await db.query("UPDATE live_sessions SET status='active' WHERE id=$1",[live])
+   const product=(await db.query<{id:string}>("INSERT INTO products(name,sale_price,organization_id) VALUES('Produit live',5000,$1) RETURNING id",[org])).rows[0].id
+   await db.query('INSERT INTO stock_lots(product_id,organization_id,quantity_received,quantity_available,purchase_cost,import_cost,packaging_cost,unit_cost,sale_price) VALUES($1,$2,5,5,1000,0,0,1000,5000)',[product,org])
+   const input={client_name:'Awa',channel:'facebook',order_date:'2026-10-29',seller_id:owner,live_session_id:live,lines:[{product_id:product,quantity:1}]}
+   const id=(await db.query<{id:string}>('SELECT create_order_complete($1::jsonb) id',[JSON.stringify(input)])).rows[0].id
+   expect((await db.query<{live_session_id:string}>('SELECT live_session_id FROM orders WHERE id=$1',[id])).rows[0].live_session_id).toBe(live)
+   await db.query("UPDATE live_sessions SET status='completed' WHERE id=$1",[live])
+   await db.exec('SAVEPOINT closed_live')
+   await expect(db.query('SELECT create_order_complete($1::jsonb)',[JSON.stringify(input)])).rejects.toThrow('LIVE_SESSION_NOT_ACTIVE')
+   await db.exec('ROLLBACK TO SAVEPOINT closed_live')
+   await db.query("INSERT INTO organizations(id,name) VALUES('10000000-0000-4000-8000-000000000099','Autre boutique')")
+   const other=(await db.query<{id:string}>("INSERT INTO live_sessions(name,organization_id,session_date,slot,status) VALUES('Autre live','10000000-0000-4000-8000-000000000099',CURRENT_DATE,'morning','active') RETURNING id")).rows[0].id
+   await db.exec('SAVEPOINT other_live')
+   await expect(db.query('SELECT create_order_complete($1::jsonb)',[JSON.stringify({...input,live_session_id:other})])).rejects.toThrow('LIVE_SESSION_NOT_ACTIVE')
+   await db.exec('ROLLBACK TO SAVEPOINT other_live')
+  } finally {await db.exec('ROLLBACK')}
  })
 
 })

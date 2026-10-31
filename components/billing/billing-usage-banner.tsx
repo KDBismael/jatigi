@@ -20,7 +20,7 @@ export function BillingUsageBanner({
     >
       {remaining > 0
         ? `Plus que ${remaining} commandes sur votre plan Découverte ce mois.`
-        : 'Vous avez atteint 30 commandes ce mois. Vos commandes existantes restent accessibles et modifiables.'}{' '}
+        : `Vous avez atteint ${summary.limits.orders} commandes ce mois. Vos commandes existantes restent accessibles et modifiables.`}{' '}
       {summary.canManageBilling ? (
         <Link href="/subscription" className="font-bold underline">
           Passer au plan Pro

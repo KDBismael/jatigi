@@ -1,3 +1,4 @@
+import { PLANS } from './plans'
 import { NextResponse } from 'next/server'
 import { MonerizError } from './moneriz'
 
@@ -5,8 +6,7 @@ export class BillingAccessError extends Error {
   constructor(public code: string, message: string, public status = 402) { super(message) }
 }
 const limits: Record<string, string> = {
-  PLAN_LIVE_REQUIRED: 'Les sessions live sont disponibles avec Pro et Business.',
-  PLAN_ORDER_LIMIT: 'Vous avez atteint 30 commandes ce mois. Passez au plan Pro pour continuer. Vos commandes existantes restent accessibles.',
+  PLAN_ORDER_LIMIT: `Vous avez atteint ${PLANS.discovery.ordersPerMonth} commandes ce mois. Passez au plan Pro pour continuer. Vos commandes existantes restent accessibles.`,
   PLAN_DRIVER_LIMIT: 'La limite de livreurs actifs de votre offre est atteinte. Changez de plan pour en ajouter un.',
   PLAN_USER_LIMIT: 'La limite de comptes de votre offre est atteinte. Changez de plan pour ajouter un collaborateur.',
 }
@@ -17,6 +17,7 @@ export function billingErrorResponse(error: unknown) {
   const code = Object.keys(limits).find(key => message.includes(key))
   if (code) return NextResponse.json({ error: limits[code], code, upgradeUrl: '/subscription' }, { status: 402 })
   const cases: Record<string, [string,number]> = {
+    PLAN_LIVE_REQUIRED: ['Les sessions live sont incluses dans toutes les offres. Une mise à jour de la plateforme est nécessaire pour les activer.',503],
     BILLING_OWNER_REQUIRED: ['Seul le propriétaire peut gérer l’abonnement.',403],
     BILLING_PAYMENT_PENDING: ['Un paiement attend déjà une confirmation. Reprenez-le avant de changer d’offre.',409],
     BILLING_RETRY_LATER: ['Attendez quelques secondes avant de reprendre cette demande.',429],
