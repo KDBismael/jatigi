@@ -12,6 +12,8 @@ import { PasswordInput } from '@/components/ui/password-input'
 import { translateAuthError } from '@/lib/auth-errors'
 import { signupSchema, signupApiSchema } from '@/lib/schemas/auth.schema'
 import { passwordStrength } from '@/lib/password-strength'
+import { DEFAULT_PHONE_COUNTRY, PHONE_COUNTRIES, internationalPhone, phoneCountry } from '@/lib/phone-countries'
+import { Icon } from '@/components/ui/icon'
 import styles from './auth-form.module.css'
 
 type Mode = 'login' | 'signup'
@@ -24,6 +26,7 @@ export function AuthForm({initialMode='login',selectedPlan,selectedCycle}:{initi
   const [visible, setVisible] = useState(false)
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
+  const [phoneCountryCode, setPhoneCountryCode] = useState(DEFAULT_PHONE_COUNTRY)
   const [orgName, setOrgName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string,string>>({})
@@ -32,7 +35,7 @@ export function AuthForm({initialMode='login',selectedPlan,selectedCycle}:{initi
   const matches = password === confirmPassword
   const ready = strength.minimum && strength.mixed && matches && confirmPassword.length > 0
   const planQuery = selectedPlan ? `?plan=${selectedPlan === 'discovery' ? 'decouverte' : selectedPlan}${selectedCycle ? `&cycle=${selectedCycle}` : ''}` : ''
-  const signupValues = {email,password,confirmPassword,full_name:fullName,phone,organization_name:orgName}
+  const signupValues = {email,password,confirmPassword,full_name:fullName,phone:internationalPhone(phoneCountryCode,phone),organization_name:orgName}
 
   function switchMode(next: Mode) { router.replace(`/auth/${next}${planQuery}`) }
   async function handleLogin(e: FormEvent) {
@@ -106,7 +109,7 @@ export function AuthForm({initialMode='login',selectedPlan,selectedCycle}:{initi
         <fieldset><legend>Votre boutique</legend>
           <Field label="Nom de la boutique" id="signup-shop-name" name="organization_name" autoComplete="organization" value={orgName} onChange={e=>setOrgName(e.target.value)} placeholder="Ex : Boutique Aminata" {...field('organization_name')}/>
           <Field label="Votre nom complet" id="signup-full-name" name="full_name" autoComplete="name" value={fullName} onChange={e=>setFullName(e.target.value)} placeholder="Aminata Diallo" {...field('full_name')}/>
-          <Field label="Téléphone" id="signup-phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="07 00 00 00 00" prefix="+225" {...field('phone')}/>
+          <PhoneField country={phoneCountryCode} onCountry={setPhoneCountryCode} value={phone} onChange={e=>setPhone(e.target.value)} {...field('phone')}/>
         </fieldset>
         <fieldset><legend>Votre accès</legend>
           <Field label="Email" id="signup-email" name="email" type="email" autoComplete="email" inputMode="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="vous@exemple.com" {...field('email')}/>
@@ -127,5 +130,14 @@ export function AuthForm({initialMode='login',selectedPlan,selectedCycle}:{initi
   </main>
 }
 function Check({checked}:{checked:boolean}) {return <svg aria-hidden="true" viewBox="0 0 20 20" width="16" height="16" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor"/>{checked&&<path d="m6 10 3 3 5-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>}</svg>}
-function Field({label,id,error,prefix,...props}:InputHTMLAttributes<HTMLInputElement>&{label:string;id:string;error?:string;prefix?:string}) {return <div><label className={styles.label} htmlFor={id}>{label}</label><div className={prefix?styles.phone:undefined}>{prefix&&<span>{prefix}</span>}<input {...props} required id={id} data-testid={id} className={styles.input} aria-invalid={!!error} aria-describedby={error?`${id}-error`:undefined}/></div>{error&&<p className={styles.fieldError} id={`${id}-error`}>{error}</p>}</div>}
+function Field({label,id,error,...props}:InputHTMLAttributes<HTMLInputElement>&{label:string;id:string;error?:string}) {return <div><label className={styles.label} htmlFor={id}>{label}</label><input {...props} required id={id} data-testid={id} className={styles.input} aria-invalid={!!error} aria-describedby={error?`${id}-error`:undefined}/>{error&&<p className={styles.fieldError} id={`${id}-error`}>{error}</p>}</div>}
+/** A transparent native select over the dial code keeps the OS country picker on phones. */
+function PhoneField({country,onCountry,error,...props}:InputHTMLAttributes<HTMLInputElement>&{country:string;onCountry:(code:string)=>void;error?:string}) {
+  const selected=phoneCountry(country)
+  return <div><label className={styles.label} htmlFor="signup-phone">Téléphone</label><div className={styles.phone}>
+    <div className={styles.dial}><span aria-hidden="true" className={styles.dialCode}>{selected.code}</span><span aria-hidden="true" data-testid="signup-phone-dial">+{selected.dial}</span><Icon name="chevron-down" className="h-4 w-4"/>
+      <select aria-label="Indicatif du pays" value={selected.code} onChange={e=>onCountry(e.target.value)}>{PHONE_COUNTRIES.map(c=><option key={c.code} value={c.code}>{c.name} (+{c.dial})</option>)}</select></div>
+    <input {...props} required id="signup-phone" name="phone" data-testid="signup-phone" type="tel" inputMode="tel" autoComplete="tel-national" placeholder={selected.code==='CI'?'07 00 00 00 00':'Numéro sans l’indicatif'} className={styles.input} aria-invalid={!!error} aria-describedby={error?'signup-phone-error':undefined}/>
+  </div>{error&&<p className={styles.fieldError} id="signup-phone-error">{error}</p>}</div>
+}
 function ErrorBox({error,testId}:{error:string;testId?:string}) {return <p className={styles.error} role="alert" data-testid={testId}>{error}</p>}

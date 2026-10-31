@@ -46,7 +46,20 @@ it('envoie seulement les données API après validation, sans confirmation',asyn
  expect(screen.getByTestId('signup-submit').getAttribute('aria-disabled')).toBe('false')
  fireEvent.submit(screen.getByTestId('signup-form'))
  await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1))
- expect(JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string)).toEqual({email:'awa@example.com',password:'abcdefg1',phone:'0700000000',full_name:'Awa',organization_name:'Awa boutique'})
+ expect(JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string)).toEqual({email:'awa@example.com',password:'abcdefg1',phone:'+225 0700000000',full_name:'Awa',organization_name:'Awa boutique'})
+})
+
+it('envoie le numéro avec l’indicatif du pays choisi',async()=>{
+ vi.mocked(fetch).mockResolvedValue({ok:false,json:async()=>({error:'Email déjà utilisé'})} as Response)
+ render(<AuthForm initialMode="signup" />)
+ const country=screen.getByRole('combobox',{name:'Indicatif du pays'}) as HTMLSelectElement
+ expect(country.value).toBe('CI')
+ fireEvent.change(country,{target:{value:'SN'}})
+ expect(screen.getByTestId('signup-phone-dial').textContent).toBe('+221')
+ for(const [id,value] of [['signup-shop-name','Awa boutique'],['signup-full-name','Awa'],['signup-phone','77 123 45 67'],['signup-email','awa@example.com'],['signup-password','abcdefg1'],['signup-password-confirm','abcdefg1']]) fireEvent.change(screen.getByTestId(id),{target:{value}})
+ fireEvent.submit(screen.getByTestId('signup-form'))
+ await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1))
+ expect(JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string).phone).toBe('+221 77 123 45 67')
 })
 
 it('place le focus sur la confirmation différente après les autres champs valides',()=>{
