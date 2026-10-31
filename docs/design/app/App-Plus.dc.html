@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Menu Plus mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.p-row{transition:background-color .15s ease}
+.p-row:active{background-color:#F3F4F6}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 1120px; display: flex; flex-direction: column; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #111827; background: #F9FAFB">
+<dc-import name="AppTopBar" hint-size="390px,62px"></dc-import>
+<main style="flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 18px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700">Plus</h1>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="3">
+<section style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; padding: 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6B7280">{{g.title}}</h2>
+<div style="background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; overflow: hidden">
+<sc-for list="{{g.items}}" as="i" hint-placeholder-count="3">
+<a href="#" class="p-row" style="display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 0 14px; border-top: 1px solid #F3F4F6; text-decoration: none; color: #111827; font-size: 15px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="{{i.d}}"></path></svg>
+<span style="flex: 1">{{i.label}}</span>
+<sc-if value="{{i.gold}}" hint-placeholder-val="{{false}}"><span style="font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; background: #17140D; color: #F1DC97; border: 1px solid #C9A227">Pro</span></sc-if>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="m9 6 6 6-6 6"></path></svg>
+</a>
+</sc-for>
+</div>
+</section>
+</sc-for>
+
+<section style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; padding: 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #6B7280">Affichage</h2>
+<div role="group" aria-label="Thème" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px; padding: 4px">
+<span style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #111827; color: #FFFFFF; font-size: 14px; font-weight: 600">Système</span>
+<span style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 14px; font-weight: 600; color: #374151">Clair</span>
+<span style="min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-size: 14px; font-weight: 600; color: #374151">Sombre</span>
+</div>
+</section>
+
+<form style="margin: 0"><button type="button" style="width: 100%; min-height: 48px; border: 1px solid #FECACA; border-radius: 12px; background: #FFFFFF; color: #B91C1C; font-family: Inter, sans-serif; font-weight: 600; font-size: 15px">Déconnexion</button></form>
+<p style="margin: 0; text-align: center; font-size: 12px; color: #9CA3AF">Awa Koné · Propriétaire</p>
+</main>
+<div style="position: sticky; bottom: 0">
+<dc-import name="AppBottomNav" active="plus" hint-size="390px,72px"></dc-import>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var I = {
+      chart: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
+      receipt: 'M9 14.25l6-6m4.5-3.493V21l-3.75-1.5L12 21l-3.75-1.5L4.5 21V4.757A2.25 2.25 0 016.75 2.5h10.5a2.25 2.25 0 012.25 2.257z',
+      target: 'M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z',
+      report: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H6.75A2.25 2.25 0 004.5 4.5v15A2.25 2.25 0 006.75 21h10.5a2.25 2.25 0 002.25-2.25v-4.5z',
+      users: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
+      card: 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z',
+      user: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z',
+      support: 'M8.625 9.75a3.375 3.375 0 116.75 0c0 2.25-3.375 2.25-3.375 4.5m.008 3.75h-.008M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+    };
+    return {
+      groups: [
+        { title: 'Pilotage', items: [{ label: 'Analyses', d: I.chart }, { label: 'Dépenses', d: I.receipt }, { label: 'Objectifs & lives', d: I.target }, { label: 'Bilans mensuels', d: I.report }] },
+        { title: 'Boutique', items: [{ label: 'Équipe', d: I.users }, { label: 'Abonnement', d: I.card, gold: true }, { label: 'Mon compte', d: I.user }] },
+        { title: 'Aide', items: [{ label: 'Support', d: I.support }] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

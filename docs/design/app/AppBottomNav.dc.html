@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Warko · Barre de navigation mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Navigation principale" style="width: 100%; display: flex; justify-content: space-around; background: #FFFFFF; border-top: 1px solid #E5E7EB; padding: 6px 4px 10px; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #6B7280; box-sizing: border-box">
+<sc-for list="{{items}}" as="n" hint-placeholder-count="5">
+<a href="#" aria-current="{{n.current}}" style="{{n.style}}">
+<span style="{{n.bar}}"></span>
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.d}}"></path></svg>
+<span>{{n.label}}</span>
+</a>
+</sc-for>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["dashboard","orders","deliveries","products","plus"],"default":"dashboard"},"$preview":{"width":390,"height":72}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var active = this.props.active || 'dashboard';
+    var defs = [
+      { k: 'dashboard', label: 'Tableau', d: 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z' },
+      { k: 'orders', label: 'Commandes', d: 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z' },
+      { k: 'deliveries', label: 'Livraisons', d: 'M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12' },
+      { k: 'products', label: 'Produits', d: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z' },
+      { k: 'plus', label: 'Plus', d: 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5' }
+    ];
+    var items = defs.map(function (n) {
+      var on = n.k === active;
+      return {
+        label: n.label, d: n.d, current: on ? 'page' : 'false',
+        style: 'position: relative; flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; text-decoration: none; font-size: 11px; font-weight: ' + (on ? '700' : '500') + '; color: ' + (on ? '#4F46E5' : '#6B7280'),
+        bar: 'position: absolute; top: -6px; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: ' + (on ? '#4F46E5' : 'transparent')
+      };
+    });
+    return { items: items };
+  }
+}
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@ import { requirePlatformAdmin } from '@/lib/platform-admin'
 import { AdminShell } from '@/components/admin/admin-shell'
 
 export const metadata = {
-  title: 'Warko — Administration',
+  title: 'Warko · Administration',
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

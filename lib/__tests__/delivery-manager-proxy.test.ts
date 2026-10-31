@@ -19,3 +19,9 @@ it('blocks employee delivery access', async () => {
 it('keeps admin delivery access', async () => {
  role = 'admin'; expect((await proxy(new NextRequest('http://localhost/deliveries'))).headers.get('location')).toBe(null)
 })
+it.each(['admin', 'employee', 'manager'])('allows authenticated %s into the filtered Plus page', async (value) => {
+ role = value; expect((await proxy(new NextRequest('http://localhost/more'))).headers.get('location')).toBe(null)
+})
+it.each(['employee', 'manager'])('keeps subscription protected for %s', async (value) => {
+ role = value; expect((await proxy(new NextRequest('http://localhost/subscription'))).headers.get('location')).toBe('http://localhost/orders')
+})
