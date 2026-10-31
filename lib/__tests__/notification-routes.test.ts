@@ -37,6 +37,7 @@ it('rejects unauthenticated cron before processing billing or sending', async ()
   expect(mocks.billing).not.toHaveBeenCalled()
 })
 it('awaits billing then scheduling and delivery for authenticated cron', async () => {
+  for (const [key,value] of Object.entries({RESEND_API_KEY:'re_qa',NOTIFICATION_FROM_EMAIL:'qa@warko.test',NOTIFICATION_UNSUBSCRIBE_SECRET:'qa',APP_BASE_URL:'https://warko.test'})) vi.stubEnv(key,value)
   vi.stubEnv('CRON_SECRET', 'secret')
   const response = await cron(
     new Request('https://warko.test/api/jobs/lifecycle', {

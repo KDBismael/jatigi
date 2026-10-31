@@ -96,6 +96,9 @@ export async function sendEmail(
       to: [message.to],
       subject: message.subject,
       html: message.html,
+      ...(process.env.NOTIFICATION_REPLY_TO_EMAIL
+        ? { reply_to: process.env.NOTIFICATION_REPLY_TO_EMAIL }
+        : {}),
       ...(message.unsubscribeUrl
         ? {
             headers: {

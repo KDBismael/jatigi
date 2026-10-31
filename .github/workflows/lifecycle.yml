@@ -1,0 +1,46 @@
+name: Rappels Warko
+
+on:
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Vérifier la configuration sans envoyer d’email
+        type: boolean
+        default: true
+
+permissions: {}
+concurrency:
+  group: warko-lifecycle
+  cancel-in-progress: false
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      APP_BASE_URL: https://warko.app
+      CRON_SECRET: ${{ secrets.WARKO_CRON_SECRET }}
+    steps:
+      - name: Vérifier la configuration sans traitement
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$CRON_SECRET" ]; then
+            echo '::error::Le secret WARKO_CRON_SECRET doit correspondre à CRON_SECRET dans Vercel.'
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error --max-time 15 \
+            --retry 1 --retry-delay 5 --retry-all-errors \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_BASE_URL/api/jobs/lifecycle?dryRun=1"
+      - name: Traiter les rappels et reçus en attente
+        if: github.event_name == 'schedule' || inputs.dry_run == false
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error --max-time 125 \
+            --retry 1 --retry-delay 5 --retry-all-errors \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$APP_BASE_URL/api/jobs/lifecycle"

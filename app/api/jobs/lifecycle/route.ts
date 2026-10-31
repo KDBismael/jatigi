@@ -1,3 +1,4 @@
+import { notificationConfigMissing } from '@/lib/notification-config'
 import { timingSafeEqual } from 'node:crypto'
 import { processBillingLifecycle } from '@/services/billing-lifecycle'
 import {
@@ -18,6 +19,13 @@ export async function GET(request: Request) {
     !timingSafeEqual(authorization, expected)
   )
     return Response.json({ error: 'Non autorisé' }, { status: 401 })
+  const missing = notificationConfigMissing(process.env)
+  if (missing.length) return Response.json(
+    { error: 'Configuration des emails incomplète.', missing },
+    { status: 503, headers: { 'Cache-Control': 'no-store' } },
+  )
+  if (new URL(request.url).searchParams.get('dryRun') === '1')
+    return Response.json({ ready: true, dryRun: true }, { headers: { 'Cache-Control': 'no-store' } })
   try {
     const billing = await processBillingLifecycle()
     const repo = await createNotificationRepository()

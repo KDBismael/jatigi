@@ -64,3 +64,10 @@ it('receipts remain transactional and use authenticated pdf link', () => {
   expect(result.html).toContain('/api/billing/receipts/inv')
   expect(result.html).not.toContain('unsubscribe')
 })
+it('routes replies to the operator without changing the verified sender', async () => {
+ vi.stubEnv('RESEND_API_KEY','re_qa');vi.stubEnv('NOTIFICATION_FROM_EMAIL','Warko <notifications@warko.test>');vi.stubEnv('NOTIFICATION_REPLY_TO_EMAIL','operator@example.test')
+ const fetch=vi.fn(async()=>Response.json({id:'qa-email'}));vi.stubGlobal('fetch',fetch)
+ await sendEmail({to:'recipient@example.test',subject:'QA',html:'QA'})
+ const body=JSON.parse((fetch.mock.calls[0] as unknown as [string,RequestInit])[1].body as string)
+ expect(body.from).toBe('Warko <notifications@warko.test>');expect(body.reply_to).toBe('operator@example.test')
+})

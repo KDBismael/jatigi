@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check:document-runtime": "node scripts/check-document-runtime.mjs"
+    "check:document-runtime": "node scripts/check-document-runtime.mjs",
+    "check:production": "node scripts/check-production-readiness.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

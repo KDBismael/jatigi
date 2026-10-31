@@ -18,7 +18,7 @@ Les visiteurs uniques, le taux landing→inscription et le coût d’acquisition
 
 ## Déploiement (non exécuté pendant cette implémentation)
 
-1. Sauvegarder la base et tester les migrations sur une copie de préproduction. Appliquer les migrations dans l’ordre, de `20261029163241_saas_subscriptions.sql` à `20261029170007_saas_metrics.sql`, y compris les réglages onboarding et les six migrations métier. Les anciens clients sans abonnement deviennent Découverte pour les **nouvelles créations** ; rien n’est supprimé. Si une transition commerciale est prévue, attribuer explicitement les périodes offertes côté serveur avant ouverture.
+1. Sauvegarder la base et tester les migrations sur une copie de préproduction. Appliquer les migrations dans l’ordre, de `20261029163241_saas_subscriptions.sql` à `20261029170009_live_sessions_all_plans.sql`, y compris les réglages onboarding et les six migrations métier. Les anciens clients sans abonnement deviennent Découverte pour les **nouvelles créations** ; rien n’est supprimé. Si une transition commerciale est prévue, attribuer explicitement les périodes offertes côté serveur avant ouverture.
 2. Déployer les buckets privés créés par les migrations et vérifier les routes authentifiées images/logo. Ne jamais rendre publics les fichiers pour contourner les droits.
 3. Renseigner les variables de `.env.local.example` côté serveur. Ne jamais exposer de clé secrète avec `NEXT_PUBLIC_`.
 4. Déployer le code après le schéma et le stockage. Le font NotoSans et les bibliothèques natives Sharp doivent être inclus dans les traces de production ; exécuter `npm run check:document-runtime` après compilation.
@@ -33,7 +33,7 @@ Les visiteurs uniques, le taux landing→inscription et le coût d’acquisition
 - Rejouer un événement, inverser l’ordre succès/expiration et succès/inversion, interrompre l’appel checkout ; vérifier la même intention/idempotency key à la reprise. Une réponse incertaine ne crée pas une nouvelle facture automatiquement.
 - Page de paiement expirée après une tentative échouée : « Vérifier ce paiement » ferme l’intention inutilisable. Une session encore ouverte reste en attente ; un succès tardif reste traité.
 - Tester le passage Business→Pro prépayé, renouvellement anticipé, annulation et fin de grâce. Une période courante payée prévaut sur la grâce d’une ancienne offre.
-- Vérifier la 30e / 31e commande, le deuxième livreur actif gratuit, le quatrième compte Pro ; les échecs de création rendent leur réservation et leur stock.
+- Vérifier la 100e / 101e commande, le deuxième livreur actif gratuit, le quatrième compte Pro ; les échecs de création rendent leur réservation et leur stock.
 - Vérifier les accès croisés entre boutiques, employés et responsables, les reçus réservés au propriétaire et le refus des écritures billing via le client Supabase navigateur.
 - Recetter les nouveaux écrans avec un compte de préproduction, les images et les PDF en production, puis un vrai paiement autorisé à faible risque. Les tests locaux utilisent des réponses simulées pour Moneriz/Resend et ne valident pas les identifiants réels.
 
@@ -42,3 +42,32 @@ Les visiteurs uniques, le taux landing→inscription et le coût d’acquisition
 Les quotas comptent les créations du mois calendaire d’Abidjan, y compris les commandes annulées. Archiver un livreur libère une place et conserve ses données. Une rétrogradation ne supprime ni commandes, ni comptes, ni livreurs existants ; les ajouts restent bloqués au plafond. Pro conserve l’accès aux 30 derniers jours du bilan détaillé ; Business à l’historique complet.
 
 Le MRR utilise les périodes payées actives du mode configuré, avec les annuels divisés par douze. Une période offerte sans facture ne crée pas de revenu. Les métriques de rétention utilisent les mois calendaires suivants l’inscription et excluent les cohortes incomplètes. Les paiements de test sont identifiés dans les reçus et le panneau de croissance.
+
+## Mise à jour Découverte : 100 commandes/mois
+
+Découverte inclut désormais 100 créations par mois, avec avertissement dès 95. Une installation ayant déjà reçu les neuf migrations SaaS applique uniquement `20261029170008_discovery_100_orders.sql`, également disponible en fichier manuel transactionnel `docs/deployment/2026-10-29-discovery-100-orders.sql`. Les compteurs et commandes sont conservés. Le bundle `docs/deployment/2026-10-29-saas-migrations.sql` inclut les onze migrations et ne doit être exécuté que si aucune n’a déjà été appliquée. Le plafond de commandes ne change pas l’historique de bilan Pro de 30 jours.
+
+## Sessions live incluses pour tous
+
+Les sessions live sont également disponibles avec Découverte. Elles sont présentées dans la ligne commune aux offres, pas comme avantage payant. Appliquer `20261029170009_live_sessions_all_plans.sql` (ou `docs/deployment/2026-10-29-live-sessions-all-plans.sql`) à une base déjà migrée. Si la mise à jour du quota 100 n’est pas encore appliquée, appliquer aussi `20261029170008_discovery_100_orders.sql` avant. Aucun compteur n’est réinitialisé. Les limites de commandes, droits de rôle et contrôles de boutique/session active sont conservés.
+
+
+## Audit de lancement du 31 octobre 2026
+
+Le backend audité est antérieur au bilan journalier et aux migrations SaaS/variantes. Pour cet état précis, utiliser la [mise à niveau regroupée](deployment/2026-10-30-launch-migrations.sql), après sauvegarde et recette sur une copie. Elle inclut les prérequis absents du seul bundle SaaS ; ne pas exécuter les deux bundles à la suite. Le script refuse une base déjà ou partiellement migrée et ne réconcilie pas l’historique du CLI Supabase.
+
+Lancer `npm run check:production -- --database` pour vérifier la configuration et la présence du schéma sans lire de données client. Le contrôle doit échouer tant que des prérequis manquent ; ce n’est pas une validation des paiements, des emails ou de tous les droits. Pour la recette Moneriz en test, utiliser `--allow-test`, puis refaire le contrôle normal avant lancement. Voir le [rapport de lancement](reports/launch-qa/2026-10-31-launch-qa.md) et la matrice PRD pour les parcours réellement validés et les blocages restants.
+
+
+### Résultat après application du SQL
+
+Après mise à niveau manuelle, les 17 sondes de schéma et les cinq parcours de première commande passent. Des correctifs ont été ajoutés pour la progression, la fraîcheur des compteurs, les téléphones livreurs, le suivi gratuit et l’aperçu A4 mobile. Voir la [recette après SQL](reports/launch-qa/2026-10-31-post-sql-qa.md). La configuration et la recette des services Moneriz, emails et cron restent à faire avant un lancement payant ; le SQL ne configure pas leurs secrets.
+
+
+## Recette avancée et activation des emails
+
+Voir `docs/deployment/2026-10-31-production-activation.md`. La nouvelle migration `20261031133205_tenant_recurring_expenses.sql` doit précéder le code qui utilise la génération récurrente par boutique. Un objectif de session live vérifie désormais aussi l’appartenance de cette session à la boutique.
+
+L’ordonnanceur préparé dans `.github/workflows/lifecycle.yml` appelle le service toutes les cinq minutes après publication sur la branche par défaut et ajout du secret GitHub. Il n’a pas été activé pendant l’audit. Il réalise d’abord une vérification authentifiée `?dryRun=1`, sans écriture ni envoi. La route refuse désormais les traitements si la configuration email manque. Le paramètre `NOTIFICATION_REPLY_TO_EMAIL` permet de répondre au contact de l’exploitant tout en conservant un expéditeur Resend vérifié.
+
+Les enregistrements DNS Resend de `warko.app` sont présents au contrôle du 31 octobre 2026. Cela ne certifie pas le statut du domaine dans le compte Resend ni la présence des clés dans Vercel. La liste des variables de production a été consultée sans lire leurs valeurs. Aucun email n’a été envoyé pendant cette recette.
