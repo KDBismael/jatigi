@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createClient } from '@/services/supabase/server'
 import { getProductById, updateProduct, deleteProduct } from '@/services/product-service'
 import { z } from 'zod'
@@ -72,7 +73,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   const parsed = productUpdateSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return invalidRequest(parsed.error)
   }
 
   try {

@@ -1,4 +1,5 @@
 import { canManageDeliveries } from '@/lib/delivery-access'
+import { invalidRequest } from '@/lib/api-validation'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { deliverySettlementSchema } from '@/lib/schemas/delivery-driver.schema'
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   }
   const parsed = deliverySettlementSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
   try {
     const { id } = await params
     await addDeliverySettlement(id, parsed.data, profile.organization_id, user.id)

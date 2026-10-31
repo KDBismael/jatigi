@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createAdminClient } from '@/services/supabase/server'
 import { signupApiSchema } from '@/lib/schemas/auth.schema'
 
@@ -6,7 +7,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const parsed = signupApiSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return invalidRequest(parsed.error)
   }
 
   const { email, password, full_name, phone, organization_name } = parsed.data

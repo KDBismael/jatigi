@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { getOrderContext } from '@/lib/order-context'
 import { isDeliveryOrder, orderForRole } from '@/lib/order-access'
 import { orderErrorResponse } from '@/lib/order-errors'
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const parsed = orderSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return invalidRequest(parsed.error)
   }
 
   try {

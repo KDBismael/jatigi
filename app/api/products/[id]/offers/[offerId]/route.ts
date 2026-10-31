@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createClient } from '@/services/supabase/server'
 import { productOfferUpdateSchema } from '@/lib/schemas/product.schema'
 import { deleteProductOffer, updateProductOffer } from '@/services/product-offer-service'
@@ -16,7 +17,7 @@ export async function PUT(request: NextRequest, { params }: Context) {
   const organizationId = await adminOrganization()
   if (!organizationId) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   const parsed = productOfferUpdateSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
   try {
     const { id, offerId } = await params
     return NextResponse.json(await updateProductOffer(id, offerId, parsed.data, organizationId))

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createClient } from '@/services/supabase/server'
 import { z } from 'zod'
 import { updateStockLot } from '@/services/stock-lot-service'
@@ -34,7 +35,7 @@ export async function PATCH(
   const body = await request.json()
   const parsed = lotUpdateSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return invalidRequest(parsed.error)
   }
 
   try {

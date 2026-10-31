@@ -1,4 +1,5 @@
 import { billingErrorResponse } from '@/lib/billing/access'
+import { invalidRequest } from '@/lib/api-validation'
 import { NextRequest,NextResponse } from 'next/server'
 import {createAdminClient} from '@/services/supabase/server'
 import {requireOrganizationAdmin} from '@/lib/admin-context'
@@ -8,7 +9,7 @@ import {z} from 'zod'
 export async function GET(){const a=await requireOrganizationAdmin();if(!a)return NextResponse.json({error:'Forbidden'},{status:403});const db=await createAdminClient();const {data,error}=await db.from('live_sessions').select('*').eq('organization_id',a.organizationId).order('session_date',{ascending:false});if(error)return NextResponse.json({error:'Chargement impossible'},{status:500});return NextResponse.json(data??[])}
 export async function POST(r:NextRequest){
  const a=await requireOrganizationAdmin();if(!a)return NextResponse.json({error:'Forbidden'},{status:403})
- const p=liveSchema.safeParse(await r.json());if(!p.success)return NextResponse.json({error:p.error.flatten()},{status:400})
+ const p=liveSchema.safeParse(await r.json());if(!p.success)return invalidRequest(p.error)
  if(p.data.status!=='planned')return NextResponse.json({error:'Créez une session planifiée avant de la démarrer'},{status:400})
  const db=await createAdminClient();const {data,error}=await db.from('live_sessions').insert({...p.data,organization_id:a.organizationId}).select().single()
  if(error)return billingErrorResponse(new Error(error.message));return NextResponse.json(data,{status:201})

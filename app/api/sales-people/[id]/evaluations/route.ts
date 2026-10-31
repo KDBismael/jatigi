@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { requireOrganizationAdmin } from '@/lib/admin-context'
 import { salesPersonEvaluationSchema } from '@/lib/schemas/sales-person.schema'
 import { createSalesPersonEvaluation, getSalesPersonEvaluations } from '@/services/sales-person-service'
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest, ctx: { params: Promise<{ id: st
   const { id } = await ctx.params
 
   const parsed = salesPersonEvaluationSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
 
   try {
     return NextResponse.json(

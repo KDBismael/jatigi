@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createAdminClient } from '@/services/supabase/server'
 import { requireOrganizationAdmin } from '@/lib/admin-context'
 import { goalSchema } from '@/lib/schemas/pilotage.schema'
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const parsed = goalSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
 
   const db = await createAdminClient()
   const input = parsed.data

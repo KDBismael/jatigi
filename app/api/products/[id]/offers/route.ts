@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createClient } from '@/services/supabase/server'
 import { productOfferSchema } from '@/lib/schemas/product.schema'
 import { createProductOffer } from '@/services/product-offer-service'
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const organizationId = await adminOrganization()
   if (!organizationId) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
   const parsed = productOfferSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
   try {
     const { id } = await params
     return NextResponse.json(await createProductOffer(id, parsed.data, organizationId), { status: 201 })

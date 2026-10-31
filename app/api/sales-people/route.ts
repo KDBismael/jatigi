@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { z } from 'zod'
 import { requireOrganizationAdmin } from '@/lib/admin-context'
 import { salesPersonSchema, salesPersonUpdateSchema } from '@/lib/schemas/sales-person.schema'
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const parsed = salesPersonSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
 
   try {
     return NextResponse.json(await createSalesPerson(parsed.data, auth.organizationId), { status: 201 })
@@ -34,7 +35,7 @@ export async function PUT(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const parsed = salesPersonUpdateSchema.safeParse(await request.json())
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  if (!parsed.success) return invalidRequest(parsed.error)
 
   try {
     return NextResponse.json(await updateSalesPerson(parsed.data, auth.organizationId))

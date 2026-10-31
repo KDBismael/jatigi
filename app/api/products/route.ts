@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createClient } from '@/services/supabase/server'
 import { productSchema } from '@/lib/schemas/product.schema'
 import { createProduct, getProducts } from '@/services/product-service'
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const parsed = productSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return invalidRequest(parsed.error)
   }
 
   try {

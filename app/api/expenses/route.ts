@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { invalidRequest } from '@/lib/api-validation'
 import { createAdminClient } from '@/services/supabase/server'
 import { requireOrganizationAdmin } from '@/lib/admin-context'
 import { expenseSchema } from '@/lib/schemas/pilotage.schema'
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
 }
 export async function POST(request:NextRequest){
   const auth=await requireOrganizationAdmin(); if(!auth)return NextResponse.json({error:'Forbidden'},{status:403})
-  const parsed=expenseSchema.safeParse(await request.json()); if(!parsed.success)return NextResponse.json({error:parsed.error.flatten()},{status:400})
+  const parsed=expenseSchema.safeParse(await request.json()); if(!parsed.success)return invalidRequest(parsed.error)
   const db=await createAdminClient(); const input=parsed.data
   if(input.sales_person_id){
     const {data:person}=await db.from('sales_people').select('id').eq('id',input.sales_person_id).eq('organization_id',auth.organizationId).single()
@@ -29,5 +30,5 @@ export async function POST(request:NextRequest){
   const {data,error}=await db.from('expenses').insert({organization_id:auth.organizationId,category:input.category,label:input.label,amount:input.amount,expense_date:input.expense_date,receipt_url:input.receipt_url||null,sales_person_id:input.sales_person_id||null,created_by:auth.user.id}).select().single()
   if(error)return NextResponse.json({error:error.message},{status:500}); return NextResponse.json(data,{status:201})
 }
-export async function PUT(request:NextRequest){const auth=await requireOrganizationAdmin();if(!auth)return NextResponse.json({error:'Forbidden'},{status:403});const body=await request.json();const parsed=expenseSchema.safeParse(body);if(!parsed.success)return NextResponse.json({error:parsed.error.flatten()},{status:400});const db=await createAdminClient();const {category,label,amount,expense_date,receipt_url,sales_person_id}=parsed.data;if(sales_person_id){const{data:person}=await db.from('sales_people').select('id').eq('id',sales_person_id).eq('organization_id',auth.organizationId).single();if(!person)return NextResponse.json({error:'Personne commerciale introuvable'},{status:400})}const {data,error}=await db.from('expenses').update({category,label,amount,expense_date,receipt_url:receipt_url||null,sales_person_id:sales_person_id||null}).eq('id',body.id).eq('organization_id',auth.organizationId).select().single();if(error)return NextResponse.json({error:error.code==='PGRST116'?'Dépense introuvable':'Impossible de modifier la dépense.'},{status:error.code==='PGRST116'?404:500});return NextResponse.json(data)}
+export async function PUT(request:NextRequest){const auth=await requireOrganizationAdmin();if(!auth)return NextResponse.json({error:'Forbidden'},{status:403});const body=await request.json();const parsed=expenseSchema.safeParse(body);if(!parsed.success)return invalidRequest(parsed.error);const db=await createAdminClient();const {category,label,amount,expense_date,receipt_url,sales_person_id}=parsed.data;if(sales_person_id){const{data:person}=await db.from('sales_people').select('id').eq('id',sales_person_id).eq('organization_id',auth.organizationId).single();if(!person)return NextResponse.json({error:'Personne commerciale introuvable'},{status:400})}const {data,error}=await db.from('expenses').update({category,label,amount,expense_date,receipt_url:receipt_url||null,sales_person_id:sales_person_id||null}).eq('id',body.id).eq('organization_id',auth.organizationId).select().single();if(error)return NextResponse.json({error:error.code==='PGRST116'?'Dépense introuvable':'Impossible de modifier la dépense.'},{status:error.code==='PGRST116'?404:500});return NextResponse.json(data)}
 export async function DELETE(request:NextRequest){const auth=await requireOrganizationAdmin();if(!auth)return NextResponse.json({error:'Forbidden'},{status:403});const {id}=z.object({id:z.string().uuid()}).parse(await request.json());const db=await createAdminClient();const {error}=await db.from('expenses').delete().eq('id',id).eq('organization_id',auth.organizationId);if(error)return NextResponse.json({error:error.message},{status:500});return NextResponse.json({success:true})}
