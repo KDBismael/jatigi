@@ -1,4 +1,5 @@
 import type { Order } from '@/types/order'
+import type { OrderStatus } from '@/lib/constants'
 
 /** Share selling prices/discounts with staff, never acquisition costs. */
 export function orderForRole(order: Order, role: string) {
@@ -17,7 +18,14 @@ export function orderForRole(order: Order, role: string) {
   }
 }
 
+/** Statuses a delivery manager may set. */
 export const DELIVERY_STATUSES = ['in_progress', 'delivered', 'cancelled', 'postponed', 'returned'] as const
+/** Orders a delivery manager handles: handed to a driver, from confirmation onwards. */
+const MANAGER_STATUSES: readonly string[] = ['confirmed', ...DELIVERY_STATUSES]
 export function isDeliveryOrder(order: Pick<Order, 'status' | 'delivery_driver_id'>) {
-  return Boolean(order.delivery_driver_id) && (DELIVERY_STATUSES as readonly string[]).includes(order.status)
+  return Boolean(order.delivery_driver_id) && MANAGER_STATUSES.includes(order.status)
+}
+/** Manager status menu: the current status stays visible but only delivery statuses can be chosen. */
+export function managerStatusOptions(current: OrderStatus): readonly OrderStatus[] {
+  return (DELIVERY_STATUSES as readonly string[]).includes(current) ? DELIVERY_STATUSES : [current, ...DELIVERY_STATUSES]
 }

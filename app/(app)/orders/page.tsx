@@ -20,15 +20,18 @@ export default function OrdersPage() {
   const isManager = useAuthStore(s=>s.profile?.role==='manager')
   const isAdmin = useAuthStore((state) => state.isAdmin())
 
-  const [preset, setPreset] = useState<DatePreset>('today')
+  const [chosenPreset, setPreset] = useState<DatePreset | null>(null)
+  const defaultPreset: DatePreset = isManager ? 'last7d' : 'today'
+  const preset = chosenPreset ?? defaultPreset
   const [customFrom, setCustomFrom] = useState<string | undefined>()
   const [customTo, setCustomTo] = useState<string | undefined>()
 
-  // Initialize date filter to default preset on first render
+  // Default period once the role is known: delivery managers follow the week's runs, others today.
   useEffect(() => {
-    const range = getPeriodDates('today')
+    if (chosenPreset) return
+    const range = getPeriodDates(defaultPreset)
     setFilters({ dateFrom: range.dateFrom, dateTo: range.dateTo })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [defaultPreset]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handlePeriodChange(p: DatePreset, from?: string, to?: string) {
     setPreset(p)

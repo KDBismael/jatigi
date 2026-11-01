@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, resolveUnitCost } from "@/lib/utils";
 import { orderAmounts, orderRemittableAmount } from "@/lib/order-amounts";
 import { canManageDeliveries } from "@/lib/delivery-access";
-import { DELIVERY_STATUSES } from "@/lib/order-access";
+import { managerStatusOptions } from "@/lib/order-access";
 import {
   CHANNELS,
   CHANNEL_LABELS,
@@ -43,7 +43,7 @@ export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const isManager = useAuthStore((s) => s.profile?.role === "manager");
-  const availableStatuses = isManager ? DELIVERY_STATUSES : STATUSES;
+  
   const isAdmin = useAuthStore((s) => s.isAdmin());
   const canSettle = canManageDeliveries(useAuthStore((s) => s.profile?.role));
   const { drivers } = useDeliveryDrivers();
@@ -275,7 +275,7 @@ export default function OrderDetailPage() {
       />
       <OrderStatusActions
         status={order.status}
-        statuses={availableStatuses}
+        statuses={isManager ? managerStatusOptions(order.status) : STATUSES}
         busy={updating}
         onChange={handleStatusChange}
         error={statusError}
