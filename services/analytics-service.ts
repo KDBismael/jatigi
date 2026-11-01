@@ -56,23 +56,22 @@ export async function getDashboardStats(range: DateRange, organizationId: string
 export async function getProductPerformance(range: DateRange, organizationId: string): Promise<ProductPerformance[]> {
   const supabase = await createAdminClient()
 
-  const { data: deliveredOrders } = await supabase
-    .from('orders')
-    .select('id')
-    .eq('organization_id', organizationId)
-    .eq('status', 'delivered')
-    .gte('order_date', range.dateFrom)
-    .lte('order_date', range.dateTo)
-
-  const ids = deliveredOrders?.map((o) => o.id) ?? []
-  if (ids.length === 0) return []
-
-  const { data } = await supabase
-    .from('order_lines')
-    .select('product_id, quantity, line_total, total_cost, unit_price, unit_cost, product:products(name, purchase_cost, import_cost, packaging_cost)')
-    .in('order_id', ids)
-
-  if (!data) return []
+  // Filter through the order join and page the lines: an id list in the URL breaks past ~200 orders.
+  const data: unknown[] = []
+  for (let from = 0; ; from += 1000) {
+    const { data: page, error } = await supabase
+      .from('order_lines')
+      .select('product_id, quantity, line_total, total_cost, unit_price, unit_cost, product:products(name, purchase_cost, import_cost, packaging_cost), order:orders!inner(organization_id, status, order_date)')
+      .eq('order.organization_id', organizationId)
+      .eq('order.status', 'delivered')
+      .gte('order.order_date', range.dateFrom)
+      .lte('order.order_date', range.dateTo)
+      .order('id')
+      .range(from, from + 999)
+    if (error) throw new Error(error.message)
+    data.push(...(page ?? []))
+    if (!page || page.length < 1000) break
+  }
 
   const map = new Map<string, ProductPerformance>()
 

@@ -19,25 +19,18 @@ export async function getProducts(organizationId: string): Promise<Product[]> {
   return data as Product[]
 }
 
+/** Order lines and stock movements both mean history; counts avoid sending id lists in the URL. */
 async function productHistoryCount(id: string, organizationId: string): Promise<number> {
   const supabase = await createAdminClient()
-  const { data: lines, error: linesError } = await supabase
-    .from('order_lines')
-    .select('id, order:orders!inner(organization_id)')
-    .eq('product_id', id)
-    .eq('order.organization_id', organizationId)
-  if (linesError) throw new Error(linesError.message)
-  const lineIds = (lines ?? []).map((line) => line.id as string)
-  const {count:movementCount,error:movementError}=await supabase.from('stock_movements').select('id',{count:'exact',head:true}).eq('product_id',id).eq('organization_id',organizationId)
-  if(movementError)throw new Error(movementError.message)
-  if (lineIds.length === 0) return movementCount??0
-
-  const { count, error: allocationsError } = await supabase
-    .from('order_line_lots')
-    .select('id', { count: 'exact', head: true })
-    .in('order_line_id', lineIds)
-  if (allocationsError) throw new Error(allocationsError.message)
-  return lineIds.length + (count ?? 0) + (movementCount??0)
+  const [lines, movements] = await Promise.all([
+    supabase.from('order_lines').select('id, order:orders!inner(organization_id)', { count: 'exact', head: true })
+      .eq('product_id', id).eq('order.organization_id', organizationId),
+    supabase.from('stock_movements').select('id', { count: 'exact', head: true })
+      .eq('product_id', id).eq('organization_id', organizationId),
+  ])
+  if (lines.error) throw new Error(lines.error.message)
+  if (movements.error) throw new Error(movements.error.message)
+  return (lines.count ?? 0) + (movements.count ?? 0)
 }
 
 export async function getProductById(id: string, organizationId: string): Promise<Product | null> {

@@ -147,7 +147,7 @@ export function ProductTable({ products, mode = 'active', onDelete, onToggleActi
           confirmLabel="Supprimer"
           cancelLabel="Annuler"
           variant="danger"
-          onConfirm={async () => { const result = await onDelete?.(deleteTarget.id); if (result?.message) alert(result.message); setDeleteTarget(null) }}
+          onConfirm={async () => { try { const result = await onDelete?.(deleteTarget.id); if (result?.message) alert(result.message) } catch (caught) { alert(caught instanceof Error ? caught.message : 'Suppression impossible. Réessayez.') } finally { setDeleteTarget(null) } }}
           onCancel={() => setDeleteTarget(null)}
         />
       )}
