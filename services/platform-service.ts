@@ -216,3 +216,22 @@ export async function getPlatformSaasMetrics():Promise<PlatformSaasMetrics> {
  if(error)throw new Error(error.message)
  return data as PlatformSaasMetrics
 }
+
+export interface PlatformEventReport {
+  funnel: { visitors: number; signupClicks: number; signupViews: number; signups: number; firstOrder: number; onboarded: number; paid: number }
+  daily: { day: string; visitors: number; signups: number }[]
+  sources: { source: string; visitors: number }[]
+  actions: { name: string; events: number; shops: number }[]
+}
+
+/** Visitor-to-paid report over the last `days` days, internal shops excluded. */
+export async function getPlatformEventReport(days: number): Promise<PlatformEventReport> {
+  const db = await createAdminClient(), { excludedOrgIds } = await resolveExclusions(db)
+  const to = new Date(), from = new Date(to)
+  from.setUTCDate(from.getUTCDate() - (days - 1))
+  const { data, error } = await db.rpc('platform_event_report', {
+    p_from: from.toISOString().slice(0, 10), p_to: to.toISOString().slice(0, 10), p_excluded: [...excludedOrgIds],
+  })
+  if (error) throw new Error(error.message)
+  return data as PlatformEventReport
+}

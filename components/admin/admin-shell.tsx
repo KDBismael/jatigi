@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin", label: "Vue d’ensemble", icon: "dashboard" },
   { href: "/admin/users", label: "Utilisateurs", icon: "users" },
   { href: "/admin/organizations", label: "Organisations", icon: "building" },
+  { href: "/admin/analytics", label: "Analytique", icon: "chart" },
 ] as const;
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
