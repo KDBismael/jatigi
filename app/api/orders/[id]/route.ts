@@ -5,6 +5,7 @@ import { DELIVERY_STATUSES, isDeliveryOrder, orderForRole } from '@/lib/order-ac
 import { orderErrorResponse } from '@/lib/order-errors'
 import { orderStatusUpdateSchema, orderUpdateSchema } from '@/lib/schemas/order.schema'
 import { updateOrderStatus, updateOrder, getOrderById } from '@/services/order-service'
+import { recordEvent } from '@/services/analytics-events-service'
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getOrderContext()
@@ -62,6 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   try {
     const order = await updateOrderStatus(id, parsed.data, ctx.profile.organization_id)
+    await recordEvent('order_status_changed', { userId: ctx.user.id, organizationId: ctx.profile.organization_id }, { status: parsed.data.status, role: ctx.profile.role })
     return NextResponse.json(orderForRole(order, ctx.profile.role))
   } catch (err) {
     return orderErrorResponse(err)

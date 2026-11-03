@@ -35,9 +35,11 @@ it("tracks one delegated click on a nested CTA icon without collecting client da
   fireEvent.click(document.body);
   expect(track).toHaveBeenCalledTimes(1);
 });
-it("has no network side effects without an analytics provider", () => {
-  const fetcher = vi.fn();
+it("only reports to Warko's own events endpoint, never to a third party", () => {
+  const fetcher = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(async () => new Response(null, { status: 204 }));
+  vi.stubGlobal("navigator", { ...navigator, sendBeacon: undefined });
   vi.stubGlobal("fetch", fetcher);
   analytics.track("cta_signup", { location: "hero" });
-  expect(fetcher).not.toHaveBeenCalled();
+  expect(fetcher).toHaveBeenCalledTimes(1);
+  expect(fetcher.mock.calls[0][0]).toBe("/api/events");
 });

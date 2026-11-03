@@ -24,7 +24,7 @@ beforeEach(() => { mocks.inserts.length = 0 })
 it('saves a one-off expense dated the 31st', async () => {
   const response = await post({ ...base, recurring: false })
   expect(response.status).toBe(201)
-  expect(mocks.inserts).toEqual([expect.objectContaining({ table: 'expenses', value: expect.objectContaining({ expense_date: '2026-10-31', amount: 81000 }) })])
+  expect(mocks.inserts.filter(i => i.table !== 'app_events')).toEqual([expect.objectContaining({ table: 'expenses', value: expect.objectContaining({ expense_date: '2026-10-31', amount: 81000 }) })])
 })
 
 it('anchors a recurring expense dated after the 28th on the 28th', async () => {

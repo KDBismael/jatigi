@@ -6,6 +6,7 @@ import { inviteEmployeeSchema } from '@/lib/schemas/team.schema'
 import { getTeamMembers, createTeamMember, deleteTeamMember, updateMemberRole } from '@/services/team-service'
 import { ROLES } from '@/lib/constants'
 import { z } from 'zod'
+import { recordEvent } from '@/services/analytics-events-service'
 
 const memberMutationSchema = z.object({ id: z.string().uuid() })
 const roleMutationSchema = memberMutationSchema.extend({ role: z.enum(ROLES) })
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
       ...parsed.data,
       organization_id: auth.profile.organization_id,
     })
+    await recordEvent('member_invited', { userId: auth.user.id, organizationId: auth.profile.organization_id }, { role: parsed.data.role })
     return NextResponse.json(member, { status: 201 })
   } catch (err) {
     if (String(err).includes('PLAN_')) return billingErrorResponse(err)

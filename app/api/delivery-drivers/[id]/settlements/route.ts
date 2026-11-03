@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { deliverySettlementSchema } from '@/lib/schemas/delivery-driver.schema'
 import { addDeliverySettlement, getDeliverySettlementHistory } from '@/services/delivery-driver-service'
+import { recordEvent } from '@/services/analytics-events-service'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createClient()
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   try {
     const { id } = await params
     await addDeliverySettlement(id, parsed.data, profile.organization_id, user.id)
+    await recordEvent('settlement_recorded', { userId: user.id, organizationId: profile.organization_id }, { role: profile.role })
     return NextResponse.json({ success: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erreur lors du versement'

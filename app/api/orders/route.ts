@@ -5,6 +5,7 @@ import { isDeliveryOrder, orderForRole } from '@/lib/order-access'
 import { orderErrorResponse } from '@/lib/order-errors'
 import { orderSchema } from '@/lib/schemas/order.schema'
 import { createOrder, getOrders } from '@/services/order-service'
+import { recordEvent } from '@/services/analytics-events-service'
 
 export async function GET() {
   const ctx = await getOrderContext()
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const order = await createOrder(parsed.data, ctx.user.id, ctx.profile.organization_id)
+    await recordEvent('order_created', { userId: ctx.user.id, organizationId: ctx.profile.organization_id }, { channel: parsed.data.channel, role: ctx.profile.role })
     return NextResponse.json(orderForRole(order, ctx.profile.role), { status: 201 })
   } catch (err) {
     return orderErrorResponse(err)

@@ -4,6 +4,7 @@ import { createClient } from '@/services/supabase/server'
 import { productSchema } from '@/lib/schemas/product.schema'
 import { createProduct, getProducts } from '@/services/product-service'
 import { ProductCreationAcknowledgedError } from '@/lib/product-errors'
+import { recordEvent } from '@/services/analytics-events-service'
 
 async function getAuthContext() {
   const supabase = await createClient()
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
       },
       ctx.profile.organization_id
     )
+    await recordEvent('product_created', { userId: ctx.user.id, organizationId: ctx.profile.organization_id }, { pricing_mode: rest.pricing_mode ?? 'unit' })
     return NextResponse.json(product, { status: 201 })
   } catch (err) {
     if (err instanceof ProductCreationAcknowledgedError) {

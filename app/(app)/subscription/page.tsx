@@ -5,6 +5,7 @@ import { useSubscription } from '@/hooks/use-subscription'
 import styles from '@/components/billing/subscription.module.css'
 import { SubscriptionActionButton } from '@/components/billing/subscription-action-button'
 import { SubscriptionView } from '@/components/billing/subscription-view'
+import { TrackView } from '@/components/analytics/track-view'
 export default function SubscriptionPage() {
   const billing = useSubscription()
   const [intent, setIntent] = useState<BillingIntent | null>(null)
@@ -25,6 +26,7 @@ export default function SubscriptionPage() {
   }, [billing.summary?.canManageBilling, billing.summary?.plan, billing.summary?.status])
   return (
     <main data-testid="subscription-page" className={styles.page}>
+      <TrackView event="subscription_view" />
       <header className={styles.pageHeader}><h1>Abonnement et paiements</h1><p className={styles.muted}>Votre offre, votre consommation et vos paiements, au même endroit.</p></header>
       {billing.error && (
         <div role="alert" className={styles.pageError}>

@@ -13,10 +13,12 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 import { StickyMobileCta } from "@/components/landing/sticky-mobile-cta";
 import { LandingTracking } from "@/components/landing/landing-tracking";
 import s from "@/components/landing/landing.module.css";
+import { TrackView } from "@/components/analytics/track-view";
 export default function LandingPage() {
   return (
     <div data-testid="landing-page" className={s.root}>
       <LandingTracking />
+      <TrackView event="landing_view" withSource />
       <LandingNav />
       <main>
         <Hero />

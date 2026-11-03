@@ -3,6 +3,7 @@ import { invalidRequest } from '@/lib/api-validation'
 import { createClient } from '@/services/supabase/server'
 import { stockLotSchema } from '@/lib/schemas/stock-lot.schema'
 import { addStockLot, getStockLots } from '@/services/stock-lot-service'
+import { recordEvent } from '@/services/analytics-events-service'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -50,6 +51,7 @@ export async function POST(
 
   try {
     const lot = await addStockLot(parsed.data, id, ctx.profile.organization_id)
+    await recordEvent('stock_added', { userId: ctx.user.id, organizationId: ctx.profile.organization_id })
     return NextResponse.json(lot, { status: 201 })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { invalidRequest } from '@/lib/api-validation'
 import { createAdminClient } from '@/services/supabase/server'
 import { signupApiSchema } from '@/lib/schemas/auth.schema'
+import { recordEvent } from '@/services/analytics-events-service'
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
@@ -82,5 +83,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Impossible de finaliser la création de la boutique' }, { status: 500 })
   }
 
+  await recordEvent('signup_completed', { userId, organizationId: org.id })
   return NextResponse.json({ success: true, organization: org }, { status: 201 })
 }

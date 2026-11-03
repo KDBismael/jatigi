@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/services/supabase/server'
 import { deliveryDriverSchema } from '@/lib/schemas/delivery-driver.schema'
 import { createDeliveryDriver, getDeliveryDrivers } from '@/services/delivery-driver-service'
+import { recordEvent } from '@/services/analytics-events-service'
 
 async function getAuthContext() {
   const supabase = await createClient()
@@ -47,7 +48,9 @@ export async function POST(request: NextRequest) {
   const parsed = deliveryDriverSchema.safeParse(await request.json())
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Informations du livreur invalides' }, { status: 400 })
   try {
-    return NextResponse.json(await createDeliveryDriver(parsed.data, auth.profile.organization_id), { status: 201 })
+    const driver = await createDeliveryDriver(parsed.data, auth.profile.organization_id)
+    await recordEvent('driver_created', { userId: auth.user.id, organizationId: auth.profile.organization_id })
+    return NextResponse.json(driver, { status: 201 })
   } catch (error) {
     if (String(error).includes('PLAN_')) return billingErrorResponse(error)
     console.error('[/api/delivery-drivers] creation failed:', error)
