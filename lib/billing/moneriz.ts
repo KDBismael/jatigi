@@ -92,12 +92,12 @@ export function verifyMonerizSignature(raw: string | Uint8Array, secret: string,
   return timingSafeEqual(expected, Buffer.from(v1, 'hex'))
 }
 export function getMonerizMode(): MonerizMode {
-  const parsed = modeSchema.safeParse(process.env.MONERIZ_MODE || 'test')
+  const parsed = modeSchema.safeParse((process.env.MONERIZ_MODE || 'test').trim())
   if (!parsed.success) throw new MonerizError('MONERIZ_MODE_INVALID')
   return parsed.data
 }
 export function getMonerizSecret(mode: MonerizMode): string {
-  const secret = (mode === 'test' ? process.env.MONERIZ_TEST_SECRET_KEY : process.env.MONERIZ_LIVE_SECRET_KEY) || process.env.MONERIZ_SECRET_KEY
+  const secret = ((mode === 'test' ? process.env.MONERIZ_TEST_SECRET_KEY : process.env.MONERIZ_LIVE_SECRET_KEY) || process.env.MONERIZ_SECRET_KEY)?.trim()
   if (!secret?.startsWith(`izp_${mode}_sk_`) || secret.length <= `izp_${mode}_sk_`.length) throw new MonerizError('CHECKOUT_NOT_CONFIGURED')
   return secret
 }

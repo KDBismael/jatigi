@@ -12,7 +12,14 @@ const limits: Record<string, string> = {
 }
 export function billingErrorResponse(error: unknown) {
   if (error instanceof BillingAccessError) return NextResponse.json({ error: error.message, code: error.code, upgradeUrl: '/subscription' }, { status: error.status, headers: { 'Cache-Control': 'no-store' } })
-  if (error instanceof MonerizError) return NextResponse.json({ error: error.code === 'KYB_REQUIRED' ? 'Les paiements sont momentanément indisponibles : la vérification du compte marchand doit être finalisée.' : 'Le paiement n’est pas encore confirmé. Réessayez cette même demande ou contactez le support.', code: error.code }, { status: error.status, headers: { 'Cache-Control': 'no-store', ...(error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : {}) } })
+  if (error instanceof MonerizError) {
+    const messages: Record<string, string> = {
+      KYB_REQUIRED: 'Les paiements sont momentanément indisponibles : la vérification du compte marchand doit être finalisée.',
+      MONERIZ_MODE_INVALID: 'Le mode de paiement de la plateforme est invalide. Contactez le support.',
+      CHECKOUT_NOT_CONFIGURED: 'Le paiement n’est pas encore configuré. Contactez le support.',
+    }
+    return NextResponse.json({ error: messages[error.code] ?? 'Le paiement n’est pas encore confirmé. Réessayez cette même demande ou contactez le support.', code: error.code }, { status: error.status, headers: { 'Cache-Control': 'no-store', ...(error.retryAfter ? { 'Retry-After': String(error.retryAfter) } : {}) } })
+  }
   const message = error instanceof Error ? error.message : String(error)
   const code = Object.keys(limits).find(key => message.includes(key))
   if (code) return NextResponse.json({ error: limits[code], code, upgradeUrl: '/subscription' }, { status: 402 })
