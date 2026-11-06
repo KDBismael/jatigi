@@ -60,3 +60,14 @@ it("keeps stale data visible on failed refresh", async () => {
   expect(result.current.summary?.plan).toBe("discovery");
   expect(result.current.error).toBe("Indisponible");
 });
+it('refreshes a payment already confirmed during retry without showing a pending-payment error',async()=>{
+ let paid=false
+ vi.stubGlobal('fetch',vi.fn(async(url)=>{
+  if(String(url).endsWith('/checkout')){paid=true;return Response.json({state:'paid',checkoutUrl:null})}
+  return Response.json({plan:paid?'pro':'discovery',payments:[]})
+ }))
+ const {result}=renderHook(()=>useSubscription(),{wrapper})
+ await waitFor(()=>expect(result.current.summary).toBeTruthy())
+ await act(()=>result.current.checkout('pro','monthly'))
+ expect(result.current.summary?.plan).toBe('pro');expect(result.current.error).toBeNull()
+})

@@ -102,3 +102,9 @@ it('ne change pas le renouvellement d’un client déjà payant selon une ancien
  expect(screen.getByTestId('subscription-cycle-monthly').getAttribute('aria-pressed')).toBe('true')
  expect(screen.queryByTestId('subscription-selected-intent')).toBeNull()
 })
+it('shows a verified failed attempt and retries the same offer instead of labelling it pending',()=>{
+ render(<SubscriptionView summary={{...base,payments:[{id:'failed',plan:'business',cycle:'monthly',amount:150,state:'failed',createdAt:'2026-11-06',paidAt:null,receiptUrl:'/unused'}]}} {...props}/>)
+ expect(screen.getByText('Échoué')).toBeTruthy()
+ fireEvent.click(screen.getByTestId('subscription-retry-payment'))
+ expect(props.onCheckout).toHaveBeenCalledWith('business','monthly')
+})

@@ -1,0 +1,11 @@
+import{afterEach,beforeEach,expect,it,vi}from'vitest'
+const mocks=vi.hoisted(()=>({mode:'test',dbMode:'test',prepare:vi.fn(),rpc:vi.fn(),create:vi.fn()}))
+vi.mock('@/lib/billing/test-pricing',()=>({TEST_BILLING_PRICES:{pro:100,business:150}}))
+vi.mock('@/services/test-billing-invoice',()=>({prepareTestBillingInvoice:mocks.prepare}))
+vi.mock('@/lib/billing/moneriz',async()=>{const actual=await vi.importActual<typeof import('@/lib/billing/moneriz')>('@/lib/billing/moneriz');return{...actual,getMonerizMode:()=>mocks.mode,createMonerizSession:mocks.create}})
+vi.mock('@/services/supabase/server',()=>({createAdminClient:async()=>({rpc:mocks.rpc,from:(table:string)=>{const q={select:()=>q,eq:()=>q,single:async()=>({data:table==='organizations'?{owner_id:'qa-owner',country:'CI'}:{mode:mocks.dbMode},error:null})};return q}})}))
+import{checkoutSubscription}from'@/services/billing-service'
+beforeEach(()=>{vi.clearAllMocks();mocks.mode='test';mocks.dbMode='test';mocks.rpc.mockResolvedValue({data:null,error:null});mocks.prepare.mockResolvedValue({id:'qa-invoice',mode:'test',amount:100,state:'pending',idempotency_key:'qa-idempotency-key',checkout_request:{amount:100},checkout_url:null,checkout_session_id:null});mocks.create.mockResolvedValue({id:'cs_qa',checkoutUrl:'https://moneriz.com/qa'})})
+afterEach(()=>vi.unstubAllEnvs())
+it('uses the server test price and the standard checkout persistence path',async()=>{vi.stubEnv('APP_BASE_URL','https://warko.test');const result=await checkoutSubscription('qa-org','qa-owner','pro','yearly');expect(result.checkoutUrl).toBe('https://moneriz.com/qa');expect(mocks.prepare).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({organizationId:'qa-org',userId:'qa-owner',plan:'pro',cycle:'yearly',amount:100}),expect.any(Function));expect(mocks.rpc).toHaveBeenCalledWith('save_billing_checkout',expect.anything());expect(mocks.rpc).not.toHaveBeenCalledWith('prepare_billing_invoice',expect.anything())})
+it('never applies these prices to live payments',async()=>{mocks.mode='live';mocks.dbMode='live';await expect(checkoutSubscription('qa-org','qa-owner','pro','monthly')).rejects.toMatchObject({code:'BILLING_TEST_PRICING_MODE',status:503});expect(mocks.prepare).not.toHaveBeenCalled();expect(mocks.create).not.toHaveBeenCalled()})

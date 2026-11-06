@@ -1,6 +1,7 @@
 'use client'
+import { TEST_BILLING_PRICES } from '@/lib/billing/test-pricing'
 import { useState } from 'react'
-import { PLANS, type BillingCycle, type SubscriptionSummary, type PlanId } from '@/lib/billing/plans'
+import { PLANS, ANNUAL_SAVING_PERCENT, type BillingCycle, type SubscriptionSummary, type PlanId } from '@/lib/billing/plans'
 import { formatAmount } from '@/lib/utils'
 import type { BillingIntent } from '@/lib/billing/intent'
 import { planFeatures } from '@/lib/billing/plan-presentation'
@@ -21,11 +22,11 @@ export function SubscriptionView({summary,onCheckout,onAction,onReconcile,busy,s
  <SubscriptionAlerts summary={summary} busy={busy} onCheckout={onCheckout} onResume={()=>onAction('resume')}/>
  <div className={styles.hero}><SubscriptionMemberCard summary={summary} busy={busy} onCheckout={onCheckout}/><SubscriptionUsage summary={summary}/></div>
  {summary.plan!=='discovery' && <section data-testid="subscription-benefits" className={`${styles.panel} ${styles.benefits}`}><h2>Inclus dans votre plan {PLANS[summary.plan].name}</h2><ul className={styles.benefitList}>{planFeatures(summary.plan).map(feature=><li key={feature}><Icon name="check"/>{feature}</li>)}</ul></section>}
- <section data-testid="subscription-plans" className={styles.stack}><div className={styles.sectionHead}><h2>Changer de plan</h2><div role="group" aria-label="Période de facturation" className={styles.cycle}>{(['monthly','yearly'] as const).map(value=><SubscriptionActionButton key={value} data-testid={`subscription-cycle-${value}`} aria-pressed={cycle===value} onClick={()=>setCycle(value)}>{value==='monthly'?'Mensuel':'Annuel'}{value==='yearly' && <span className={styles.annualSaving}>20 % d’économie</span>}</SubscriptionActionButton>)}</div></div>
+ <section data-testid="subscription-plans" className={styles.stack}><div className={styles.sectionHead}><h2>Changer de plan</h2><div role="group" aria-label="Période de facturation" className={styles.cycle}>{(['monthly','yearly'] as const).map(value=><SubscriptionActionButton key={value} data-testid={`subscription-cycle-${value}`} aria-pressed={cycle===value} onClick={()=>setCycle(value)}>{value==='monthly'?'Mensuel':'Annuel'}{value==='yearly' && !TEST_BILLING_PRICES && ANNUAL_SAVING_PERCENT>0 && <span className={styles.annualSaving}>{ANNUAL_SAVING_PERCENT} % d’économie</span>}</SubscriptionActionButton>)}</div></div>
  <PlanCards cycle={cycle} current={summary.plan} onChoose={summary.canManageBilling?onCheckout:undefined} busy={busy}/>
  {!summary.canManageBilling && <p className={styles.notice}>Seul le propriétaire peut gérer l’abonnement.</p>}
  <p className={styles.muted}>Le renouvellement nécessite un paiement confirmé à chaque échéance. Paiement sécurisé sur la page de notre prestataire : Mobile Money en priorité, carte selon disponibilité. L’activation attend la confirmation du paiement.</p>
  </section>
- <SubscriptionManagement summary={summary} busy={busy} onAction={onAction}/><SubscriptionPayments summary={summary} busy={busy} onReconcile={onReconcile}/>
+ <SubscriptionManagement summary={summary} busy={busy} onAction={onAction}/><SubscriptionPayments summary={summary} busy={busy} onReconcile={onReconcile} onCheckout={onCheckout}/>
  </div>
 }

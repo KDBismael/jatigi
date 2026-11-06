@@ -114,7 +114,7 @@ function useSubscriptionController(enabled: boolean) {
         window.location.assign(url.href);
       } else {
         await refreshAfterMutation();
-        if (active.current)
+        if (active.current && result.state !== "paid")
           setError(
             "Paiement en attente de vérification. Ne payez pas une seconde fois.",
           );

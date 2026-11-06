@@ -1,3 +1,8 @@
+import {HAS_CUSTOM_BILLING_PRICES} from '@/lib/billing/pricing'
+import {preparePricedBillingInvoice} from './priced-billing-invoice'
+import {visiblePaymentState} from '@/lib/billing/payment-state'
+import { TEST_BILLING_PRICES } from '@/lib/billing/test-pricing'
+import { prepareTestBillingInvoice } from './test-billing-invoice'
 import { createAdminClient } from '@/services/supabase/server'
 import { PLANS, type PlanId, type BillingCycle, type SubscriptionSummary } from '@/lib/billing/plans'
 import { BillingAccessError } from '@/lib/billing/access'
@@ -6,7 +11,7 @@ import { createMonerizSession, getMonerizMode, MonerizError, readMonerizPayment,
 export interface BillingInvoice {
   id:string; organization_id:string; mode:MonerizMode; plan:'pro'|'business'; cycle:BillingCycle; amount:number;
   reference:string; idempotency_key:string; checkout_request:MonerizCheckoutRequest;
-  checkout_session_id:string|null; checkout_url:string|null; state:string; paid_at:string|null; created_at:string;
+  checkout_session_id:string|null; checkout_url:string|null; state:string; paid_at:string|null; created_at:string; last_payment_status?:string|null;
 }
 interface Grant {plan:'pro'|'business';period_start:string;period_end:string;revoked_at:string|null;invoice_id:string|null;invoice:{mode:MonerizMode;cycle:BillingCycle}|null}
 function fail(error: {message:string}|null) { if (error) throw new Error(error.message) }
@@ -35,9 +40,9 @@ export async function getSubscriptionSummary(organizationId:string,userId:string
   const plan:PlanId=active?.plan??'discovery', config=PLANS[plan]
   let payments:SubscriptionSummary['payments']=[]
   if (canManageBilling) {
-    const result=await db.from('billing_invoices').select('id,plan,cycle,amount,state,created_at,paid_at').eq('organization_id',organizationId).eq('mode',mode).order('created_at',{ascending:false}).limit(100)
+    const result=await db.from('billing_invoices').select('id,plan,cycle,amount,state,last_payment_status,created_at,paid_at').eq('organization_id',organizationId).eq('mode',mode).order('created_at',{ascending:false}).limit(100)
     fail(result.error)
-    payments=(result.data??[]).map(row=>({id:row.id,plan:row.plan,cycle:row.cycle,amount:row.amount,state:row.state,createdAt:row.created_at,paidAt:row.paid_at,receiptUrl:`/api/billing/receipts/${row.id}`}))
+    payments=(result.data??[]).map(row=>({id:row.id,plan:row.plan,cycle:row.cycle,amount:row.amount,state:visiblePaymentState(row.state,row.last_payment_status),createdAt:row.created_at,paidAt:row.paid_at,receiptUrl:`/api/billing/receipts/${row.id}`}))
   }
   return {plan,cycle:active?.invoice?.cycle??null,status:active?(Date.parse(active.period_end)>now?'active':'grace'):(candidates.length?'expired':'free'),periodEnd:active?.period_end??null,
     cancelAtPeriodEnd:prefs?.cancel_at_period_end??false,pendingPlan:prefs?.pending_plan??null,
@@ -61,16 +66,32 @@ export async function requireBillingOwner(organizationId:string,userId:string) {
   return data
 }
 function baseUrl(mode:MonerizMode) {
-  const url=new URL(process.env.APP_BASE_URL??'http://localhost:3000')
+  const previewOrigin=process.env.VERCEL_ENV==='preview'&&process.env.VERCEL_URL?`https://${process.env.VERCEL_URL}`:undefined
+  const url=new URL(process.env.APP_BASE_URL??previewOrigin??'http://localhost:3000')
   if(url.username||url.password||url.search||url.hash||url.pathname!=='/'||(url.protocol!=='https:'&&!(mode==='test'&&['localhost','127.0.0.1'].includes(url.hostname)&&url.protocol==='http:'))) throw new Error('APP_BASE_URL_INVALID')
   return url.origin
 }
 export async function checkoutSubscription(organizationId:string,userId:string,plan:'pro'|'business',cycle:BillingCycle) {
   const org=await requireBillingOwner(organizationId,userId), db=await createAdminClient(),mode=getMonerizMode()
   if(await runtimeMode(db)!==mode) throw new Error('BILLING_MODE_MISMATCH')
-  const prepared=await db.rpc('prepare_billing_invoice',{p_org:organizationId,p_user:userId,p_mode:mode,p_plan:plan,p_cycle:cycle,p_origin:baseUrl(mode),p_country:org.country??'CI'})
-  fail(prepared.error)
-  const invoice=prepared.data as BillingInvoice
+  if(TEST_BILLING_PRICES&&mode!=='test')throw new BillingAccessError('BILLING_TEST_PRICING_MODE','Les tarifs de test sont réservés aux paiements de test. Contactez le support.',503)
+  async function prepareInvoice():Promise<BillingInvoice> {
+  if(TEST_BILLING_PRICES) {
+    return await prepareTestBillingInvoice(db,{organizationId,userId,plan,cycle,amount:TEST_BILLING_PRICES[plan],origin:baseUrl(mode),country:org.country??'CI'},invoiceId=>reconcileBillingInvoice(organizationId,userId,invoiceId))
+  } else if(HAS_CUSTOM_BILLING_PRICES) {
+    return await preparePricedBillingInvoice(db,{organizationId,userId,mode,plan,cycle,amount:PLANS[plan][cycle],origin:baseUrl(mode),country:org.country??'CI'},invoiceId=>reconcileBillingInvoice(organizationId,userId,invoiceId))
+  } else {
+    const prepared=await db.rpc('prepare_billing_invoice',{p_org:organizationId,p_user:userId,p_mode:mode,p_plan:plan,p_cycle:cycle,p_origin:baseUrl(mode),p_country:org.country??'CI'})
+    fail(prepared.error)
+    return prepared.data as BillingInvoice
+  }
+  }
+  let invoice=await prepareInvoice()
+  if(invoice.state==='pending'&&invoice.last_payment_status==='failed'&&invoice.checkout_session_id) {
+    const checked=await reconcileBillingInvoice(organizationId,userId,invoice.id)
+    if(checked.state==='paid')return {invoiceId:invoice.id,checkoutUrl:null,state:'paid'}
+    if(checked.state==='expired')invoice=await prepareInvoice()
+  }
   if(invoice.state==='paid') return {invoiceId:invoice.id,checkoutUrl:null,state:'paid'}
   if(invoice.checkout_session_id&&invoice.checkout_url) return {invoiceId:invoice.id,checkoutUrl:invoice.checkout_url,state:invoice.state}
   try {
@@ -113,15 +134,15 @@ export async function reconcileBillingInvoice(organizationId:string,userId:strin
   if(session.paymentId) {
     const payment=await readMonerizPayment(invoice.mode,session.paymentId)
     closedWithoutPaidAttempt=['failed','expired'].includes(payment.status)
-    if(payment.status==='paid'||payment.status==='reversed') await commitMonerizEvent(invoice.mode,{id:`evt_reconcile_${invoice.mode}_${payment.id}_${payment.status}`,type:payment.status==='paid'?'payment.succeeded':'payment.reversed',createdAt:invoice.created_at,data:{payment}})
+    if(['paid','reversed','failed','expired'].includes(payment.status)) await commitMonerizEvent(invoice.mode,{id:`evt_reconcile_${invoice.mode}_${payment.id}_${payment.status}`,type:payment.status==='paid'?'payment.succeeded':`payment.${payment.status}`,createdAt:invoice.created_at,data:{payment}})
   }
   if(closedWithoutPaidAttempt&&(session.status==='expired'||session.status==='disabled')) {
     const updated=await db.from('billing_invoices').update({state:'expired'}).eq('id',invoice.id).eq('state','pending')
     fail(updated.error)
   }
-  const latest=await db.from('billing_invoices').select('state').eq('id',invoice.id).eq('organization_id',organizationId).single();fail(latest.error)
+  const latest=await db.from('billing_invoices').select('state,last_payment_status').eq('id',invoice.id).eq('organization_id',organizationId).single();fail(latest.error)
   if(!latest.data) throw new Error('BILLING_INVOICE_NOT_FOUND')
-  return {state:latest.data.state as string}
+  return {state:visiblePaymentState(latest.data.state,latest.data.last_payment_status)}
 }
 
 export interface BillingReceipt {

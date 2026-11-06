@@ -1,7 +1,9 @@
 "use client";
+import {HAS_CUSTOM_BILLING_PRICES} from "@/lib/billing/pricing";
+import { TEST_BILLING_PRICES } from "@/lib/billing/test-pricing";
 import { useState } from "react";
 import Link from "next/link";
-import { PLANS, type BillingCycle } from "@/lib/billing/plans";
+import { PLANS, ANNUAL_SAVING_PERCENT, type BillingCycle } from "@/lib/billing/plans";
 import { formatAmount } from "@/lib/utils";
 import { LandingIcon } from "./landing-icons";
 import { SectionHeading } from "./section-heading";
@@ -18,8 +20,7 @@ export function PricingSection() {
             title="Commencez gratuitement. Passez au Pro quand vous grandissez."
           />
           <p className="-mt-4 text-base text-[#545873]">
-            Le prix suit votre nombre de livreurs. Prix de lancement, sans
-            engagement.
+            Le prix suit votre nombre de livreurs. Sans engagement.
           </p>
         </div>
         <div
@@ -44,11 +45,11 @@ export function PricingSection() {
               className={`relative min-h-12 rounded-full text-sm font-semibold ${cycle === value ? "text-white" : "text-[#3b3f5c]"}`}
             >
               {value === "monthly" ? "Mensuel" : "Annuel"}
-              {value === "yearly" && (
+              {value === "yearly" && !TEST_BILLING_PRICES && ANNUAL_SAVING_PERCENT>0 && (
                 <span
                   className={`ml-2 text-[11px] ${annual ? "text-[#fbbf24]" : "text-[#166534]"}`}
                 >
-                  −20 %
+                  −{ANNUAL_SAVING_PERCENT} %
                 </span>
               )}
             </button>
@@ -146,8 +147,8 @@ export function PricingSection() {
                       className={`mt-1 text-[13px] font-semibold ${pro ? "text-[#fbbf24]" : "text-[#b45309]"}`}
                     >
                       {annual
-                        ? `Soit ${formatAmount(plan.yearly / 12)} FCFA/mois · Économisez ${formatAmount(plan.monthly * 12 - plan.yearly)} FCFA`
-                        : "Prix de lancement"}
+                        ? `Soit ${formatAmount(plan.yearly / 12)} FCFA/mois${plan.monthly*12>plan.yearly?` · Économisez ${formatAmount(plan.monthly*12-plan.yearly)} FCFA`:""}`
+                        : HAS_CUSTOM_BILLING_PRICES ? "Facturation mensuelle" : "Prix de lancement"}
                     </p>
                   )}
                   {plan.id === "discovery" && (

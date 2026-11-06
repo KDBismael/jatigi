@@ -1,0 +1,8 @@
+version: 2
+
+secret:
+  # Test fixtures and local QA scripts use throwaway passwords for
+  # @example.com accounts and mocked Supabase clients; real keys come from env.
+  ignored_paths:
+    - lib/__tests__/**
+    - scripts/qa-personas/**
