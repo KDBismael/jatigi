@@ -268,7 +268,7 @@ export default function OrderDetailPage() {
   );
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="@container space-y-6 max-w-3xl">
       <OrderDetailHeader
         order={order}
         onEdit={!isEditing && !isManager ? () => startEdit() : undefined}
@@ -482,13 +482,13 @@ export default function OrderDetailPage() {
 
       {/* Financial summary — admin only */}
       {isAdmin && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 @2xl:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-5">
               <p className="text-xs text-gray-500 font-medium">
                 Total avec livraison
               </p>
-              <p className="text-xl font-bold text-indigo-600 mt-1">
+              <p className="text-xl font-bold break-words [overflow-wrap:anywhere] text-indigo-600 mt-1">
                 {formatCurrency(amounts.totalAmount)}
               </p>
               <p className="text-xs text-gray-400 mt-1">
@@ -500,7 +500,7 @@ export default function OrderDetailPage() {
           <Card>
             <CardContent className="pt-5">
               <p className="text-xs text-gray-500 font-medium">Coût total</p>
-              <p className="text-xl font-bold text-gray-700 mt-1">
+              <p className="text-xl font-bold break-words [overflow-wrap:anywhere] text-gray-700 mt-1">
                 {formatCurrency(totalCost)}
               </p>
             </CardContent>
@@ -509,7 +509,7 @@ export default function OrderDetailPage() {
             <CardContent className="pt-5">
               <p className="text-xs text-gray-500 font-medium">Bénéfice net</p>
               <p
-                className={`text-xl font-bold mt-1 ${totalProfit >= 0 ? "text-green-600" : "text-red-600"}`}
+                className={`text-xl font-bold break-words [overflow-wrap:anywhere] mt-1 ${totalProfit >= 0 ? "text-green-600" : "text-red-600"}`}
               >
                 {formatCurrency(totalProfit)}
               </p>

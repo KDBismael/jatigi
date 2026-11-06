@@ -115,7 +115,7 @@ export function DailyDeliveryBalance({
             d’Abidjan).
           </p>
         </div>
-        <div className="grid grid-cols-[1fr_0.7fr_1.4fr] items-center gap-2">
+        <div className="grid grid-cols-2 @lg:grid-cols-[1fr_0.7fr_1.4fr] items-end gap-2">
           <Button
             variant={date === day() ? "primary" : "secondary"}
             onClick={() => selectDate(day())}
@@ -130,14 +130,14 @@ export function DailyDeliveryBalance({
           >
             Hier
           </Button>
-          <label htmlFor={inputId} className="min-w-0">
+          <label htmlFor={inputId} className="col-span-2 min-w-0 @lg:col-span-1">
             <span className="sr-only">Date de tournée</span>
             <input
               id={inputId}
               type="date"
               value={date}
               onChange={(event) => selectDate(event.target.value)}
-              className="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2 text-xs text-gray-700"
+              className="min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2 text-base text-gray-700"
             />
           </label>
         </div>

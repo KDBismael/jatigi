@@ -69,7 +69,7 @@ export function AddStockModal({ variants=[], productName, productId, onSuccess, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl @container w-full min-w-0 max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-5 border-b border-gray-100">
           <h2 className="font-semibold text-gray-900">Ajouter un stock</h2>
           <p className="text-sm text-gray-500 mt-0.5">{productName}</p>
@@ -88,7 +88,7 @@ export function AddStockModal({ variants=[], productName, productId, onSuccess, 
           />
 
           {/* Étape 2 : coûts */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 items-end gap-3 @lg:grid-cols-3">
             {variants.length>0&&<Select label="Variante" placeholder="Stock sans variante" options={variants.filter(v=>v.is_active).map(v=>({value:v.id,label:v.name}))} {...register('variant_id')} />}
             <Input
               label="Montant payé au fournisseur (FCFA)"
@@ -119,7 +119,7 @@ export function AddStockModal({ variants=[], productName, productId, onSuccess, 
           <div className="pt-1">
             <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
               <p className="text-xs text-gray-500">Coût unitaire</p>
-              <p className="text-base font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
+              <p className="break-words [overflow-wrap:anywhere] text-base font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
             </div>
           </div>
 

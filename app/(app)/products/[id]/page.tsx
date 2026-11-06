@@ -139,7 +139,7 @@ export default function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="@container space-y-4">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-36 w-full" />
         <Skeleton className="h-48 w-full" />
@@ -166,14 +166,14 @@ export default function ProductDetailPage() {
   })
 
   return (
-    <div className="space-y-4">
+    <div className="@container space-y-4">
       {isAdmin && <CustomerExport key={product.id} product={product} />}
       {/* Header — stacks on mobile */}
       <div className="flex items-start gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-0.5 shrink-0" aria-label="Retour"><Icon name="chevron-left" /></Button>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold text-gray-900 truncate">{product.name}</h1>
+            <h1 className="min-w-0 break-words [overflow-wrap:anywhere] text-xl font-bold text-gray-900">{product.name}</h1>
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${product.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700'}`}>
               {product.is_active !== false ? 'Actif' : 'Archivé'}
             </span>
@@ -221,7 +221,7 @@ export default function ProductDetailPage() {
       )}
 
       {/* Key numbers — 2 cols on mobile, 4 on desktop */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 @md:grid-cols-2">
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Mode de vente</p>
@@ -231,7 +231,7 @@ export default function ProductDetailPage() {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Coût de revient</p>
-            <p className="text-base font-bold text-gray-700 mt-1">
+            <p className="text-base font-bold break-words [overflow-wrap:anywhere] text-gray-700 mt-1">
               {formatCurrency(product.purchase_cost + product.import_cost + product.packaging_cost)}
             </p>
           </CardContent>
@@ -239,7 +239,7 @@ export default function ProductDetailPage() {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-gray-500">{product.pricing_mode === 'offers' ? 'Offres actives' : 'Marge unitaire'}</p>
-            <p className={`text-base font-bold mt-1 ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-base font-bold break-words [overflow-wrap:anywhere] mt-1 ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {product.pricing_mode === 'offers' ? (product.offers ?? []).filter(o => o.is_active).length : formatCurrency(margin)}
             </p>
           </CardContent>
@@ -247,7 +247,7 @@ export default function ProductDetailPage() {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-gray-500">Stock disponible</p>
-            <p className={`text-base font-bold mt-1 ${
+            <p className={`text-base font-bold break-words [overflow-wrap:anywhere] mt-1 ${
               product.stock_quantity > 5 ? 'text-green-600'
               : product.stock_quantity > 0 ? 'text-yellow-600'
               : 'text-red-600'
@@ -268,7 +268,7 @@ export default function ProductDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 @sm:grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-gray-500">Achat / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.purchase_cost)}</p>
@@ -281,7 +281,7 @@ export default function ProductDetailPage() {
                 <p className="text-gray-500">Emballage / unité</p>
                 <p className="font-semibold text-gray-900 mt-0.5">{formatCurrency(product.packaging_cost)}</p>
               </div>
-              <div className="border-l border-gray-100 pl-3">
+              <div className="border-t border-gray-100 pt-3 @sm:border-l @sm:border-t-0 @sm:pl-3 @sm:pt-0">
                 <p className="text-gray-500">Total / unité</p>
                 <p className="font-bold text-gray-900 mt-0.5">
                   {formatCurrency(product.purchase_cost + product.import_cost + product.packaging_cost)}
@@ -322,7 +322,7 @@ export default function ProductDetailPage() {
                         {isEditingThis ? 'Annuler' : 'Modifier'}
                       </Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
+                    <div className="grid grid-cols-1 @sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-600">
                       <span>{lot.quantity_received} reçus ·{' '}
                         <span className={lot.quantity_available > 0 ? 'text-green-600 font-medium' : 'text-gray-400'}>
                           {lot.quantity_available} dispo

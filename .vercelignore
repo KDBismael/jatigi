@@ -1,0 +1,9 @@
+.git
+.next
+.vercel
+node_modules
+artifacts
+.env
+.env.*
+!.env.local.example
+!.env.production.example

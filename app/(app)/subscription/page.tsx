@@ -24,6 +24,8 @@ export default function SubscriptionPage() {
     }).catch(() => {})
     return () => { active = false }
   }, [billing.summary?.canManageBilling, billing.summary?.plan, billing.summary?.status])
+  const returnedPayment = billing.summary?.payments.find(payment => payment.id === invoice)
+  const paymentConfirmed = returnedPayment?.state === 'paid'
   return (
     <main data-testid="subscription-page" className={styles.page}>
       <TrackView event="subscription_view" />
@@ -46,16 +48,17 @@ export default function SubscriptionPage() {
           className={styles.pageReturn}
         >
           <p>
-            Retour du paiement. Seule la confirmation du prestataire active
-            votre plan. Retrouvez son état dans l’historique ci-dessous.
+            {paymentConfirmed
+              ? 'Paiement confirmé. Retrouvez votre reçu dans l’historique ci-dessous.'
+              : 'Retour du paiement. Seule la confirmation du prestataire active votre plan. Retrouvez son état dans l’historique ci-dessous.'}
           </p>
-          <SubscriptionActionButton
+          {!paymentConfirmed && <SubscriptionActionButton
             disabled={billing.busy}
             className="mt-2"
             onClick={() => void billing.reconcile(invoice)}
           >
             Vérifier ce paiement
-          </SubscriptionActionButton>
+          </SubscriptionActionButton>}
         </div>
       )}
       {billing.summary && (

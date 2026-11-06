@@ -189,7 +189,7 @@ export default function TeamPage() {
             Comptes de connexion, vendeurs internes et suivi humain.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setShowPersonForm((v) => !v)}>
             {showPersonForm ? 'Annuler' : '+ Personne commerciale'}
           </Button>
@@ -253,7 +253,7 @@ export default function TeamPage() {
           ) : (
             <div className="grid lg:grid-cols-2 gap-3">
               {people.map((person) => (
-                <div key={person.id} className="rounded-xl border border-gray-200 p-4">
+                <div key={person.id} className="@container rounded-xl border border-gray-200 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900 truncate">{person.full_name}</p>
@@ -265,7 +265,7 @@ export default function TeamPage() {
                       {person.is_active ? 'Actif' : 'Inactif'}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 mt-4 text-sm">
+                  <div className="grid grid-cols-1 @2xs:grid-cols-2 gap-3 mt-4 text-sm">
                     <div>
                       <p className="text-gray-500">CA du mois</p>
                       <p className="font-semibold">{formatCurrency(Number(person.month_revenue ?? 0))}</p>

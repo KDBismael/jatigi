@@ -79,7 +79,7 @@ export function DeliveryDayCard({
           className={`h-4 w-4 text-gray-500 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
         />
       </button>
-      <dl className="grid grid-cols-2 gap-3 border-t border-gray-100 px-4 py-3 text-xs sm:grid-cols-4">
+      <dl className="grid grid-cols-2 gap-3 border-t border-gray-100 px-4 py-3 text-xs @2xl:grid-cols-4">
         {[
           { label: "Encaissé sur la tournée", value: driver.amountCollected },
           { label: "Frais retenus", value: driver.deliveryFees },
@@ -88,7 +88,7 @@ export function DeliveryDayCard({
         ].map(({ label, value }) => (
           <div key={label}>
             <dt className="text-gray-500">{label}</dt>
-            <dd className="mt-1 font-semibold text-gray-900">
+            <dd className="mt-1 font-semibold break-words [overflow-wrap:anywhere] text-gray-900">
               {value == null ? "Non documenté" : formatCurrency(value)}
             </dd>
           </div>

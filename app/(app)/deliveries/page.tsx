@@ -165,10 +165,10 @@ export default function DeliveriesPage() {
     );
 
   return (
-    <div className="space-y-6">
+    <div className="@container space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Livraisons</h1>
+          <h1 className="text-2xl font-bold break-words [overflow-wrap:anywhere] text-gray-900">Livraisons</h1>
           <p className="text-sm text-gray-500 mt-1">
             Suivez les colis et les reversements de chaque livreur.
           </p>
@@ -243,11 +243,11 @@ export default function DeliveriesPage() {
         <>
           {isAdmin && <ParcelExport />}
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 @4xl:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-5">
                 <p className="text-xs text-gray-500">Colis en circulation</p>
-                <p className="text-2xl font-bold text-orange-600 mt-1">
+                <p className="text-2xl font-bold break-words [overflow-wrap:anywhere] text-orange-600 mt-1">
                   {totals.active}
                 </p>
               </CardContent>
@@ -255,7 +255,7 @@ export default function DeliveriesPage() {
             <Card>
               <CardContent className="pt-5">
                 <p className="text-xs text-gray-500">Colis livrés</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">
+                <p className="text-2xl font-bold break-words [overflow-wrap:anywhere] text-green-600 mt-1">
                   {totals.delivered}
                 </p>
               </CardContent>
@@ -263,7 +263,7 @@ export default function DeliveriesPage() {
             <Card>
               <CardContent className="pt-5">
                 <p className="text-xs text-gray-500">Total à reverser</p>
-                <p className="text-2xl font-bold text-indigo-600 mt-1">
+                <p className="text-2xl font-bold break-words [overflow-wrap:anywhere] text-indigo-600 mt-1">
                   {formatCurrency(totals.due)}
                 </p>
               </CardContent>

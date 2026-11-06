@@ -1,0 +1,17 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import {createRequire} from 'node:module';
+const req=createRequire(process.cwd()+'/package.json');
+req('@next/env').loadEnvConfig(process.cwd());
+const {createClient}=req('@supabase/supabase-js'),{createServerClient}=req('@supabase/ssr');
+(async()=>{const base=process.env.QA_BASE_URL||'http://localhost:3012';if(!['localhost','127.0.0.1'].includes(new URL(base).hostname))throw Error('QA setup requires a local application instance');const stamp=Date.now();const account={email:`qa-mobile-ui-${stamp}@example.com`,password:`Qa!${crypto.randomBytes(18).toString('hex')}9`};
+ const signup=await fetch(base+'/api/auth/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...account,full_name:'QA mobile propriétaire',phone:'0700000123',organization_name:`QA mobile UI ${stamp}`})});if(signup.status!==201)throw Error(`QA signup ${signup.status}`)
+ let cookies=[];const auth=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,{cookies:{getAll:()=>cookies,setAll:c=>{cookies=c}}});const login=await auth.auth.signInWithPassword(account);if(login.error)throw Error('QA signin failed')
+ async function api(path,method='GET',body){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',Cookie:cookies.map(c=>`${c.name}=${c.value}`).join('; ')},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,data:await r.json()}}
+ const me=await api('/api/me');const org=me.data.profile.organization_id;if(!me.data.organization.name.startsWith('QA mobile UI '))throw Error('QA guard');
+ const db=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL,process.env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});const opt=await db.from('organizations').update({notifications_unsubscribed_at:new Date().toISOString()}).eq('id',org);if(opt.error)throw Error('QA notification opt out failed')
+ const product=await api('/api/products','POST',{name:'Parfum Collection Signature longue durée Edition spéciale',pricing_mode:'unit',sale_price:5000,stock_quantity:100,total_purchase:50000,total_transport:5000,total_packaging:1000});if(product.status!==201)throw Error('QA product '+product.status)
+ const driver=await api('/api/delivery-drivers','POST',{name:'QA Livreur avec un nom particulièrement long',phone:'0700000124'});if(driver.status!==201)throw Error('QA driver '+driver.status)
+ const order=await api('/api/orders','POST',{client_name:'QA Cliente avec un nom particulièrement long',client_phone:'0700000125',channel:'whatsapp',order_date:'2026-11-06',seller_id:me.data.profile.id,delivery_driver_id:driver.data.id,delivery_date:'2026-11-06',delivery_fee:1500,delivery_location:'Cocody Angré, près du grand carrefour, porte bleue au deuxième étage',lines:[{product_id:product.data.id,quantity:3}]});if(order.status!==201)throw Error('QA order '+order.status)
+ const result={base,account,cookies: cookies.map(c=>({name:c.name,value:c.value,domain:'localhost',path:'/',httpOnly:false,secure:false,sameSite:'Lax'})),me:me.data,productId:product.data.id,driverId:driver.data.id,orderId:order.data.id};fs.writeFileSync('/private/tmp/warko-mobile-private.json',JSON.stringify(result),{mode:0o600});console.log(JSON.stringify({setup:'ok',product:product.status,driver:driver.status,order:order.status,emails:'opted out',base}))
+})().catch(e=>{console.error(e.message);process.exitCode=1})

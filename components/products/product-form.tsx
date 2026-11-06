@@ -47,7 +47,7 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
   const totalProfit = margin * qty
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="@container space-y-6 w-full min-w-0 max-w-2xl">
       {/* Nom du produit */}
       <Card>
         <CardHeader>
@@ -85,7 +85,7 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
             />
 
             {/* Étape 2 : coûts */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 items-end gap-4 @lg:grid-cols-3">
               <Input
                 label="Montant payé au fournisseur (FCFA)"
                 type="number"
@@ -117,20 +117,20 @@ export function ProductForm({ onSubmit, defaultValues, isLoading, isEditing = fa
               min={0} placeholder="Ex : 3 000" error={errors.sale_price?.message} {...register('sale_price')} />}
 
             {/* Résultats calculés automatiquement */}
-            {pricingMode !== 'offers' && <div className="grid grid-cols-3 gap-3 pt-1">
+            {pricingMode !== 'offers' && <div className="grid grid-cols-1 gap-3 pt-1 @lg:grid-cols-3">
               <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                 <p className="text-xs text-gray-500">Coût unitaire</p>
-                <p className="text-lg font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
+                <p className="break-words [overflow-wrap:anywhere] text-lg font-bold text-gray-800 mt-0.5">{formatCurrency(unitCost)}</p>
               </div>
               <div className={`p-3 rounded-lg border-2 ${margin >= 0 ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
                 <p className="text-xs text-gray-500">Marge / unité</p>
-                <p className={`text-lg font-bold mt-0.5 ${margin >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                <p className={`break-words [overflow-wrap:anywhere] text-lg font-bold mt-0.5 ${margin >= 0 ? 'text-green-700' : 'text-red-700'}`}>
                   {formatCurrency(margin)}
                 </p>
               </div>
               <div className={`p-3 rounded-lg border-2 ${totalProfit >= 0 ? 'border-indigo-200 bg-indigo-50' : 'border-red-200 bg-red-50'}`}>
                 <p className="text-xs text-gray-500">Bénéfice total estimé</p>
-                <p className={`text-lg font-bold mt-0.5 ${totalProfit >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
+                <p className={`break-words [overflow-wrap:anywhere] text-lg font-bold mt-0.5 ${totalProfit >= 0 ? 'text-indigo-700' : 'text-red-700'}`}>
                   {formatCurrency(totalProfit)}
                 </p>
               </div>

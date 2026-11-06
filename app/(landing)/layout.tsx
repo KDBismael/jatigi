@@ -1,14 +1,15 @@
 import { PLANS } from "@/lib/billing/plans";
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Inter } from "next/font/google";
-const heading = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["700", "800"],
+import localFont from "next/font/local";
+const heading = localFont({
+  src: "../../assets/fonts/BricolageGrotesque-Latin.woff2",
+  weight: "700 800",
   display: "swap",
   variable: "--font-bricolage",
 });
-const body = Inter({
-  subsets: ["latin"],
+const body = localFont({
+  src: "../../assets/fonts/Inter-Latin.woff2",
+  weight: "100 900",
   display: "swap",
   variable: "--font-landing-inter",
 });

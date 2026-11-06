@@ -24,3 +24,21 @@ it('does not expose return invoice controls for non owners or invalid ids',async
  window.history.replaceState({},'','/subscription?invoice=01234567-89ab-cdef-0123-456789abcdef');billing.summary={...summary,canManageBilling:false}
  render(<SubscriptionPage/>);await screen.findByTestId('subscription-current-plan');expect(screen.queryByRole('status')).toBeNull();expect(screen.queryByRole('button',{name:'Vérifier ce paiement'})).toBeNull()
 })
+it('replaces the return warning with confirmation once the exact invoice is paid',async()=>{
+ const id='01234567-89ab-cdef-0123-456789abcdef';window.history.replaceState({},'','/subscription?invoice='+id)
+ const payment={id,plan:'business' as const,cycle:'monthly' as const,amount:100,state:'pending',createdAt:'2026-11-06',paidAt:null,receiptUrl:'/receipt'}
+ billing.summary={...summary,plan:'business',status:'active',payments:[payment]}
+ const {rerender}=render(<SubscriptionPage/>);await screen.findByRole('status')
+ expect(screen.getByRole('status').textContent).toContain('Retour du paiement')
+ billing.summary={...billing.summary,payments:[{...payment,state:'paid'}]};rerender(<SubscriptionPage/>)
+ expect(screen.getByRole('status').textContent).toContain('Paiement confirmé')
+ expect(screen.getByRole('status').textContent).not.toContain('Seule la confirmation')
+ expect(screen.queryByRole('button',{name:'Vérifier ce paiement'})).toBeNull()
+ expect(billing.reconcile).not.toHaveBeenCalled();expect(billing.checkout).not.toHaveBeenCalled()
+})
+it('does not treat an active plan or another paid invoice as confirmation of the return invoice',async()=>{
+ const id='01234567-89ab-cdef-0123-456789abcdef';window.history.replaceState({},'','/subscription?invoice='+id)
+ billing.summary={...summary,plan:'business',status:'active',payments:[{id:'another-invoice',plan:'pro',cycle:'monthly',amount:100,state:'paid',createdAt:'2026-11-06',paidAt:null,receiptUrl:'/receipt'}]}
+ render(<SubscriptionPage/>);await screen.findByRole('status')
+ expect(screen.getByRole('status').textContent).not.toContain('Paiement confirmé');expect(screen.getByRole('button',{name:'Vérifier ce paiement'})).toBeTruthy()
+})
